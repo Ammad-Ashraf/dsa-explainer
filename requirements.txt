@@ -1,0 +1,13 @@
+# Pinned to the versions this project was built and tested with (Python 3.11).
+manim==0.22.1           # animation renderer (Cairo; no LaTeX needed)
+manimpango==0.7.1
+av==18.1.0              # reads clip durations (also used by Manim)
+imageio-ffmpeg==0.8.1   # bundled ffmpeg binary, joins the clips
+gradio==6.31.0          # web interface
+openai==3.45.0          # client for any OpenAI-compatible LLM API
+pydantic==2.14.2        # scene-plan schema
+python-dotenv==1.2.4
+kokoro-onnx==0.6.1      # local text to speech (Kokoro-82M, ONNX, CPU)
+numpy==2.4.6
+httpx==0.28.1           # model download script
+pytest==9.2.0

@@ -1,0 +1,82 @@
+{
+  "topic": "How does a stack work?",
+  "level": "beginner",
+  "title": "How a Stack Works",
+  "structure": "stack",
+  "initial": [4, 9],
+  "scenes": [
+    {
+      "kind": "intro",
+      "caption": "Last in, first out",
+      "narration": "A stack works like a pile of plates. You can only put a plate on the top, and you can only take a plate from the top. Our stack starts with 4 at the bottom and 9 above it."
+    },
+    {
+      "kind": "step",
+      "caption": "push(2)",
+      "op": {"name": "push", "args": {"value": 2}},
+      "claimed_state": [4, 9, 2],
+      "narration": "First we push 2. Push always places the new item on the top, so 2 lands right above 9. Now the top is 2 and the size is 3."
+    },
+    {
+      "kind": "step",
+      "caption": "push(7)",
+      "op": {"name": "push", "args": {"value": 7}},
+      "claimed_state": [4, 9, 2, 7],
+      "narration": "Next we push 7. Again it goes on the top, above 2. The stack keeps items in the order they arrived, with the newest one on top. The top is now 7."
+    },
+    {
+      "kind": "step",
+      "caption": "peek()",
+      "op": {"name": "peek", "args": {}},
+      "claimed_state": [4, 9, 2, 7],
+      "narration": "Peek lets us look at the top item without taking it off. Peek gives us 7, and the stack does not change. This is handy when you only need to check what comes next."
+    },
+    {
+      "kind": "step",
+      "caption": "pop()",
+      "op": {"name": "pop", "args": {}},
+      "claimed_state": [4, 9, 2],
+      "narration": "Now we pop. Pop removes the top item, 7, which was the last one we added. That is the key rule of a stack: last in, first out. The top is now 2."
+    },
+    {
+      "kind": "step",
+      "caption": "pop()",
+      "op": {"name": "pop", "args": {}},
+      "claimed_state": [4, 9],
+      "narration": "We pop again and 2 comes off. Items always leave in the reverse order of how they arrived. The top is 9 again and the size is back to 2."
+    },
+    {
+      "kind": "step",
+      "caption": "push(5)",
+      "op": {"name": "push", "args": {"value": 5}},
+      "claimed_state": [4, 9, 5],
+      "narration": "Finally we push 5, and it lands on top of 9. Push, pop and peek all work only at the top, so each one takes the same short time, no matter how big the stack grows."
+    },
+    {
+      "kind": "summary",
+      "caption": "Summary",
+      "points": ["Push adds an item to the top", "Pop removes the item on top", "Peek reads the top without removing it", "Last in, first out, and every operation is fast"],
+      "narration": "To sum up, a stack only lets you work at the top. Push adds an item, pop removes the newest item, and peek looks at it. That makes a stack last in, first out. Stacks power the undo button, the back button in your browser, and function calls in every program."
+    }
+  ],
+  "quiz": [
+    {
+      "question": "A stack holds 4, 9 and 5, with 5 on top. You pop once, then push 8. Which value is on top?",
+      "start": [4, 9, 5],
+      "ops": [{"name": "pop", "args": {}}, {"name": "push", "args": {"value": 8}}],
+      "ask": "top",
+      "options": ["5", "9", "8", "4"],
+      "answer": "8",
+      "explanation": "Pop takes 5 off, then push puts 8 on the top."
+    },
+    {
+      "question": "A stack holds 4 and 9, with 9 on top. You push 1, push 6, then pop. How many items are left?",
+      "start": [4, 9],
+      "ops": [{"name": "push", "args": {"value": 1}}, {"name": "push", "args": {"value": 6}}, {"name": "pop", "args": {}}],
+      "ask": "size",
+      "options": ["2", "3", "4", "5"],
+      "answer": "3",
+      "explanation": "Two pushes make 4 items, and one pop brings it back to 3."
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "topic": "Insert, search and delete in a binary search tree",
+  "level": "intermediate",
+  "title": "Binary Search Trees",
+  "structure": "bst",
+  "initial": [8, 3, 10],
+  "scenes": [
+    {
+      "kind": "intro",
+      "caption": "Smaller left, larger right",
+      "narration": "In a binary search tree, every value in a node's left subtree is smaller than the node, and every value in its right subtree is larger. That rule lets us skip half of the tree at each step. Our tree starts with 8 at the root, 3 on the left and 10 on the right."
+    },
+    {
+      "kind": "step",
+      "caption": "insert(1)",
+      "op": {"name": "insert", "args": {"value": 1}},
+      "claimed_state": {"value": 8, "left": {"value": 3, "left": {"value": 1}}, "right": {"value": 10}},
+      "narration": "To insert 1, we compare it with the root. 1 is less than 8, so we go left. 1 is less than 3, so we go left again and find an empty spot. 1 becomes the left child of 3."
+    },
+    {
+      "kind": "step",
+      "caption": "insert(6)",
+      "op": {"name": "insert", "args": {"value": 6}},
+      "claimed_state": {"value": 8, "left": {"value": 3, "left": {"value": 1}, "right": {"value": 6}}, "right": {"value": 10}},
+      "narration": "Next we insert 6. It is less than 8, so we go left, and greater than 3, so we go right. 6 becomes the right child of 3."
+    },
+    {
+      "kind": "step",
+      "caption": "insert(14)",
+      "op": {"name": "insert", "args": {"value": 14}},
+      "claimed_state": {"value": 8, "left": {"value": 3, "left": {"value": 1}, "right": {"value": 6}}, "right": {"value": 10, "right": {"value": 14}}},
+      "narration": "Now 14. It is greater than 8, so we go right, and greater than 10, so it becomes the right child of 10. Each insert follows one path from the root, so it takes time proportional to the height."
+    },
+    {
+      "kind": "step",
+      "caption": "search(6)",
+      "op": {"name": "search", "args": {"value": 6}},
+      "claimed_state": {"value": 8, "left": {"value": 3, "left": {"value": 1}, "right": {"value": 6}}, "right": {"value": 10, "right": {"value": 14}}},
+      "narration": "Searching uses the same comparisons. To find 6 we go left at 8, right at 3, and find 6 after only three comparisons. In a balanced tree a search takes O(log n) time."
+    },
+    {
+      "kind": "step",
+      "caption": "delete(3)",
+      "op": {"name": "delete", "args": {"value": 3}},
+      "claimed_state": {"value": 8, "left": {"value": 6, "left": {"value": 1}}, "right": {"value": 10, "right": {"value": 14}}},
+      "narration": "Deleting 3 is the hard case, because it has two children. We replace 3 with its in-order successor, the smallest value in its right subtree, which is 6. Then we remove the old node 6, and the order rule still holds."
+    },
+    {
+      "kind": "step",
+      "caption": "delete(10)",
+      "op": {"name": "delete", "args": {"value": 10}},
+      "claimed_state": {"value": 8, "left": {"value": 6, "left": {"value": 1}}, "right": {"value": 14}},
+      "narration": "Deleting 10 is easier, because it has only one child. Its child 14 simply takes its place as the right child of 8. The root is still 8 and the size is 4."
+    },
+    {
+      "kind": "summary",
+      "caption": "Summary",
+      "points": ["Left subtree smaller, right subtree larger", "Insert and search follow one path", "Two children: use the in-order successor", "O(log n) when the tree is balanced"],
+      "narration": "To sum up, a binary search tree keeps smaller values on the left and larger values on the right. Insert, search and delete each follow a single path from the root. When the tree stays balanced, that path is short, so all three take O(log n) time."
+    }
+  ],
+  "quiz": [
+    {
+      "question": "Insert 8, 3, 10, 1 and 6 into an empty BST, then delete 8. Which value becomes the root?",
+      "start": [8, 3, 10, 1, 6],
+      "ops": [{"name": "delete", "args": {"value": 8}}],
+      "ask": "root",
+      "options": ["3", "6", "10", "1"],
+      "answer": "10",
+      "explanation": "8 has two children, so it is replaced by its in-order successor, 10."
+    },
+    {
+      "question": "Insert 5, 2, 9, 7 and 1 into an empty BST. What is its in-order traversal?",
+      "start": [5, 2, 9, 7, 1],
+      "ops": [],
+      "ask": "inorder",
+      "options": ["1, 2, 5, 7, 9", "5, 2, 1, 9, 7", "5, 2, 9, 1, 7", "1, 2, 7, 9, 5"],
+      "answer": "1, 2, 5, 7, 9",
+      "explanation": "An in-order traversal of a BST always lists the values in sorted order."
+    }
+  ]
+}

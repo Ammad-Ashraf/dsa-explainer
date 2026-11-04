@@ -1,0 +1,82 @@
+{
+  "topic": "Show how a queue handles print jobs",
+  "level": "intermediate",
+  "title": "Queues: First In, First Out",
+  "structure": "queue",
+  "initial": [3, 8],
+  "scenes": [
+    {
+      "kind": "intro",
+      "caption": "First in, first out",
+      "narration": "A queue is a line, like print jobs waiting for a printer. New jobs join at the rear and the printer always takes the job at the front. Our queue starts with job 3 at the front and job 8 behind it."
+    },
+    {
+      "kind": "step",
+      "caption": "enqueue(5)",
+      "op": {"name": "enqueue", "args": {"value": 5}},
+      "claimed_state": [3, 8, 5],
+      "narration": "Job 5 arrives, so we enqueue 5. Enqueue adds at the rear, so 5 waits behind 8. The rear is now 5, the front is still 3, and the size is 3."
+    },
+    {
+      "kind": "step",
+      "caption": "enqueue(1)",
+      "op": {"name": "enqueue", "args": {"value": 1}},
+      "claimed_state": [3, 8, 5, 1],
+      "narration": "Job 1 arrives next. It also joins at the rear, behind 5. Arriving later never lets a job skip ahead. The rear is now 1."
+    },
+    {
+      "kind": "step",
+      "caption": "dequeue()",
+      "op": {"name": "dequeue", "args": {}},
+      "claimed_state": [8, 5, 1],
+      "narration": "The printer is free, so we dequeue. Dequeue removes the job at the front, which is 3, the job that waited longest. Now the front is 8."
+    },
+    {
+      "kind": "step",
+      "caption": "peek()",
+      "op": {"name": "peek", "args": {}},
+      "claimed_state": [8, 5, 1],
+      "narration": "Peek shows the next job without removing it. It returns 8 and the queue stays the same. With a front index, peek takes constant time, O(1)."
+    },
+    {
+      "kind": "step",
+      "caption": "dequeue()",
+      "op": {"name": "dequeue", "args": {}},
+      "claimed_state": [5, 1],
+      "narration": "We dequeue again and job 8 is printed. Jobs leave in exactly the order they arrived. The front is now 5 and the size is 2."
+    },
+    {
+      "kind": "step",
+      "caption": "enqueue(6)",
+      "op": {"name": "enqueue", "args": {"value": 6}},
+      "claimed_state": [5, 1, 6],
+      "narration": "Finally job 6 arrives and joins at the rear. A queue built on a linked list or a circular array does both enqueue and dequeue in O(1) time."
+    },
+    {
+      "kind": "summary",
+      "caption": "Summary",
+      "points": ["Enqueue adds at the rear", "Dequeue removes from the front", "First in, first out", "Both operations take O(1) time"],
+      "narration": "To sum up, a queue is first in, first out. Enqueue adds at the rear, dequeue removes from the front, and peek reads the front. Both main operations run in constant time. Queues schedule print jobs, handle web requests, and drive breadth-first search."
+    }
+  ],
+  "quiz": [
+    {
+      "question": "A queue holds 3 and 8, with 3 at the front. You enqueue 5, then dequeue once. Which value is at the front?",
+      "start": [3, 8],
+      "ops": [{"name": "enqueue", "args": {"value": 5}}, {"name": "dequeue", "args": {}}],
+      "ask": "front",
+      "options": ["3", "8", "5", "empty"],
+      "answer": "8",
+      "explanation": "Dequeue removes 3, so 8 moves to the front."
+    },
+    {
+      "question": "A queue holds 6, 2 and 9, with 6 at the front. You dequeue twice, then enqueue 4. Which value is at the rear?",
+      "start": [6, 2, 9],
+      "ops": [{"name": "dequeue", "args": {}}, {"name": "dequeue", "args": {}}, {"name": "enqueue", "args": {"value": 4}}],
+      "ask": "rear",
+      "options": ["9", "4", "6", "2"],
+      "answer": "4",
+      "explanation": "The newest value always joins at the rear, so it is 4."
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "topic": "Show BFS on this graph: A-B, A-C, B-D, C-D, C-E, D-F, E-F, start at A",
+  "level": "beginner",
+  "title": "Breadth-First Search",
+  "structure": "graph",
+  "initial": {"edges": [["A", "B"], ["A", "C"], ["B", "D"], ["C", "D"], ["C", "E"], ["D", "F"], ["E", "F"]], "start": "A", "directed": false},
+  "scenes": [
+    {
+      "kind": "intro",
+      "caption": "Explore level by level",
+      "narration": "Breadth-first search explores a graph in rings, like ripples in a pond. It visits the start node, then all of its neighbours, then their neighbours. A queue remembers which node to visit next. We start at node A, so the queue holds only A."
+    },
+    {
+      "kind": "step",
+      "caption": "Visit A",
+      "op": {"name": "bfs_step", "args": {}},
+      "claimed_state": {"current": "A", "queue": ["B", "C"], "visited": ["A"]},
+      "narration": "We take A from the front of the queue and mark it visited. Its neighbours B and C have not been seen yet, so we add them to the back of the queue, in alphabetical order. The current node is A."
+    },
+    {
+      "kind": "step",
+      "caption": "Visit B",
+      "op": {"name": "bfs_step", "args": {}},
+      "claimed_state": {"current": "B", "queue": ["C", "D"], "visited": ["A", "B"]},
+      "narration": "Next we take B from the front. Its neighbour A is already visited, so we skip it, but D is new, so D joins the back of the queue behind C."
+    },
+    {
+      "kind": "step",
+      "caption": "Visit C",
+      "op": {"name": "bfs_step", "args": {}},
+      "claimed_state": {"current": "C", "queue": ["D", "E"], "visited": ["A", "B", "C"]},
+      "narration": "Now C. A is visited and D is already waiting in the queue, so we do not add it twice. Only E is new, so E joins the queue. Every node one step away from A is now done."
+    },
+    {
+      "kind": "step",
+      "caption": "Visit D",
+      "op": {"name": "bfs_step", "args": {}},
+      "claimed_state": {"current": "D", "queue": ["E", "F"], "visited": ["A", "B", "C", "D"]},
+      "narration": "We visit D. Its neighbours B and C are visited already, and F is new, so F is added to the queue behind E."
+    },
+    {
+      "kind": "step",
+      "caption": "Visit E",
+      "op": {"name": "bfs_step", "args": {}},
+      "claimed_state": {"current": "E", "queue": ["F"], "visited": ["A", "B", "C", "D", "E"]},
+      "narration": "We visit E. Its neighbour C is visited and F is already queued, so nothing new is added. Only F is left in the queue."
+    },
+    {
+      "kind": "step",
+      "caption": "Visit F",
+      "op": {"name": "bfs_step", "args": {}},
+      "claimed_state": {"current": "F", "queue": [], "visited": ["A", "B", "C", "D", "E", "F"]},
+      "narration": "Finally we visit F. All of its neighbours are visited, and the queue is now empty, so the search is finished. The visiting order is A, B, C, D, E, F."
+    },
+    {
+      "kind": "summary",
+      "caption": "Summary",
+      "points": ["A queue decides which node comes next", "Visit a node, then queue its new neighbours", "Nodes are visited level by level", "Finds shortest paths in unweighted graphs"],
+      "narration": "To sum up, breadth-first search uses a queue to visit a graph level by level. Each node is visited once and each edge is checked a couple of times, so it runs in time proportional to the nodes plus the edges. Because it goes level by level, it finds the shortest path in an unweighted graph."
+    }
+  ],
+  "quiz": [
+    {
+      "question": "Run BFS on this graph from A, taking neighbours in alphabetical order. In which order are the nodes visited?",
+      "start": null,
+      "ops": [],
+      "ask": "bfs_order",
+      "options": ["A, B, C, D, E, F", "A, B, D, F, C, E", "A, C, B, E, D, F", "A, B, C, E, D, F"],
+      "answer": "A, B, C, D, E, F",
+      "explanation": "BFS finishes each level before the next: A, then B and C, then D and E, then F."
+    },
+    {
+      "question": "In this graph, after BFS from A has visited three nodes, which nodes are waiting in the queue?",
+      "start": null,
+      "ops": [{"name": "bfs_step", "args": {}}, {"name": "bfs_step", "args": {}}, {"name": "bfs_step", "args": {}}],
+      "ask": "queue",
+      "options": ["D, E", "C, D", "E, F", "D, F"],
+      "answer": "D, E",
+      "explanation": "After visiting A, B and C, the queue holds D and E."
+    }
+  ]
+}
