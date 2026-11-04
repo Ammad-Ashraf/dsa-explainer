@@ -18,7 +18,7 @@ Covered: **stacks, queues, linked lists, binary search trees, and breadth-first 
 
 | Part | Model / tool | Where it runs |
 | --- | --- | --- |
-| Lesson planning, narration text, quiz questions, revisions | Any OpenAI-compatible LLM API; default **Gemini 2.5 Flash** (free tier). Groq, Claude, OpenAI or a local Ollama model work by changing `.env` | API (allowed by the brief) |
+| Lesson planning, narration text, quiz questions, revisions | Any OpenAI-compatible LLM API; default **Gemini 3.5 Flash** (free tier). Groq, Claude, OpenAI or a local Ollama model work by changing `.env` | API (allowed by the brief) |
 | Step verifier, quiz answer checking | Plain Python data structures (`dsa_explainer/structures.py`) | Local |
 | Text to speech | **Kokoro-82M** (ONNX, CPU) via `kokoro-onnx` | **Local** (required by the brief) |
 | Animation | **Manim Community 0.22** (Cairo renderer, no LaTeX) | Local |

@@ -3,17 +3,21 @@ OpenAI, Ollama...). Only planning and writing use the API; voice and video
 run locally.
 
 Check your settings with:  python -m dsa_explainer.llm
+List the models your key can use:  python -m dsa_explainer.llm --models
 """
 
 from __future__ import annotations
 
 import json
+import logging
+import sys
 import time
 
 from openai import BadRequestError, OpenAI
 
 from . import config
 
+logging.getLogger("httpx").setLevel(logging.WARNING)  # no line per API request in the console
 _client: OpenAI | None = None
 _json_mode = True  # turned off once if the provider rejects response_format
 
@@ -64,4 +68,7 @@ def check() -> None:
 
 
 if __name__ == "__main__":
-    check()
+    if "--models" in sys.argv:  # the model names this key can use
+        print("\n".join(sorted(m.id.removeprefix("models/") for m in client().models.list())))
+    else:
+        check()
