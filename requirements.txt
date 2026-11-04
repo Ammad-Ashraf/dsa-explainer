@@ -10,4 +10,5 @@ python-dotenv==1.2.4
 kokoro-onnx==0.6.1      # local text to speech (Kokoro-82M, ONNX, CPU)
 numpy==2.4.6
 httpx==0.28.1           # model download script
+markdown==3.11.2        # prints the report to PDF (scripts/build_report.py)
 pytest==9.2.0

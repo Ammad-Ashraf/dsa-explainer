@@ -37,6 +37,62 @@ def test_no_video_after_too_many_wrong_plans(monkeypatch):
         planner.plan_lesson("stack", "beginner", log=quiet)
 
 
+def test_rate_limit_waits_then_retries(monkeypatch):
+    import httpx
+    from openai import RateLimitError
+
+    request = httpx.Request("POST", "https://example.invalid/chat/completions")
+    limited = RateLimitError("rate limited", response=httpx.Response(429, request=request), body=None)
+    replies = [limited, limited, "ok"]
+    waits = []
+
+    class Completions:
+        @staticmethod
+        def create(**kwargs):
+            reply = replies.pop(0)
+            if isinstance(reply, Exception):
+                raise reply
+            return reply
+
+    class Client:
+        chat = type("Chat", (), {"completions": Completions})
+
+    monkeypatch.setattr(llm, "client", lambda: Client)
+    monkeypatch.setattr(llm, "_on_fallback", False)
+    monkeypatch.setattr(llm.time, "sleep", waits.append)
+    assert llm._create(model="m", messages=[]) == "ok"
+    assert waits == [10, 20]
+
+
+def test_daily_limit_switches_to_fallback_model(monkeypatch):
+    import httpx
+    from openai import RateLimitError
+
+    request = httpx.Request("POST", "https://example.invalid/chat/completions")
+    daily = RateLimitError("Quota exceeded: GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+                           response=httpx.Response(429, request=request), body=None)
+    seen = []
+
+    class Completions:
+        @staticmethod
+        def create(**kwargs):
+            seen.append(kwargs["model"])
+            if kwargs["model"] == "main":
+                raise daily
+            return "ok"
+
+    class Client:
+        chat = type("Chat", (), {"completions": Completions})
+
+    monkeypatch.setattr(llm, "client", lambda: Client)
+    monkeypatch.setattr(llm, "_on_fallback", False)
+    monkeypatch.setattr(config, "LLM_MODEL", "main")
+    monkeypatch.setattr(config, "LLM_FALLBACK_MODEL", "lite")
+    monkeypatch.setattr(llm.time, "sleep", lambda s: pytest.fail("a daily limit should not wait"))
+    assert llm._create(model="main", messages=[]) == "ok"
+    assert seen == ["main", "lite"] and llm.model_in_use() == "lite"
+
+
 def test_parse_json_tolerates_fences_and_text():
     assert llm.parse_json('Here you go:\n```json\n{"a": 1}\n```') == {"a": 1}
     with pytest.raises(ValueError):

@@ -7,7 +7,7 @@ import traceback
 
 import gradio as gr
 
-from dsa_explainer import config, pipeline
+from dsa_explainer import config, llm, pipeline
 from dsa_explainer.lesson import Lesson, scene_labels
 from dsa_explainer.structures import DISPLAY_NAMES
 from dsa_explainer.verifier import answer_index
@@ -66,7 +66,7 @@ def _show(result: dict):
                  f"now, {result['reused']} reused from the cache.")
     timing = []
     if "plan_seconds" in result:
-        timing += [f"planning {result['plan_seconds']:.0f} s ({config.LLM_MODEL})",
+        timing += [f"planning {result['plan_seconds']:.0f} s ({llm.model_in_use()})",
                    f"quiz {result['quiz_seconds']:.0f} s"]
     timing += [f"voice {result['voice_seconds']:.0f} s",
                f"voice and drawing together {result['build_seconds']:.0f} s"]

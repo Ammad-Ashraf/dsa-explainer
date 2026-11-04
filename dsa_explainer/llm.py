@@ -13,13 +13,15 @@ import logging
 import sys
 import time
 
-from openai import BadRequestError, OpenAI
+from openai import BadRequestError, OpenAI, RateLimitError
 
 from . import config
 
 logging.getLogger("httpx").setLevel(logging.WARNING)  # no line per API request in the console
 _client: OpenAI | None = None
 _json_mode = True  # turned off once if the provider rejects response_format
+_on_fallback = False  # set once the main model's daily allowance is used up
+RATE_LIMIT_WAITS = (10, 20, 30)  # seconds; free tiers allow only a few requests a minute
 
 
 def client() -> OpenAI:
@@ -32,6 +34,29 @@ def client() -> OpenAI:
     return _client
 
 
+def model_in_use() -> str:
+    return config.LLM_FALLBACK_MODEL if _on_fallback else config.LLM_MODEL
+
+
+def _create(**kwargs):
+    """One API call. A per-minute rate limit: wait and try again. A daily limit: switch to the fallback model."""
+    global _on_fallback
+    for wait in (*RATE_LIMIT_WAITS, None):
+        kwargs["model"] = model_in_use()
+        try:
+            return client().chat.completions.create(**kwargs)
+        except RateLimitError as exc:
+            details = f"{exc} {exc.body}".lower()  # the quota name, e.g. "...PerDay...", is in the body
+            if config.LLM_FALLBACK_MODEL and not _on_fallback and "day" in details:
+                _on_fallback = True  # the main model's daily allowance is used up
+                continue
+            if wait is None:
+                raise RuntimeError("The language model's rate limit was reached (free tiers allow only a few "
+                                   "requests per minute and per day). Wait a minute and try again, or use another "
+                                   "key or provider in .env.") from exc
+            time.sleep(wait)
+
+
 def chat(messages: list[dict], temperature: float | None = None) -> str:
     """One chat completion; returns the reply text."""
     global _json_mode
@@ -39,14 +64,12 @@ def chat(messages: list[dict], temperature: float | None = None) -> str:
               "temperature": config.LLM_TEMPERATURE if temperature is None else temperature}
     if _json_mode:
         try:
-            reply = client().chat.completions.create(**kwargs, response_format={"type": "json_object"})
-            return reply.choices[0].message.content or ""
+            return _create(**kwargs, response_format={"type": "json_object"}).choices[0].message.content or ""
         except BadRequestError as exc:
             if "response_format" not in str(exc) and "json" not in str(exc).lower():
                 raise
             _json_mode = False  # this provider has no JSON mode; the prompt still asks for JSON
-    reply = client().chat.completions.create(**kwargs)
-    return reply.choices[0].message.content or ""
+    return _create(**kwargs).choices[0].message.content or ""
 
 
 def parse_json(text: str) -> dict:
@@ -61,10 +84,11 @@ def parse_json(text: str) -> dict:
 
 
 def check() -> None:
-    print(f"provider: {config.LLM_BASE_URL}\nmodel:    {config.LLM_MODEL}")
+    print(f"provider: {config.LLM_BASE_URL}\nmodel:    {config.LLM_MODEL}"
+          + (f" (fallback: {config.LLM_FALLBACK_MODEL})" if config.LLM_FALLBACK_MODEL else ""))
     started = time.perf_counter()
     reply = chat([{"role": "user", "content": 'Reply with the JSON object {"ok": true}.'}])
-    print(f"reply in {time.perf_counter() - started:.1f} s: {reply.strip()[:200]}")
+    print(f"{model_in_use()} replied in {time.perf_counter() - started:.1f} s: {reply.strip()[:200]}")
 
 
 if __name__ == "__main__":

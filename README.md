@@ -14,11 +14,24 @@ narration, animates it, and exports a video that ends with a short quiz. The lea
 
 Covered: **stacks, queues, linked lists, binary search trees, and breadth-first search on a graph**.
 
+**Demo video:** *add the Loom link*
+
+## Documents
+
+| Document | What it is |
+| --- | --- |
+| [Report](docs/report.md) ([PDF](docs/report.pdf)) | The project report: core modules, setup, technical details, testing and evaluation |
+| [Architecture diagram](docs/architecture.png) | The system architecture (drawn by `scripts/make_diagram.py`) |
+| [Live evaluation](docs/live-eval.md) | Results of nine real requests to the language model (`scripts/live_eval.py`) |
+| [Loom video guide](docs/loom-video-guide.md) | Script and checklist for the 2 to 3 minute demo video |
+| [AI prompts](docs/ai-prompts.md) | The prompts we gave our AI coding assistant |
+| [Submission checklist](docs/submission-checklist.md) | What is done and what is left before submitting |
+
 ## Models, APIs and what runs locally
 
 | Part | Model / tool | Where it runs |
 | --- | --- | --- |
-| Lesson planning, narration text, quiz questions, revisions | Any OpenAI-compatible LLM API; default **Gemini 3.5 Flash** (free tier). Groq, Claude, OpenAI or a local Ollama model work by changing `.env` | API (allowed by the brief) |
+| Lesson planning, narration text, quiz questions, revisions | Any OpenAI-compatible LLM API; default **Gemini 3.5 Flash** (free tier), switching to **Gemini 3.5 Flash-Lite** when the daily free allowance runs out. Groq, Claude, OpenAI or a local Ollama model work by changing `.env` | API (allowed by the brief) |
 | Step verifier, quiz answer checking | Plain Python data structures (`dsa_explainer/structures.py`) | Local |
 | Text to speech | **Kokoro-82M** (ONNX, CPU) via `kokoro-onnx` | **Local** (required by the brief) |
 | Animation | **Manim Community 0.22** (Cairo renderer, no LaTeX) | Local |
@@ -27,22 +40,7 @@ Covered: **stacks, queues, linked lists, binary search trees, and breadth-first 
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    U["Learner: topic + level"] --> P["1. Lesson planner<br/>LLM writes a JSON scene plan"]
-    P --> S{"Schema check<br/>(Pydantic)"}
-    S -- invalid --> P
-    S --> V{"3. Step verifier<br/>runs the real data structure"}
-    V -- "errors + the true state" --> P
-    V -- verified --> Q["5. Quiz generator<br/>answers checked by running them"]
-    Q --> T["4. Voice<br/>Kokoro-82M, local"]
-    T --> R["2. Renderer<br/>Manim, one clip per scene"]
-    R --> C[("Clip cache<br/>keyed by content")]
-    C --> F["ffmpeg joins clips<br/>lesson.mp4"]
-    F --> W["Gradio web app"]
-    W -- "slow down step 4" --> RV["6. Revision control<br/>rules or LLM"]
-    RV --> V
-```
+![DSA Explainer system architecture](docs/architecture.png)
 
 **The key idea: the language model never draws and never has the last word on facts.**
 It writes a *structured plan*: the starting data, one operation per step (`push(7)`, `insert(6)`, `bfs_step()`),
@@ -102,9 +100,10 @@ the verified plan `lesson.json`.
 python -m pytest
 ```
 
-The tests cover every data structure, the verifier catching each kind of mistake (wrong state, false narration,
-invented numbers, impossible operations, wrong quiz answers, too-short lessons), the planner's repair loop and
-the revision flow (with a fake LLM, so no key is needed), and one real clip render with sound.
+The 35 tests cover every data structure, the verifier catching each kind of mistake (wrong state, false narration,
+invented numbers, impossible operations, wrong quiz answers, too-short lessons), the planner's repair loop, rate
+limits and the fallback model, and the revision flow (with a fake LLM, so no key is needed), plus two real clip
+renders with sound. `python scripts/live_eval.py --render` runs the same checks against the real API.
 
 ## Performance (AMD Ryzen 5 3600, CPU only, 4 drawing processes)
 
@@ -121,6 +120,9 @@ exists, so speaking and drawing overlap.
 Planning adds one LLM call per attempt, plus one or two calls for the quiz.
 
 ## Limitations
+
+- Free-tier API keys allow only a few requests per minute. When the provider says "rate limited", the app waits
+  (10, 20, then 30 seconds) and tries again before showing a message.
 
 - Only the five structures above. Other topics (heaps, sorting, DFS) are refused with a message rather than
   explained badly.
