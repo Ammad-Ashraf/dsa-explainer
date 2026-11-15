@@ -29,7 +29,122 @@ model together with the true state; and the renderer draws only states that our 
 The system covers **stacks, queues, singly linked lists, binary search trees and breadth-first search (BFS) on a
 graph**. The brief requires linked lists, stacks, queues, trees and one graph or sorting algorithm.
 
-## 2. Requirements and how they are met
+## 2. Complex Computing Problem analysis
+
+### 2.1 Problem statement
+
+Data structures and algorithms are a core part of every computer science degree, and learners find them hard because
+the structures *change*: a pointer moves, a node is replaced, a queue grows and shrinks. Understanding comes from
+watching those changes one step at a time, on the learner's own question, at the learner's own level, and with
+someone explaining why each step happens.
+
+The existing options each cover only part of this:
+
+- **Textbooks and slides** show still pictures of a few states. The learner has to imagine the transitions.
+- **Algorithm visualisation websites** animate correct states, but only for fixed algorithms and the examples they
+  were built with. They do not explain in words adapted to a beginner or an advanced student, they cannot answer a
+  question phrased in the learner's own words, and they do not quiz the learner.
+- **Recorded lectures** explain well, but the example, the pace and the level are fixed. A learner cannot ask for
+  "step 4 again, slower" or "the same idea with my numbers".
+- **General-purpose AI chatbots** answer any question in any style, but they track state unreliably. They can say,
+  confidently, that the top of a stack is 9 when it is 7, or list a BFS order that skips a node. They also produce
+  text, not a synchronised animation, and **AI video generators** draw freely, so nothing guarantees that the picture
+  shows the true state.
+
+The gap is a tool that is **flexible** like a chatbot (any phrasing, the learner's own data, three levels, changes on
+request) and at the same time **guaranteed correct** like a hand-built visualiser, delivered as a narrated video with a
+quiz on an ordinary laptop. A standard solution does not close this gap, because the two halves pull in opposite
+directions: the component that gives flexibility (a language model) is exactly the one that cannot be trusted with
+facts, and the components that are exact (simulators, fixed animations) cannot understand free-form requests.
+Combining them so that each covers the other's weakness is the problem this project solves.
+
+### 2.2 Complexity drivers
+
+- **Conflicting requirements.** The brief asks for open-ended input ("a learner types a topic") *and* for correctness
+  ("a wrong video is worse than no video"). Free text cannot be checked directly, so we had to design an
+  intermediate representation, the JSON scene plan, that is expressive enough for a language model to write and
+  precise enough for code to check step by step (Section 5.1).
+- **No complete solution for checking language.** Operations and states can be checked exactly, but narration is free
+  English. There is no known method that verifies every sentence. We check what can be checked: claims about the top,
+  front, rear, head, tail, root, size and current node, and every number mentioned (Section 5.2). The rest is a known,
+  documented gap (Section 9).
+- **Many components that depend on each other.** The plan format must match the simulators, the drawers, the quiz's
+  fact names and the revision rules. Audio length decides animation timing. The cache key of a clip must include
+  everything the clip shows, or a revision would show a stale picture. A change in one component breaks others unless
+  the contracts are kept, so the list of operations given to the model is generated from the simulator classes
+  themselves, and 35 tests guard the contracts between components.
+- **Non-deterministic and imperfect input.** The language model may return invalid JSON, a wrong state, an impossible
+  operation, a refusal, or nothing at all because of an outage or a rate limit. Every one of these has to end in
+  either a verified lesson or a clear message, never in a wrong video.
+- **Hard resource limits.** Text to speech must run locally (brief), on a CPU, and every video must last at least
+  30 seconds, which means minutes of speech and thousands of frames per lesson. Without parallel drawing and
+  overlapping speech with drawing, a lesson took about two minutes to build; with them it takes about one
+  (Section 6.2).
+- **External limits found only in testing.** Gemini's free tier allows 20 requests a day per model. Our live
+  evaluation ran into it, which forced an automatic fallback model and per-minute retry logic (Section 5.1).
+
+### 2.3 Design justification
+
+For each major decision we considered at least two approaches. The table lists the alternatives we rejected and why.
+
+| Decision | Chosen | Alternative considered | Why we rejected it |
+| --- | --- | --- | --- |
+| How the animation is produced | The model writes a plan of operations; our renderer draws states computed by our simulators | **The model writes the animation code itself** (for example Manim code), or an AI video generator draws the video | Generated code can run without errors and still show wrong states, so correctness could not be checked. Running model-written code is also a security risk, and a failure is hard to repair automatically. The brief also says the model should not draw freely. |
+| How a plan is checked | Running every step on real data structures in Python | **A second language model as a judge** of the first one's plan | A judge model can be wrong in the same way as the planner, gives different answers on different runs, doubles the number of API calls (a problem with a 20-requests-a-day free tier), and cannot produce the true state to send back. A simulation is exact, takes milliseconds and explains every rejection. |
+| Where the lesson content comes from | A language model, constrained by a schema and checked by the verifier | **Fixed templates without a language model**, one hand-written lesson per structure with the values filled in | Templates cannot answer a question in the learner's own words, adapt to three levels, use the learner's own data or rewrite a scene on request, which is the natural-language part of the project. We kept the idea only as a safety net: the fallback quiz question is built from the lesson by code. |
+| Which language model | A cloud API (Gemini) through an OpenAI-compatible client | **A small local model through Ollama**, as in our Assignment 3 | On this laptop's CPU, the 3-billion-parameter model from Assignment 3 took 6.6 to 16 seconds just to start answering, and models of that size are much weaker at long structured output. The brief allows APIs for planning. Ollama still works by changing `.env`. |
+| How a narration claim is checked | Rule-based patterns for state facts, plus a check on every number | **A natural-language inference model** that judges whether each sentence follows from the true state | It would need an extra model on the CPU, would be slower, and would itself make mistakes we could not explain. The rules cover the facts that matter most in these lessons and every rejection is understandable. |
+| How the video is built | One clip per scene, cached by content and joined with ffmpeg | **One continuous video per lesson** | Any change, even "slow down step 4", would force the whole video to be drawn again, so revision control could not change "only that part". Separate clips can also be drawn in parallel. |
+| Which voice | Kokoro-82M (ONNX, local) | **Piper**, which we used in Assignment 3 | Piper is faster, but in our own testing it sounded robotic. A lesson video does not need real-time speech, so we chose the more natural voice and won the time back with parallel drawing. |
+
+### 2.4 Trade-off analysis
+
+| Trade-off | Our choice | Reason |
+| --- | --- | --- |
+| **Correctness vs. coverage** | Five structures with exact simulators, and a polite refusal for anything else | Every supported topic can be verified. Explaining heap sort without a simulator would mean showing an unchecked video, which the brief calls worse than none. In the live evaluation, both off-topic requests were refused (Section 8.3). |
+| **Strict checking vs. complete checking of language** | Rule-based narration checks that catch wrong values and false state facts, but not wrong reasons or poor analogies | Deterministic, fast and explainable checks for the claims that matter most, rather than a slower second model that could also be wrong. The gap is stated in Section 9. |
+| **Reliability vs. waiting time** | Up to four planning attempts and a quiz repair before giving up | Each repair adds a few seconds, but a wrong video is never shown. In the live evaluation no plan needed a repair, and the verifier still caught wrong quiz answers from the smaller model. |
+| **Picture readability vs. problem size** | At most 7 items or nodes | Larger structures do not fit on screen with readable labels. Small examples are also what teaching usually uses. |
+| **Voice quality vs. speed** | The full Kokoro model, with speech and drawing overlapped and 4 drawing processes | The natural voice costs about 50 seconds per lesson. Overlapping it with drawing hides most of the drawing time, so a full lesson still takes about one minute. |
+| **Video quality vs. speed** | 480p "draft" by default, 720p "standard" on request | Draft is faster and good enough while trying topics; standard is there for the final video. |
+| **Cost vs. model quality** | The free Gemini tier, switching to the smaller Flash-Lite model after the daily allowance | The project costs nothing to run. The smaller model's quiz questions failed verification more often, but the verifier caught every one. A paid key removes the limit. |
+| **Fixed conventions vs. teaching variety** | BFS takes neighbours in alphabetical order; a BST delete uses the in-order successor | A fixed rule makes every state checkable and every quiz answer unique. Courses that teach the predecessor would need a setting. |
+| **Disk space vs. revision speed** | Keep every narration and clip in a cache | A revision then redraws only the changed scene, about 10 seconds instead of a full minute, at the cost of a few megabytes per lesson. |
+
+### 2.5 Societal and ethical impact
+
+**Benefit and accessibility.** The tool gives any learner a patient, personalised explanation: their own question and
+data, their level, the pace they ask for, and a quiz to check understanding. It runs on an ordinary laptop with no GPU,
+and the voice and animation are made locally, so it does not need a paid service apart from the language model, which
+has a free tier.
+
+**Accuracy and over-trust.** Learners tend to trust a confident, polished video, so a wrong AI explanation can do real
+harm to learning. This is the main ethical risk of the idea, and the main reason for the design: every state, every
+checked fact and every quiz answer is verified, and a lesson that cannot be verified is not shown. The remaining risk
+is narration that the rules cannot check, such as a wrong reason. The "verified" message in the app lists exactly what
+was checked rather than claiming that the whole lesson is correct, and the limitation is stated in this report.
+
+**Privacy.** The typed topic and the lesson text are sent to the language-model provider (Google, for Gemini); nothing
+else leaves the computer. Learners should not type personal information into the topic box, and on free tiers a
+provider may use requests to improve its services, so the provider's terms apply. The voice, the animation and the
+videos stay on the user's computer. The app has no accounts and no tracking, and Gradio's analytics are switched off.
+The API key is kept in `.env`, which is excluded from the repository.
+
+**Safety and security.** The model never runs code: it can only choose operations from a fixed list (such as `push` or
+`insert`), and those are carried out by our own simulators. A topic that tries to change the instructions (a prompt
+injection) can at worst produce a plan that fails validation or verification. Off-topic requests are refused.
+
+**Legal and licensing.** The components are open source: Manim (MIT), Gradio (Apache 2.0), Kokoro-82M weights (Apache
+2.0) and `kokoro-onnx` (MIT). The pronunciation step uses espeak-ng, which is GPL licensed. That is fine for coursework,
+but it would need review before the software was distributed commercially. Use of the Gemini API is governed by
+Google's terms. Our own use of an AI coding assistant is disclosed in Section 10.
+
+**Fairness.** The app works only in English and speaks with an American English voice, which may suit some learners
+less than others. A learner with only a free API key gets the smaller fallback model once the daily allowance runs
+out, so the quality of the explanation can depend on what the learner can pay for. Learners with hearing impairments
+see the captions and the animation, but not a full transcript of the narration; adding subtitles would close that gap.
+
+## 3. Requirements and how they are met
 
 | Requirement from the brief | How DSA Explainer meets it |
 | --- | --- |
@@ -40,11 +155,11 @@ graph**. The brief requires linked lists, stacks, queues, trees and one graph or
 | The system checks that the explanation is correct | Every operation is run on a real data structure; claimed states, narration facts, numbers and quiz answers are checked |
 | Text to speech runs locally | Kokoro-82M through ONNX on the CPU |
 | A user interface usable without touching the code | Gradio web app |
-| Runs on a normal laptop by following the README | CPU only; checked from a fresh clone of the repository (Section 7.2) |
+| Runs on a normal laptop by following the README | CPU only; checked from a fresh clone of the repository (Section 8.2) |
 
-The six core modules are described in Section 4.
+The six core modules are described in Section 5.
 
-## 3. System architecture
+## 4. System architecture
 
 ![DSA Explainer system architecture](architecture.png)
 
@@ -64,9 +179,9 @@ The six core modules are described in Section 4.
 7. A change request goes through **revision control**, is verified again, and only the clips whose content changed
    are drawn again.
 
-## 4. Core modules
+## 5. Core modules
 
-### 4.1 Lesson planner (`planner.py`, `lesson.py`)
+### 5.1 Lesson planner (`planner.py`, `lesson.py`)
 
 The planner turns a topic and a learner level into a `Lesson`: a title, the structure, its initial data and a list
 of scenes. A plan has one intro scene, 4 to 8 step scenes and one summary scene. Each step holds exactly one
@@ -102,7 +217,7 @@ only 20 per day for each model. When the provider answers "rate limited", the cl
 and tries again. When the limit is the *daily* one, waiting does not help, so the client switches to a fallback model
 with its own allowance (`gemini-3.5-flash-lite`), and the report under the video names the model that was used.
 
-### 4.2 Step verifier (`verifier.py`, `structures.py`)
+### 5.2 Step verifier (`verifier.py`, `structures.py`)
 
 `structures.py` holds one plain Python class per structure: `Stack`, `Queue`, `LinkedList`, `BST` and `Graph` (BFS).
 Each class lists its operations, runs them (`run`), and reports its plain state (`state`), named facts such as top,
@@ -128,14 +243,14 @@ The verifier checks a plan at four levels:
       or a small count; Big-O expressions and "step 3" are ignored. This catches invented values, such as "we push
       12" in a step that pushes 7.
 
-Quiz questions are checked the same way (Section 4.5). The verifier also produces one *frame* per scene (the
+Quiz questions are checked the same way (Section 5.5). The verifier also produces one *frame* per scene (the
 snapshots before and after it, plus the elements to highlight), and these frames are the renderer's only input.
 
 The checks are rule-based on purpose: they are deterministic, run in milliseconds, need no second model that would
 itself have to be trusted, and every rejection can be explained. The limitation is that they cannot judge every
-sentence (Section 8).
+sentence (Section 9).
 
-### 4.3 Animation renderer (`render.py`)
+### 5.3 Animation renderer (`render.py`)
 
 The renderer uses Manim Community 0.22 with its Cairo backend (no LaTeX needed) and makes one short clip per scene.
 
@@ -164,7 +279,7 @@ node, with queue and visited rows and a colour legend (current, in queue, visite
 scenes have their own title card, bullet list and answer layouts. Videos are made at 854×480 and 15 fps ("draft") or
 1280×720 and 30 fps ("standard").
 
-### 4.4 Narration and voice (`voice.py`, `video.py`)
+### 5.4 Narration and voice (`voice.py`, `video.py`)
 
 Narration is spoken by **Kokoro-82M** (82 million parameters, Apache 2.0 licence) through `kokoro-onnx` on the
 CPU, using the `af_heart` voice at 24 kHz. No speech API is used. Before speaking, the text is cleaned, for example
@@ -179,7 +294,7 @@ track cover the whole clip, so the joined video stays in sync. On a 10-clip less
 not change is never spoken again. Revisions can change a scene's speed, which slows Kokoro's speech and stretches
 the animation.
 
-### 4.5 Quiz generator (`quiz.py`)
+### 5.5 Quiz generator (`quiz.py`)
 
 The model receives the lesson's initial data, its operations, its final state and the reference for the structure,
 and writes two multiple-choice questions. Every question carries its own start data, operations, the name of the
@@ -190,7 +305,7 @@ numbers from outside the question. Wrong questions are sent back once with the r
 is built from the lesson itself. In the video, each question and its options are read aloud, a three-second timer
 bar runs, and the correct option is highlighted while the answer and explanation are spoken.
 
-### 4.6 Revision control (`revise.py`, `video.py`)
+### 5.6 Revision control (`revise.py`, `video.py`)
 
 **Speed requests** ("slow down step 4", "speed up the summary") are handled by rules, with no model call: the named
 scenes play at 0.75× or 1.25× speed.
@@ -206,9 +321,9 @@ revision, unchanged scenes are found in the cache and only the changed ones are 
 `lesson_v2.mp4`, then `lesson_v3.mp4`, and so on. For example, "slow down step 2" drew 1 clip and reused 9, in 5.5 s
 of voice and 5.7 s of drawing.
 
-## 5. Technical details
+## 6. Technical details
 
-### 5.1 Models, APIs and where they run
+### 6.1 Models, APIs and where they run
 
 | Part | Model or tool | Where it runs |
 | --- | --- | --- |
@@ -219,7 +334,7 @@ of voice and 5.7 s of drawing.
 | Joining clips | ffmpeg (bundled by `imageio-ffmpeg`), stream copy | Local |
 | Web interface | Gradio 6 | Local |
 
-### 5.2 Speed and parallelism
+### 6.2 Speed and parallelism
 
 The voice runs in the main process. Each clip is given to a pool of four drawing processes as soon as its audio
 exists, so speaking and drawing overlap, and clips are drawn in parallel. The clips are joined without re-encoding.
@@ -231,7 +346,7 @@ exists, so speaking and drawing overlap, and clips are drawn in parallel. The cl
 | A full lesson from a typed topic with Gemini, including planning and quiz (130 s of video) | 95 s |
 | Revision "slow down step 2": 1 clip drawn, 9 reused | 5.5 s voice + 5.7 s drawing |
 
-### 5.3 User interface
+### 6.3 User interface
 
 The Gradio web app has a topic box, a level and a quality selector, clickable example topics, and a section that
 makes videos from the saved lesson plans in `examples/`, which works without an API key. Beside the video player
@@ -240,7 +355,7 @@ are a box for change requests and a list of the parts that can be changed. Below
 behind a click, and the verified lesson plan as JSON. Progress messages ("Planning the lesson (attempt 1)", "Speaking
 step 3", "Drew step 5") are shown while a video is made.
 
-### 5.4 Code organisation
+### 6.4 Code organisation
 
 | File | Lines | Purpose |
 | --- | --- | --- |
@@ -259,7 +374,7 @@ step 3", "Drew step 5") are shown while a video is made.
 | `tests/` | 359 | 35 automated tests |
 | `scripts/` | | Live evaluation, diagram, report PDF, voice download |
 
-## 6. Setup and use
+## 7. Setup and use
 
 ```bash
 python -m venv .venv
@@ -274,9 +389,9 @@ python app.py                          # opens http://127.0.0.1:7860
 The README gives the full instructions, including how to use other providers and how to make videos from saved plans
 without an API key.
 
-## 7. Testing and evaluation
+## 8. Testing and evaluation
 
-### 7.1 Automated tests
+### 8.1 Automated tests
 
 `python -m pytest` runs 35 tests in about 15 seconds:
 
@@ -293,14 +408,14 @@ without an API key.
   rewrite that states a false fact is sent back and fixed.
 - **Rendering (2 tests):** a real clip with sound is made for a stack step and a BFS step.
 
-### 7.2 Fresh install
+### 8.2 Fresh install
 
 The repository was cloned into an empty folder and set up exactly as the README describes: a new virtual environment,
 `pip install -r requirements.txt`, the voice download script, the test suite, and a video made from a saved plan.
 Every step worked: the install finished without errors, the download script found both voice files at their source
 with the expected sizes, all the tests passed, and the binary search tree lesson was made (155 seconds of video).
 
-### 7.3 Live evaluation with Gemini
+### 8.3 Live evaluation with Gemini
 
 `scripts/live_eval.py` sends nine requests to the real model: seven supported topics across all five structures and
 all three levels (two of them with data typed by the learner), and two topics that must be refused. It also makes
@@ -330,12 +445,12 @@ What the run shows:
 - **Rewrite revisions changed only the part asked for:** "explain step 2 for a beginner" changed step 2, and "make
   the summary shorter" changed the summary. Both passed verification on the first attempt, in 4 s and 2 s.
 - **Free-tier limits are real.** After lesson 5 the run reached Gemini's limit of 20 requests a day for
-  `gemini-3.5-flash`. This led us to add the automatic fallback model (Section 4.1), which carried out lessons 6 to 9
+  `gemini-3.5-flash`. This led us to add the automatic fallback model (Section 5.1), which carried out lessons 6 to 9
   and the revisions. Planning times for lessons 1 to 5 were not recorded, because that part of the run was
   interrupted by the limit and resumed later; a separate full lesson with `gemini-3.5-flash` took 95 s from the typed
-  topic to the finished video (Section 5.2).
+  topic to the finished video (Section 6.2).
 
-### 7.4 Example lessons
+### 8.4 Example lessons
 
 Five verified lesson plans are included in `examples/`, one per structure. They are used by the tests, they work
 without an API key, and they rendered into videos of 126 to 154 seconds:
@@ -348,7 +463,7 @@ without an API key, and they rendered into videos of 126 to 154 seconds:
 | Binary Search Trees | intermediate | 6 | 23 | 154 s |
 | Breadth-First Search | beginner | 6 | 23 | 142 s |
 
-## 8. Limitations and future work
+## 9. Limitations and future work
 
 - **Scope.** Only the five structures are supported. Other topics (heaps, sorting, depth-first search) are refused
   with a message rather than explained badly. Adding one means writing a simulator class and a drawer; the planner,
@@ -365,14 +480,14 @@ without an API key, and they rendered into videos of 126 to 154 seconds:
   The fallback model keeps the app working, but it is smaller: in our evaluation its quiz questions were rejected
   more often (the verifier caught every one). A paid key or another provider removes the limit.
 
-## 9. Use of generative AI tools
+## 10. Use of generative AI tools
 
 As the brief allows, we used an AI coding assistant (Claude Code) while building this project. It drafted code,
 tests and documentation from our instructions, and we reviewed, ran and tested the results. The prompts that the
 application itself sends to the language model are in the code (`planner.py`, `quiz.py` and `revise.py`), and the
 prompts we gave the assistant are listed in `docs/ai-prompts.md`.
 
-## 10. Conclusion
+## 11. Conclusion
 
 DSA Explainer produces narrated, animated data-structure lessons with quizzes and targeted revisions, and it keeps
 them correct by never trusting the language model with facts: every step is run on real data structures before

@@ -38,7 +38,7 @@ the same contents. No late submissions.
 
 ## For the viva
 
-- Read `docs/report.md` sections 3 and 4. They explain every module in the order the data flows.
+- Read `docs/report.md` sections 2, 4 and 5. Section 2 is the Complex Computing Problem analysis; sections 4 and 5 explain every module in the order the data flows.
 - Be ready to explain the three ideas that matter most:
   - the verifier runs every step on real data structures and sends errors back with the true state;
   - one `morph` function animates every operation by matching shape keys between the before and after pictures;

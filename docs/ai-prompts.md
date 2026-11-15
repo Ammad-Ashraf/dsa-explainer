@@ -16,8 +16,14 @@ word and in order. The project brief (`Project.pdf`) was attached to the first o
 10. "Yes, commit it"
 11. "is it completely done?"
 12. "make the report, run the tests, and make a loom video guide aswell. Get it ready to the its just our inputs."
+13. "when does push it https://github.com/Ahmed-Javaid/NLP-Project-2026.git"
+14. "What is left to do"
+15. We pasted the course announcement that the report must follow the Complex Computing Problem (CCP) guidelines
+    (problem statement, complexity drivers, design justification, trade-off analysis, and societal and ethical
+    impact), with no change to the project itself. This produced Section 2 of the report.
 
-When the assistant asked how commits should be credited, we chose: "Ammad co-author only".
+When the assistant asked how commits should be credited, we chose: "Ammad co-author only". When it pointed out that
+the GitHub repository was public, we chose: "Make it private, then push".
 
 The prompts that the **application** sends to its own language model at run time are part of the code:
 

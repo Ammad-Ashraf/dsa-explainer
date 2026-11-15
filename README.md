@@ -20,7 +20,7 @@ Covered: **stacks, queues, linked lists, binary search trees, and breadth-first 
 
 | Document | What it is |
 | --- | --- |
-| [Report](docs/report.md) ([PDF](docs/report.pdf)) | The project report: core modules, setup, technical details, testing and evaluation |
+| [Report](docs/report.md) ([PDF](docs/report.pdf)) | The project report: Complex Computing Problem analysis (problem statement, complexity drivers, design justification, trade-offs, societal and ethical impact), core modules, setup, technical details, testing and evaluation |
 | [Architecture diagram](docs/architecture.png) | The system architecture (drawn by `scripts/make_diagram.py`) |
 | [Live evaluation](docs/live-eval.md) | Results of nine real requests to the language model (`scripts/live_eval.py`) |
 | [Loom video guide](docs/loom-video-guide.md) | Script and checklist for the 2 to 3 minute demo video |
