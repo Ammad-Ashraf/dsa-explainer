@@ -9,11 +9,14 @@
     DELETE /api/lessons/{id}
     POST /api/lessons/{id}/revisions         "slow down step 4", "explain step 2 for a beginner"
     GET  /api/lessons/{id}/videos/{version}  the video (supports seeking)
+    GET  /api/lessons/{id}/captions/{version}  its captions (WebVTT)
     GET  /api/clips/{key}                    one finished clip, playable before the whole video is joined
     GET  /api/jobs, /api/jobs/{id}           job state
     GET  /api/jobs/{id}/events               Server-Sent Events: the job's progress, replayed then live
     POST /api/jobs/{id}/cancel
     GET/PUT /api/settings                    preferences
+    GET  /api/voices                         the local voice engines and their voices
+    POST /api/voices/preview                 a short sample of a voice (WAV)
     GET  /api/providers                      language-model presets and saved choices (never the keys)
     PUT  /api/providers/{id}                 save a key, model or address; optionally make it active
     POST /api/providers/active               choose the provider in use
@@ -37,6 +40,7 @@ from ..authoring import llm, providers
 from ..core.lesson import Lesson, scene_labels
 from .. import algorithms
 from ..core.verifier import answer_index, verify_lesson
+from ..media import voices
 from .jobs import JobManager, JobReporter
 
 Quality = Literal["draft", "standard", "high"]
@@ -119,6 +123,19 @@ def _llm_public(s: llm.LLMSettings | None) -> dict:
 # --- the app --------------------------------------------------------------------------
 
 
+class VoicePreview(BaseModel):
+    engine: str | None = None
+    voice: str | None = Field(default=None, max_length=40)
+    speed: float = Field(default=1.0, ge=0.7, le=1.3)
+
+
+def _voice_ready() -> bool:
+    try:
+        return voices.engine().ready()
+    except voices.VoiceError:
+        return False
+
+
 def create_app() -> FastAPI:
     settings.apply()
     app = FastAPI(title="DSA Explainer", version=config.VERSION, docs_url="/api/docs", openapi_url="/api/openapi.json")
@@ -148,8 +165,7 @@ def create_app() -> FastAPI:
         return {
             "ok": True, "version": config.VERSION,
             "llm": _llm_public(llm.active_settings()),
-            "voice": {"ready": config.KOKORO_MODEL.exists() and config.KOKORO_VOICES.exists(),
-                      "voice": config.KOKORO_VOICE},
+            "voice": {"ready": _voice_ready(), "engine": config.VOICE_ENGINE, "voice": config.VOICE},
             "busy": any(j.status == "running" for j in jobs.list()),
         }
 
@@ -250,6 +266,10 @@ def create_app() -> FastAPI:
     def video(lesson_id: str, version: int):
         return FileResponse(store.video(lesson_id, version), media_type="video/mp4")
 
+    @app.get("/api/lessons/{lesson_id}/captions/{version}")
+    def captions(lesson_id: str, version: int):
+        return FileResponse(store.captions(lesson_id, version), media_type="text/vtt; charset=utf-8")
+
     @app.get("/api/clips/{key}")
     def clip(key: str):
         return FileResponse(store.clip(key), media_type="video/mp4")
@@ -314,6 +334,28 @@ def create_app() -> FastAPI:
     def put_settings(changes: dict):
         return {"preferences": settings.set_preferences(changes.get("preferences", changes)),
                 "qualities": list(settings.QUALITIES)}
+
+    # --- voices ---
+
+    @app.get("/api/voices")
+    def list_voices():
+        engines = []
+        for engine in voices.ENGINES.values():
+            try:
+                found = [v.to_dict() for v in engine.voices()]
+            except voices.VoiceError:
+                found = []
+            engines.append({**engine.info(), "voices": found})
+        return {"engines": engines, "current": {"engine": config.VOICE_ENGINE, "voice": config.VOICE,
+                                                "speed": config.VOICE_SPEED}}
+
+    @app.post("/api/voices/preview")
+    def preview_voice(body: VoicePreview):
+        try:
+            path = voices.preview(body.engine, body.voice, body.speed)
+        except voices.VoiceError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return FileResponse(path, media_type="audio/wav")
 
     # --- language-model providers ---
 

@@ -36,7 +36,7 @@ The open questions from the vision, decided so work can proceed without waiting:
 | 5 | Algorithm plugin architecture, new algorithms, saved-plan library | 0 | **Done** |
 | 3 | React frontend | 1, 2, 5 (registry) | **Done** |
 | 6 | Richer, still-verified animations | 5 | **Done** |
-| 4 | Voice research and pluggable voice engines | 0 | Next |
+| 4 | Voice research and pluggable voice engines | 0 | **Done** |
 | 7 | Stronger verification and an evaluation harness | 5 | |
 | 8 | Latency and responsiveness | 1, 3 | |
 | 9 | Open-source release | all | |
@@ -151,11 +151,29 @@ that swapped simply slid through each other, and the dark stage did not match th
 
 ## Milestone 4: Voice research and pluggable voice engines
 
-- [ ] 4.1 Research document `docs/research/voice-models.md`: candidates, licences, CPU speed, quality, timestamps.
-- [ ] 4.2 `media/voices/` engine interface; Kokoro as the first engine.
-- [ ] 4.3 Word timings (from the engine, or by alignment) feeding captions (WebVTT).
-- [ ] 4.4 Pronunciation lexicon for data-structure terms, with tests.
-- [ ] 4.5 Voice preview and engine selection in the API and settings.
+**Why.** The voice was one module hard-wired to Kokoro, with no captions, no way to pick or hear a voice in the
+app, and data-structure words read wrongly ("deque" as "de-queue").
+
+- [x] 4.1 Research document [docs/research/voice-models.md](../research/voice-models.md): eleven candidates with the
+      licences of their code and weights, CPU speed (Kokoro measured here by thread count, RTF 0.48 on four cores
+      of a Ryzen 5 4500U; Piper and Kitten TTS measured in a separate environment), timestamps and Windows support.
+      Decision: Kokoro-82M stays the default. Records the licence position: `kokoro-onnx` phonemises through
+      `phonemizer` (GPL-3.0+) and espeak-ng (GPL-3.0), installed as dependencies, and the path to a non-GPL
+      phonemiser (`misaki` with `is_phonemes`).
+- [x] 4.2 `media/voices/` engine interface (`Engine`: `voices()`, `synthesize()`), Kokoro as the first engine
+      (ONNX Runtime session with configurable threads and execution providers); `media/voice.py` is gone.
+- [x] 4.3 Timings and captions. *Reworded from "word timings":* no CPU engine we found exposes word timestamps, and
+      the released Kokoro ONNX file has no duration output, so each sentence is synthesised on its own and joined
+      with a 0.25 s pause; sentence times are exact, long sentences are split into caption-sized pieces at commas.
+      Every lesson version gets a WebVTT file (`lesson_v<n>.vtt`, served at `/api/lessons/{id}/captions/{v}`), the
+      lesson player shows it as a captions track, and the progressive player builds one per clip from the clip
+      event's cues.
+- [x] 4.4 Pronunciation lexicon `media/voices/lexicon.py` (notation such as O(n log n), a[i], push(7), ->, <=;
+      acronyms; deque, enqueue, Dijkstra), applied to what is spoken only, versioned in the audio cache key, with
+      tests.
+- [x] 4.5 Voices in the API and the app: `GET /api/voices` (engines, licences, readiness, voices),
+      `POST /api/voices/preview` (a cached WAV sample), and settings `voice_engine`, `voice`, `voice_speed`. The
+      Settings page has an engine and voice picker grouped by accent, a speed slider and a **Preview voice** button.
 
 ## Milestone 7: Stronger verification and an evaluation harness
 

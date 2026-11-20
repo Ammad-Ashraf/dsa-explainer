@@ -1,9 +1,16 @@
-import { useEffect, useRef, useState } from "react";
-import type { Chapter } from "../api";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { type Chapter, type Cue, cuesToVtt } from "../api";
 import type { Clip } from "../useJob";
 import { Spinner } from "./ui";
 
 const label = (name: string) => name.replace(/^\w/, (c) => c.toUpperCase());
+
+/** A captions track for one clip, from the cues its clip event carried. */
+function useCuesUrl(cues: Cue[] | undefined): string | undefined {
+  const url = useMemo(() => (cues?.length ? URL.createObjectURL(new Blob([cuesToVtt(cues)], { type: "text/vtt" })) : undefined), [cues]);
+  useEffect(() => () => { if (url) URL.revokeObjectURL(url); }, [url]);
+  return url;
+}
 
 /** Plays finished clips in order while the rest are still being drawn. */
 export function ProgressivePlayer({ clips, total, finished }: { clips: Record<number, Clip>; total: number; finished: boolean }) {
@@ -12,6 +19,7 @@ export function ProgressivePlayer({ clips, total, finished }: { clips: Record<nu
   const [started, setStarted] = useState(false);
   const current = clips[index];
   const waiting = started && !current && index < total;
+  const track = useCuesUrl(current?.cues);
 
   useEffect(() => {
     if (started && current && video.current) {
@@ -25,7 +33,9 @@ export function ProgressivePlayer({ clips, total, finished }: { clips: Record<nu
       <div className="screen">
         {current && (
           <video ref={video} key={current.key} src={`/api/clips/${current.key}`} controls={started} playsInline
-            onEnded={() => setIndex((i) => i + 1)} />
+            onEnded={() => setIndex((i) => i + 1)}>
+            {track && <track kind="captions" srcLang="en" label="English" src={track} default />}
+          </video>
         )}
         {!started && (
           <div className={`overlay${current ? "" : " solid"}`}>
@@ -67,7 +77,9 @@ export function ProgressivePlayer({ clips, total, finished }: { clips: Record<nu
 }
 
 /** The finished video, with a chapter strip that follows playback and seeks on click. */
-export function LessonPlayer({ src, chapters, ops }: { src: string; chapters: Chapter[]; ops: Record<string, string | null> }) {
+export function LessonPlayer({ src, captions, chapters, ops }: {
+  src: string; captions?: string; chapters: Chapter[]; ops: Record<string, string | null>;
+}) {
   const video = useRef<HTMLVideoElement>(null);
   const [time, setTime] = useState(0);
   const current = chapters.findIndex((c, i) => time >= c.start && (i === chapters.length - 1 || time < chapters[i + 1].start));
@@ -75,7 +87,9 @@ export function LessonPlayer({ src, chapters, ops }: { src: string; chapters: Ch
     <div className="stage">
       <div className="screen">
         <video ref={video} key={src} src={src} controls playsInline preload="metadata"
-          onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)} />
+          onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}>
+          {captions && <track kind="captions" srcLang="en" label="English" src={captions} default />}
+        </video>
       </div>
       {chapters.length > 0 && (
         <div className="chapters" aria-label="Chapters">

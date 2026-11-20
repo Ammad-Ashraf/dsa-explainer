@@ -3,6 +3,7 @@
     <id>/lesson.json         the latest verified plan
     <id>/lesson_v<n>.json    the plan of each version
     <id>/lesson_v<n>.mp4     the video of each version
+    <id>/lesson_v<n>.vtt     its captions (WebVTT)
     <id>/meta.json           title, versions, timings, verification summary
 
 Folders made before meta.json existed are still listed, from their files.
@@ -129,6 +130,13 @@ def video(lesson_id: str, version: int) -> Path:
     path = folder(lesson_id) / f"lesson_v{int(version)}.mp4"
     if not path.is_file():
         raise NotFound(f"lesson '{lesson_id}' has no video version {version}")
+    return path
+
+
+def captions(lesson_id: str, version: int) -> Path:
+    path = folder(lesson_id) / f"lesson_v{int(version)}.vtt"
+    if not path.is_file():
+        raise NotFound(f"lesson '{lesson_id}' has no captions for version {version}")
     return path
 
 

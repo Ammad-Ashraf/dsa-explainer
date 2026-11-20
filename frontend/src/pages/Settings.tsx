@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
-import { api, type Provider, type Quality, useInvalidate, useProviders, useSettings } from "../api";
+import { useEffect, useRef, useState } from "react";
+import {
+  api, type Preferences as Prefs, type Provider, type Quality, useInvalidate, useProviders, useSettings, useVoices, type VoiceInfo,
+} from "../api";
 import { Button, ErrorNotice, Loading, Notice, Segmented } from "../components/ui";
 
 type TestResult = Awaited<ReturnType<typeof api.testProvider>>;
@@ -120,31 +122,109 @@ function LanguageModel() {
   );
 }
 
+/** Engine, voice and speed, with a spoken preview. Nothing is saved until "Save voice". */
+function VoiceSettings({ prefs, onSave }: { prefs: Prefs; onSave: (change: Partial<Prefs>, what: string) => Promise<void> }) {
+  const { data, error: loadError } = useVoices();
+  const [engineId, setEngineId] = useState(prefs.voice_engine);
+  const [voice, setVoice] = useState(prefs.voice);
+  const [speed, setSpeed] = useState(prefs.voice_speed);
+  const [preview, setPreview] = useState<{ url: string; key: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const audio = useRef<HTMLAudioElement>(null);
+  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview.url); }, [preview]);
+  if (loadError) return <ErrorNotice error={loadError} />;
+  if (!data) return <Loading />;
+  const engine = data.engines.find((e) => e.id === engineId) ?? data.engines[0];
+  const groups = new Map<string, VoiceInfo[]>();
+  for (const v of engine?.voices ?? []) {
+    const group = `${v.language === "en-GB" ? "British" : "American"} English · ${v.gender || "voice"}`;
+    groups.set(group, [...(groups.get(group) ?? []), v]);
+  }
+  const changed = engine?.id !== prefs.voice_engine || voice !== prefs.voice || speed !== prefs.voice_speed;
+  const key = `${engine?.id}|${voice}|${speed}`;
+
+  async function listen() {
+    if (!engine) return;
+    if (preview?.key === key) { void audio.current?.play(); return; }
+    setBusy(true);
+    setError(null);
+    try {
+      const blob = await api.previewVoice({ engine: engine.id, voice, speed });
+      setPreview({ url: URL.createObjectURL(blob), key });
+    } catch (e) {
+      setError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <p>
+        The narration is spoken on this computer by {engine ? <b>{engine.title}</b> : "a local voice model"}; nothing
+        is sent anywhere. {engine && <span className="small">Licence: {engine.licence}.</span>}
+      </p>
+      {engine && !engine.ready && <Notice tone="blue"><span>{engine.title} is not installed yet. {engine.setup}</span></Notice>}
+      <div className="voice-grid">
+        {data.engines.length > 1 && (
+          <div className="field">
+            <label htmlFor="voice-engine">Engine</label>
+            <select id="voice-engine" className="select" value={engine?.id} onChange={(e) => { setEngineId(e.target.value); setVoice(""); }}>
+              {data.engines.map((e) => <option key={e.id} value={e.id}>{e.title}{e.ready ? "" : " (not installed)"}</option>)}
+            </select>
+          </div>
+        )}
+        <div className="field">
+          <label htmlFor="voice-name">Voice</label>
+          <select id="voice-name" className="select" value={voice} onChange={(e) => setVoice(e.target.value)} disabled={!engine?.voices.length}>
+            {!engine?.voices.some((v) => v.id === voice) && <option value={voice}>{voice || "Choose a voice"}</option>}
+            {[...groups].map(([group, list]) => (
+              <optgroup key={group} label={group}>
+                {list.map((v) => <option key={v.id} value={v.id}>{v.name.replace(/ \(.*\)$/, "")}</option>)}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="voice-speed">Speed <span className="small">{speed.toFixed(2)}×</span></label>
+          <input id="voice-speed" type="range" min={0.7} max={1.3} step={0.05} value={speed}
+            onChange={(e) => setSpeed(Number(e.target.value))} />
+          <span className="hint">Applies to every scene; a revision can still slow one scene down.</span>
+        </div>
+      </div>
+      <div className="actions-row" style={{ marginTop: 16 }}>
+        <Button small variant="secondary" onClick={listen} disabled={busy || !engine?.ready || !voice}>
+          {busy ? "Speaking…" : preview?.key === key ? "Play again" : "Preview voice"}
+        </Button>
+        <Button small onClick={() => onSave({ voice_engine: engine!.id, voice, voice_speed: speed }, "voice")} disabled={!changed || !voice}>
+          Save voice
+        </Button>
+      </div>
+      {preview && <audio ref={audio} src={preview.url} autoPlay controls style={{ marginTop: 12, width: "100%", maxWidth: 420 }} />}
+      {busy && <p className="small" style={{ marginTop: 8 }}>The first preview of a voice takes a few seconds while the model loads.</p>}
+      <ErrorNotice error={error} />
+    </>
+  );
+}
+
 function Preferences() {
   const { data } = useSettings();
   const invalidate = useInvalidate();
-  const [voice, setVoice] = useState("");
   const [saved, setSaved] = useState<string | null>(null);
   const [error, setError] = useState<unknown>(null);
-  useEffect(() => { if (data) setVoice(data.preferences.voice); }, [data?.preferences.voice]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!data) return <Loading />;
-  async function save(change: Parameters<typeof api.saveSettings>[0], what: string) {
+  async function save(change: Partial<Prefs>, what: string) {
     setError(null);
-    try { await api.saveSettings(change); invalidate("settings", "health"); setSaved(what); } catch (e) { setError(e); }
+    try { await api.saveSettings(change); invalidate("settings", "health", "voices"); setSaved(what); } catch (e) { setError(e); }
   }
   return (
     <>
       <section id="voice">
         <h2 className="section-title">Voice</h2>
-        <p>The narration is spoken by Kokoro, a voice model that runs on this computer.</p>
-        <div className="field" style={{ maxWidth: 420 }}>
-          <label htmlFor="voice-name">Voice</label>
-          <div className="actions-row">
-            <input id="voice-name" className="input" style={{ flex: 1 }} value={voice} onChange={(e) => setVoice(e.target.value)} />
-            <Button small variant="secondary" onClick={() => save({ voice }, "voice")}>Save</Button>
-          </div>
-          <span className="hint">For example af_heart, af_bella, am_michael, bf_emma or bm_george.</span>
-        </div>
+        <VoiceSettings key={`${data.preferences.voice_engine}|${data.preferences.voice}|${data.preferences.voice_speed}`}
+          prefs={data.preferences} onSave={save} />
+        {saved === "voice" && <Notice tone="green"><span>Saved the voice. New scenes use it; existing videos keep theirs.</span></Notice>}
       </section>
       <section id="video">
         <h2 className="section-title">Video</h2>
@@ -160,7 +240,7 @@ function Preferences() {
             onBlur={(e) => save({ render_workers: Number(e.target.value) }, "drawing processes")} />
           <span className="hint">How many scenes are drawn at the same time. More is faster, up to the number of CPU cores.</span>
         </div>
-        {saved && <Notice tone="green"><span>Saved the {saved}.</span></Notice>}
+        {saved && saved !== "voice" && <Notice tone="green"><span>Saved the {saved}.</span></Notice>}
         <ErrorNotice error={error} />
       </section>
     </>

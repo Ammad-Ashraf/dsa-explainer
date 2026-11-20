@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { algorithmById, api, formatSeconds, type LessonDetail, QUALITY_LABELS, useCatalog } from "../api";
+import { algorithmById, api, captionsUrl, formatSeconds, type LessonDetail, QUALITY_LABELS, useCatalog } from "../api";
 import { LessonPlayer } from "./Player";
 import { Button, ErrorNotice, LevelTag, Notice, Tabs, Tag } from "./ui";
 
@@ -160,7 +160,8 @@ export function LessonView({ lesson, onVersion }: { lesson: LessonDetail; onVers
           <Tag>{formatSeconds(info.seconds)}</Tag>
         </div>
       </div>
-      <LessonPlayer src={lesson.video_url} chapters={info.chapters ?? []} ops={ops} />
+      <LessonPlayer src={lesson.video_url} captions={info.captions ? captionsUrl(lesson.id, lesson.version) : undefined}
+        chapters={info.chapters ?? []} ops={ops} />
       {lesson.versions.length > 1 && (
         <div className="versions" aria-label="Versions">
           <span className="eyebrow">Versions</span>

@@ -1,9 +1,11 @@
 """From a verified lesson to one mp4.
 
-1. Narration audio for every scene (Kokoro, local, cached by text).
+1. Narration audio for every scene (a local voice engine, cached by text),
+   with caption cues timed from the sentences it spoke.
 2. One Manim clip per scene, cached by a hash of everything that clip shows,
    so after a revision only the scenes that changed are rendered again.
-3. ffmpeg joins the clips without re-encoding.
+3. ffmpeg joins the clips without re-encoding; the captions are joined into
+   one WebVTT file with the same offsets.
 """
 
 from __future__ import annotations
@@ -21,8 +23,8 @@ import imageio_ffmpeg
 from .. import algorithms, config, events
 from ..core.lesson import Lesson, scene_labels
 from ..core.verifier import Report, answer_index
-from . import voice
-from .render import RENDER_VERSION, render_clip
+from . import voices
+from .render import QUIZ_INTRO_SECONDS, RENDER_VERSION, THINK_SECONDS, render_clip
 
 
 def jobs_for(lesson: Lesson, report: Report) -> list[dict]:
@@ -56,6 +58,12 @@ def jobs_for(lesson: Lesson, report: Report) -> list[dict]:
     return jobs
 
 
+def quiz_reveal(question_seconds: float) -> float:
+    """When a quiz clip starts speaking the answer (render.LessonScene.play_quiz): after the question is read,
+    the options have appeared, and the thinking time has run out."""
+    return max(QUIZ_INTRO_SECONDS, question_seconds + 0.3) + THINK_SECONDS
+
+
 def clip_seconds(path: Path) -> float:
     with av.open(str(path)) as container:
         return container.duration / 1_000_000
@@ -83,12 +91,12 @@ def build_video(lesson: Lesson, report: Report, out: Path, quality: str = "draft
     rep = events.reporter(log)
     jobs = jobs_for(lesson, report)
     total = len(jobs)
-    clips, futures, voice_seconds = [], {}, 0.0
+    clips, futures, voice_seconds, cues = [], {}, 0.0, []
     started = time.perf_counter()
 
     def clip_ready(index: int, cached: bool) -> None:
         rep.emit("clip", index=index, total=total, name=jobs[index]["name"], key=clips[index].stem,
-                 seconds=round(clip_seconds(clips[index]), 2), cached=cached)
+                 seconds=round(clip_seconds(clips[index]), 2), cached=cached, cues=cues[index])
 
     reported: set = set()
 
@@ -113,9 +121,15 @@ def build_video(lesson: Lesson, report: Report, out: Path, quality: str = "draft
             rep.emit("scene", stage="voice", index=i, total=total, name=job["name"])
             rep(f"Speaking {job['name']} ({i + 1}/{total})", 0.35 + 0.3 * i / total)
             spoken = time.perf_counter()
-            job["audio"], job["duration"] = voice.speak(job["narration"], job["speed"])
+            speech = voices.speak(job["narration"], job["speed"])
+            job["audio"], job["duration"] = speech.path, speech.seconds
+            job_cues = list(speech.cues)
             if job["kind"] == "quiz":
-                job["answer_audio"], job["answer_duration"] = voice.speak(job["answer_narration"])
+                answer = voices.speak(job["answer_narration"])
+                job["answer_audio"], job["answer_duration"] = answer.path, answer.seconds
+                at = quiz_reveal(job["duration"])
+                job_cues += [[s + at, e + at, text] for s, e, text in answer.cues]
+            cues.append(job_cues)
             voice_seconds += time.perf_counter() - spoken
             clips.append(clip_path(job, quality))
             if clips[-1].exists():
@@ -145,13 +159,17 @@ def build_video(lesson: Lesson, report: Report, out: Path, quality: str = "draft
     rep("Joining the clips", 0.97)
     out.parent.mkdir(parents=True, exist_ok=True)
     concat(clips, out)
+    marks = chapters(jobs, clips)
+    lesson_cues = [[round(s + mark["start"], 3), round(e + mark["start"], 3), text]
+                   for mark, clip_cues in zip(marks, cues) for s, e, text in clip_cues]
+    out.with_suffix(".vtt").write_text(voices.captions_vtt(lesson_cues), encoding="utf-8")
     rendered = [jobs[i]["name"] for i in futures.values()]
     seconds = clip_seconds(out)
     rep.stage("join", "done", f"{seconds:.0f} s video")
     return {
         "video": out, "seconds": seconds, "clips": len(clips), "rendered": rendered,
         "reused": len(clips) - len(rendered), "voice_seconds": voice_seconds, "build_seconds": build_seconds,
-        "clip_keys": [c.stem for c in clips], "chapters": chapters(jobs, clips),
+        "clip_keys": [c.stem for c in clips], "chapters": marks, "captions": out.with_suffix(".vtt"),
     }
 
 

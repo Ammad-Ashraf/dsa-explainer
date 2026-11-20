@@ -10,7 +10,7 @@ export interface Health {
   ok: boolean;
   version: string;
   llm: { configured: boolean; provider: string | null; provider_name?: string; model: string | null; local?: boolean };
-  voice: { ready: boolean; voice: string };
+  voice: { ready: boolean; engine: string; voice: string };
   busy: boolean;
 }
 
@@ -68,6 +68,7 @@ export interface VersionInfo {
   request?: string | null;
   changed?: string[];
   timings?: Record<string, number>;
+  captions?: boolean;
 }
 export interface LessonSummary {
   id: string; title: string; topic: string; structure: string; level: Level; created: string; source: string;
@@ -98,7 +99,14 @@ export interface Providers {
   providers: Provider[];
   in_use: Health["llm"];
 }
-export interface Preferences { default_quality: Quality; voice: string; render_workers: number }
+export interface Preferences {
+  default_quality: Quality; voice_engine: string; voice: string; voice_speed: number; render_workers: number;
+}
+export interface VoiceInfo { id: string; name: string; language: string; gender: string }
+export interface VoiceEngine { id: string; title: string; licence: string; ready: boolean; setup: string; voices: VoiceInfo[] }
+export interface VoicesReply { engines: VoiceEngine[]; current: { engine: string; voice: string; speed: number } }
+/** A caption: [start, end, text], in seconds from the start of the clip. */
+export type Cue = [number, number, string];
 export interface SettingsReply { preferences: Preferences; qualities: Quality[] }
 
 export class ApiError extends Error {
@@ -150,7 +158,21 @@ export const api = {
   testProvider: (id: string, body: Partial<{ api_key: string; model: string; base_url: string }>) =>
     post<{ ok: boolean; model?: string; seconds?: number; reply?: string; error?: string }>(`/api/providers/${id}/test`, body),
   models: (id: string) => request<{ models: string[] }>(`/api/providers/${id}/models`),
+  voices: () => request<VoicesReply>("/api/voices"),
+  /** A short WAV sample of a voice (the first one is spoken on this computer and cached). */
+  previewVoice: async (body: { engine: string; voice: string; speed: number }): Promise<Blob> => {
+    const response = await fetch("/api/voices/preview", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      const detail = await response.json().catch(() => ({ detail: response.statusText }));
+      throw new ApiError(typeof detail.detail === "string" ? detail.detail : "The preview failed", response.status);
+    }
+    return response.blob();
+  },
 };
+
+export const captionsUrl = (lessonId: string, version: number) => `/api/lessons/${lessonId}/captions/${version}`;
 
 // ---- hooks -------------------------------------------------------------------------
 
@@ -162,6 +184,7 @@ export const useLesson = (id: string | undefined, version?: number) =>
   useQuery({ queryKey: ["lesson", id, version ?? "latest"], queryFn: () => api.lesson(id!, version), enabled: !!id });
 export const useProviders = () => useQuery({ queryKey: ["providers"], queryFn: api.providers });
 export const useSettings = () => useQuery({ queryKey: ["settings"], queryFn: api.settings });
+export const useVoices = () => useQuery({ queryKey: ["voices"], queryFn: api.voices, staleTime: 60_000 });
 
 export function useInvalidate() {
   const client = useQueryClient();
@@ -185,6 +208,16 @@ export function formatSeconds(seconds: number | null | undefined): string {
   if (seconds == null) return "–";
   const s = Math.round(seconds);
   return s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, "0")} s`;
+}
+
+/** WebVTT text for caption cues (the backend writes the same format for whole lessons). */
+export function cuesToVtt(cues: Cue[]): string {
+  const stamp = (t: number) => {
+    const ms = Math.round(Math.max(0, t) * 1000);
+    const pad = (n: number, w = 2) => String(n).padStart(w, "0");
+    return `${pad(Math.floor(ms / 3_600_000))}:${pad(Math.floor(ms / 60_000) % 60)}:${pad(Math.floor(ms / 1000) % 60)}.${pad(ms % 1000, 3)}`;
+  };
+  return ["WEBVTT", "", ...cues.flatMap(([start, end, text], i) => [String(i + 1), `${stamp(start)} --> ${stamp(end)}`, text.replace(/-->/g, "->"), ""])].join("\n");
 }
 
 export function formatDate(iso: string): string {

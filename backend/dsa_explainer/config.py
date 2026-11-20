@@ -30,10 +30,17 @@ LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.4"))
 LLM_TIMEOUT = float(os.getenv("LLM_TIMEOUT", "180"))
 MAX_ATTEMPTS = int(os.getenv("MAX_ATTEMPTS", "4"))  # first plan + repairs
 
-# Narration voice: Kokoro-82M, run locally through ONNX.
+# Narration voice: a local engine (media/voices). Kokoro-82M runs through ONNX Runtime.
+VOICE_ENGINE = os.getenv("VOICE_ENGINE", "kokoro")
+VOICE = os.getenv("VOICE") or os.getenv("KOKORO_VOICE", "af_heart")
+VOICE_SPEED = float(os.getenv("VOICE_SPEED", "1.0"))  # multiplies every scene's own speed
+VOICE_THREADS = int(os.getenv("VOICE_THREADS", "0"))  # ONNX Runtime threads; 0 = its default (physical cores)
+# ONNX Runtime execution providers to try in order, e.g. "DmlExecutionProvider,CPUExecutionProvider" with
+# onnxruntime-directml on Windows, or "CUDAExecutionProvider" with onnxruntime-gpu; the CPU is the fallback.
+VOICE_PROVIDERS = [p.strip() for p in os.getenv("VOICE_PROVIDERS", "CPUExecutionProvider").split(",") if p.strip()]
 KOKORO_MODEL = HOME / os.getenv("KOKORO_MODEL", "models/kokoro/kokoro-v1.0.onnx")
 KOKORO_VOICES = HOME / os.getenv("KOKORO_VOICES", "models/kokoro/voices-v1.0.bin")
-KOKORO_VOICE = os.getenv("KOKORO_VOICE", "af_heart")
+KOKORO_VOICE = VOICE  # older name
 
 RENDER_WORKERS = int(os.getenv("RENDER_WORKERS", str(max(1, min(4, (os.cpu_count() or 2) // 2)))))
 DEFAULT_QUALITY = os.getenv("DEFAULT_QUALITY", "draft")

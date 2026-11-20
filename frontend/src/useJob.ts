@@ -1,13 +1,13 @@
 // Follows a job through Server-Sent Events. The server replays every event from the start,
 // then streams new ones; the browser reconnects by itself with Last-Event-ID if the line drops.
 import { useEffect, useReducer } from "react";
-import type { Job, StageState } from "./api";
+import type { Cue, Job, StageState } from "./api";
 
 export const STAGES = ["plan", "verify", "quiz", "voice", "draw", "join"] as const;
 export type StageName = (typeof STAGES)[number];
 
 export interface Rejection { stage: string; attempt: number; reason: string }
-export interface Clip { index: number; key: string; name: string; seconds: number; cached: boolean }
+export interface Clip { index: number; key: string; name: string; seconds: number; cached: boolean; cues?: Cue[] }
 
 export interface JobState {
   connected: boolean;
@@ -68,7 +68,7 @@ function reduce(state: JobState, event: JobEvent | { type: "reset" } | { type: "
     }
     case "clip": {
       const e = event as unknown as Clip & { total: number };
-      const clips = { ...state.clips, [e.index]: { index: e.index, key: e.key, name: e.name, seconds: e.seconds, cached: e.cached } };
+      const clips = { ...state.clips, [e.index]: { index: e.index, key: e.key, name: e.name, seconds: e.seconds, cached: e.cached, cues: e.cues } };
       return { ...state, clips, scenes: { ...state.scenes, total: e.total } };
     }
     default:

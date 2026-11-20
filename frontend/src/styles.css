@@ -506,3 +506,8 @@ pre.json {
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
+
+/* settings: voice */
+.voice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px 24px; margin-top: 16px; max-width: 760px; }
+.voice-grid input[type="range"] { width: 100%; accent-color: var(--green); }
+

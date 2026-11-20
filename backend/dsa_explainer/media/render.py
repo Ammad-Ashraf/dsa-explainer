@@ -30,11 +30,12 @@ from manim import (
 from .. import config
 from . import panels, views
 from .views.common import ACCENT, BG, CELL, EDGE, FG, MUTED, NEW, VISITED, fit, label, option
-from .voice import silence
+from .voices import silence
 
 RENDER_VERSION = "5"  # change to re-render every cached clip after editing the renderer or a view
 QUALITY = {"draft": (854, 480, 15), "standard": (1280, 720, 30), "high": (1920, 1080, 30)}
 THINK_SECONDS = 3.0  # quiz: time to think before the answer is shown
+QUIZ_INTRO_SECONDS = 1.4  # quiz: the question and options appearing
 
 __all__ = ["ACCENT", "BG", "CELL", "EDGE", "FG", "MUTED", "LessonScene", "QUALITY", "RENDER_VERSION", "label",
            "render_clip"]
@@ -175,7 +176,7 @@ class LessonScene(Scene):
         options = VGroup(*[option(f"{letter}.  {text}") for letter, text in zip("ABCD", job["options"])])
         options.arrange_in_grid(rows=2, cols=2, buff=(0.4, 0.35)).next_to(question, DOWN, buff=0.55)
         self.play(FadeIn(question), LaggedStart(*[FadeIn(o, shift=UP * 0.2) for o in options], lag_ratio=0.25),
-                  run_time=1.4)
+                  run_time=QUIZ_INTRO_SECONDS)
         self.hold_until(job["duration"] + 0.3)
         bar = Line(LEFT * 3, RIGHT * 3, stroke_width=10, color=ACCENT).to_edge(DOWN, buff=0.6)
         self.add(bar)

@@ -44,6 +44,7 @@ def _finish(lesson: Lesson, folder: Path, version: int, quality: str, rep: event
         "clips": result["clips"], "rendered": result["rendered"], "reused": result["reused"],
         "chapters": result["chapters"], "checks": report.checks, "rejected": extra.get("rejected", []),
         "request": extra.get("request"), "changed": extra.get("changed", []), "timings": timings,
+        "captions": bool(result.get("captions")) and Path(result["captions"]).is_file(),
     }
     store.save(folder, lesson, version, info)
     rep("Done", 1.0)

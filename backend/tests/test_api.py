@@ -21,7 +21,7 @@ def home(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "OUTPUT_DIR", tmp_path / "outputs")
     monkeypatch.setattr(config, "CACHE_DIR", tmp_path / "cache")
     monkeypatch.setattr(config, "SETTINGS_FILE", tmp_path / "settings.json")
-    for name in ("DEFAULT_QUALITY", "KOKORO_VOICE", "RENDER_WORKERS"):  # restored after the test
+    for name in ("DEFAULT_QUALITY", "VOICE", "VOICE_ENGINE", "VOICE_SPEED", "RENDER_WORKERS"):  # restored after
         monkeypatch.setattr(config, name, getattr(config, name))
     return tmp_path
 

@@ -18,11 +18,19 @@ QUALITIES = ("draft", "standard", "high")
 # key -> (config attribute, type, check)
 PREFERENCES: dict[str, tuple[str, type, Any]] = {
     "default_quality": ("DEFAULT_QUALITY", str, lambda v: v in QUALITIES),
-    "voice": ("KOKORO_VOICE", str, lambda v: 0 < len(v) <= 40),
+    "voice_engine": ("VOICE_ENGINE", str, lambda v: v in _engines()),
+    "voice": ("VOICE", str, lambda v: 0 < len(v) <= 40),
+    "voice_speed": ("VOICE_SPEED", float, lambda v: 0.7 <= v <= 1.3),
     "render_workers": ("RENDER_WORKERS", int, lambda v: 1 <= v <= 16),
 }
 
 _lock = threading.Lock()
+
+
+def _engines() -> set:
+    from .media.voices import ENGINES  # imported late: the voice engines are not needed to read settings
+
+    return set(ENGINES)
 
 
 class SettingsError(ValueError):
