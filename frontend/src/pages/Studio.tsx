@@ -48,7 +48,7 @@ export function Composer() {
     <div className="container page">
       <form className="composer" onSubmit={(e) => { e.preventDefault(); if (topic.trim().length >= 3) submit(); }}>
         <div className="page-head" style={{ alignItems: "center", textAlign: "center", marginBottom: 8 }}>
-          <svg width="96" height="96" viewBox="-80 -80 180 160" aria-hidden="true"><Helper r={60} /></svg>
+          <svg width="132" height="90" viewBox="-110 -66 220 150" aria-hidden="true"><Helper r={60} /></svg>
           <h1 className="page-title">What do you want to see?</h1>
           <p>Name a data structure or algorithm, and give your own data if you like.</p>
         </div>

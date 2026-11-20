@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { algorithmById, api, useCatalog, usePlans } from "../api";
 import { BenefitArt, type BenefitArtKind, Emblem, HeroArt, StageIcon, type StageIconKind, Valley } from "../components/art";
+import { Reveal } from "../components/Reveal";
 import { LevelTag, LinkButton, Tag } from "../components/ui";
 
 const BENEFITS: { id: string; kind: BenefitArtKind; title: string; body: React.ReactNode }[] = [
@@ -90,13 +91,13 @@ export default function Home() {
 
       <div className="container benefits">
         {BENEFITS.map((b, i) => (
-          <section key={b.id} id={b.id} className={`benefit${i % 2 ? " reverse" : ""}`}>
+          <Reveal as="section" key={b.id} id={b.id} className={`benefit${i % 2 ? " reverse" : ""}`}>
             <div className="copy">
               <h2 className="chapter-heading">{b.title}</h2>
               <p>{b.body}</p>
             </div>
             <div className="art"><BenefitArt kind={b.kind} /></div>
-          </section>
+          </Reveal>
         ))}
       </div>
 
@@ -105,8 +106,9 @@ export default function Home() {
           <h2 className="display">six steps, one honest video</h2>
           <p className="sub lead">The language model only writes words. Everything you see is drawn from the real algorithm, on your own computer.</p>
           <div className="pipeline-tiles">
-            {PIPELINE.map((s) => (
+            {PIPELINE.map((s, i) => (
               <div key={s.kind} className="pipeline-tile">
+                <span className="glow" style={{ animationDelay: `${i * 1.2}s` }} aria-hidden="true" />
                 <StageIcon kind={s.kind} />
                 <h3>{s.title}</h3>
                 <p>{s.text}</p>
@@ -117,7 +119,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="container popular">
+      <Reveal as="section" className="container popular">
         <div className="page-head" style={{ alignItems: "center", textAlign: "center" }}>
           <h2 className="chapter-heading">start with a favourite</h2>
           <p>Ready-made lessons, checked and ready to play. No API key needed.</p>
@@ -141,7 +143,7 @@ export default function Home() {
             );
           })}
         </div>
-      </section>
+      </Reveal>
 
       <section className="faq" id="faq">
         <h2 className="chapter-heading" style={{ textAlign: "center" }}>questions</h2>

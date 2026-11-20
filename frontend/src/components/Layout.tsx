@@ -6,7 +6,7 @@ import { Helper } from "./art";
 function Wordmark() {
   return (
     <Link to="/" className="wordmark" aria-label="DSA Explainer home">
-      <svg width="34" height="34" viewBox="-70 -70 140 140" aria-hidden="true"><Helper r={56} /></svg>
+      <svg width="34" height="34" viewBox="-64 -64 128 136" aria-hidden="true"><Helper r={58} arms={false} /></svg>
       dsa explainer
     </Link>
   );
