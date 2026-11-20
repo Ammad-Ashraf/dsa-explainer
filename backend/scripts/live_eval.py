@@ -109,10 +109,11 @@ def secs(value) -> str:
 
 
 def write_report(rows: list[dict], revisions: list[dict], render: bool) -> Path:
+    s = llm.current().settings
     lines = [
         "# Live evaluation",
         "",
-        f"Provider: `{config.LLM_BASE_URL}`. Main model `{config.LLM_MODEL}`, fallback `{config.LLM_FALLBACK_MODEL}` "
+        f"Provider: `{s.base_url}`. Main model `{s.model}`, fallback `{s.fallback_model or 'none'}` "
         f"(used once the main model's daily free allowance runs out). Updated {date.today():%d %B %Y} with "
         f"`python backend/scripts/live_eval.py{' --render' if render else ''}`.",
         "",

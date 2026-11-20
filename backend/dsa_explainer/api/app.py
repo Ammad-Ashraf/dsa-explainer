@@ -14,6 +14,11 @@
     GET  /api/jobs/{id}/events               Server-Sent Events: the job's progress, replayed then live
     POST /api/jobs/{id}/cancel
     GET/PUT /api/settings                    preferences
+    GET  /api/providers                      language-model presets and saved choices (never the keys)
+    PUT  /api/providers/{id}                 save a key, model or address; optionally make it active
+    POST /api/providers/active               choose the provider in use
+    POST /api/providers/{id}/test            one tiny request with the saved or given settings
+    GET  /api/providers/{id}/models          the models this key can use
 """
 
 from __future__ import annotations
@@ -27,6 +32,7 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from .. import config, pipeline, settings, store
+from ..authoring import llm, providers
 from ..core.lesson import Lesson, scene_labels
 from ..core.structures import DISPLAY_NAMES, STRUCTURES
 from ..core.verifier import answer_index, verify_lesson
@@ -44,6 +50,18 @@ class CreateLesson(BaseModel):
 
 class RenderPlan(BaseModel):
     quality: Quality | None = None
+
+
+class ProviderChoice(BaseModel):
+    api_key: str | None = Field(default=None, max_length=500)
+    model: str | None = Field(default=None, max_length=200)
+    fallback_model: str | None = Field(default=None, max_length=200)
+    base_url: str | None = Field(default=None, max_length=500)
+    activate: bool = False
+
+
+class ActiveProvider(BaseModel):
+    provider: str | None
 
 
 class Revise(BaseModel):
@@ -87,8 +105,14 @@ def lesson_view(lesson: Lesson) -> dict:
             "plan": lesson.model_dump(mode="json")}
 
 
-def _not_found(exc: Exception):
-    raise HTTPException(status_code=404, detail=str(exc)) from exc
+def _llm_public(s: llm.LLMSettings | None) -> dict:
+    """What the page may know about the provider in use: never the key."""
+    if s is None:
+        return {"configured": False, "provider": None, "model": None, "base_url": None}
+    preset = providers.PRESETS.get(s.provider)
+    return {"configured": True, "provider": s.provider, "provider_name": preset.name if preset else "From .env",
+            "model": s.model, "fallback_model": s.fallback_model, "base_url": s.base_url,
+            "local": bool(preset and preset.local)}
 
 
 # --- the app --------------------------------------------------------------------------
@@ -108,14 +132,21 @@ def create_app() -> FastAPI:
     async def bad_setting(_: Request, exc: settings.SettingsError):
         return JSONResponse({"detail": str(exc)}, status_code=400)
 
+    @app.exception_handler(providers.ProviderError)
+    async def bad_provider(_: Request, exc: providers.ProviderError):
+        return JSONResponse({"detail": str(exc)}, status_code=400)
+
+    @app.exception_handler(llm.LLMError)
+    async def llm_problem(_: Request, exc: llm.LLMError):
+        return JSONResponse({"detail": llm.redact(str(exc))}, status_code=502)
+
     # --- status and catalogue ---
 
     @app.get("/api/health")
     def health():
         return {
             "ok": True, "version": config.VERSION,
-            "llm": {"configured": bool(config.LLM_API_KEY), "model": config.LLM_MODEL,
-                    "base_url": config.LLM_BASE_URL},
+            "llm": _llm_public(llm.active_settings()),
             "voice": {"ready": config.KOKORO_MODEL.exists() and config.KOKORO_VOICES.exists(),
                       "voice": config.KOKORO_VOICE},
             "busy": any(j.status == "running" for j in jobs.list()),
@@ -160,15 +191,20 @@ def create_app() -> FastAPI:
 
     @app.post("/api/lessons", status_code=202)
     def create_lesson(body: CreateLesson):
-        if not config.LLM_API_KEY:
+        chosen = llm.active_settings()  # fixed now: changing Settings later does not affect this job
+        if chosen is None:
             raise HTTPException(400, "No language model is set up. Add an API key in Settings, or watch a saved lesson.")
         quality = _quality(body.quality)
 
         def run(rep: JobReporter) -> dict:
-            result = pipeline.make_lesson(body.topic, body.level, quality, rep)
-            return {"lesson_id": result["lesson_id"], "version": result["version"]}
+            with llm.use(chosen):
+                result = pipeline.make_lesson(body.topic, body.level, quality, rep)
+            return {"lesson_id": result["lesson_id"], "version": result["version"],
+                    "model": llm.client_for(chosen).model_in_use()}
 
-        return jobs.submit("create", {"topic": body.topic, "level": body.level, "quality": quality}, run).snapshot()
+        params = {"topic": body.topic, "level": body.level, "quality": quality, "provider": chosen.provider,
+                  "model": chosen.model}
+        return jobs.submit("create", params, run).snapshot()
 
     @app.get("/api/lessons")
     def lessons():
@@ -194,7 +230,8 @@ def create_app() -> FastAPI:
     @app.post("/api/lessons/{lesson_id}/revisions", status_code=202)
     def revise_lesson(lesson_id: str, body: Revise):
         meta, path = store.get(lesson_id)
-        if not config.LLM_API_KEY and not pipeline.revise.is_rule_based(body.request):
+        chosen = llm.active_settings()
+        if chosen is None and not pipeline.revise.is_rule_based(body.request):
             raise HTTPException(400, "Rewriting needs a language model. Speed changes ('slow down step 2') work "
                                      "without one.")
         latest = meta["versions"][-1]["version"] if meta.get("versions") else 1
@@ -202,7 +239,8 @@ def create_app() -> FastAPI:
         quality = _quality(body.quality)
 
         def run(rep: JobReporter) -> dict:
-            result = pipeline.revise_lesson(path, version, body.request, quality, rep)
+            with llm.use(chosen):
+                result = pipeline.revise_lesson(path, version, body.request, quality, rep)
             return {"lesson_id": lesson_id, "version": result["version"], "changed": result.get("changed", [])}
 
         params = {"lesson_id": lesson_id, "request": body.request, "version": version, "quality": quality}
@@ -276,5 +314,46 @@ def create_app() -> FastAPI:
     def put_settings(changes: dict):
         return {"preferences": settings.set_preferences(changes.get("preferences", changes)),
                 "qualities": list(settings.QUALITIES)}
+
+    # --- language-model providers ---
+
+    @app.get("/api/providers")
+    def list_providers():
+        return {**providers.describe(), "in_use": _llm_public(llm.active_settings())}
+
+    @app.put("/api/providers/{provider_id}")
+    def save_provider(provider_id: str, body: ProviderChoice):
+        providers.save(provider_id, body.model_dump(exclude={"activate"}, exclude_none=True), activate=body.activate)
+        return list_providers()
+
+    @app.post("/api/providers/active")
+    def choose_provider(body: ActiveProvider):
+        providers.activate(body.provider)
+        return list_providers()
+
+    def _client(provider_id: str, body: ProviderChoice | None) -> llm.Client:
+        overrides = body.model_dump(exclude={"activate"}, exclude_none=True) if body else {}
+        data = providers.resolve(provider_id, overrides)
+        if data is None:
+            preset = providers.PRESETS.get(provider_id)
+            need = "an API key and a model" if preset is None or preset.needs_key else "a model"
+            raise HTTPException(400, f"Give {need} first.")
+        # a fresh client, so a test never inherits another configuration's fallback state
+        return llm.Client(llm.LLMSettings.from_dict(data))
+
+    @app.post("/api/providers/{provider_id}/test")
+    def test_provider(provider_id: str, body: ProviderChoice | None = None):
+        client = _client(provider_id, body)
+        try:
+            return client.check()
+        except llm.LLMError as exc:
+            return {"ok": False, "error": llm.redact(str(exc), providers.secrets() + [client.settings.api_key])}
+        except Exception as exc:  # report it, never leak a key
+            text = f"{exc.__class__.__name__}: {exc}"
+            return {"ok": False, "error": llm.redact(text, providers.secrets() + [client.settings.api_key])[:500]}
+
+    @app.get("/api/providers/{provider_id}/models")
+    def provider_models(provider_id: str):
+        return {"models": _client(provider_id, None).list_models()}
 
     return app

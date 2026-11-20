@@ -32,8 +32,8 @@ The open questions from the vision, decided so work can proceed without waiting:
 | --- | --- | --- | --- |
 | 0 | Reorganise the repository and write the roadmap | | **Done** |
 | 1 | Local API server | 0 | **Done** |
-| 2 | Bring-your-own-key, provider-independent LLM layer | 1 | Next |
-| 5 | Algorithm plugin architecture, new algorithms, saved-plan library | 0 | |
+| 2 | Bring-your-own-key, provider-independent LLM layer | 1 | **Done** |
+| 5 | Algorithm plugin architecture, new algorithms, saved-plan library | 0 | Next |
 | 3 | React frontend | 1, 2, 5 (registry) | |
 | 6 | Richer, still-verified animations | 5 | |
 | 4 | Voice research and pluggable voice engines | 0 | |
@@ -70,13 +70,14 @@ before the frontend because the library pages are built from it.
 **Why.** `authoring/llm.py` keeps one client, one fallback flag and one JSON-mode flag in module globals built from
 `.env`, so the process has exactly one key and one provider.
 
-- [ ] 2.1 `authoring/providers/`: `LLMProvider` interface, OpenAI-compatible adapter, native Anthropic adapter.
-- [ ] 2.2 Provider presets registry (base URL, models, key page, notes) for Gemini, OpenAI, Anthropic, Groq,
+- [x] 2.1 `authoring/llm.py` `Client` per provider configuration (one OpenAI-compatible adapter covers every preset,
+      Anthropic included, through its compatible endpoint; native adapters plug in at `Client`).
+- [x] 2.2 Provider presets registry (base URL, models, key page, notes) for Gemini, OpenAI, Anthropic, Groq,
       OpenRouter, Ollama, LM Studio and custom URLs.
-- [ ] 2.3 `LLMSettings` passed through planner, quiz and reviser; rate-limit and fallback state per client; no globals.
-- [ ] 2.4 Structured output: JSON Schema from the Pydantic models, used where the provider supports it.
-- [ ] 2.5 Keys stored in `settings.json`, redacted in logs and errors; `.env` still the default.
-- [ ] 2.6 API: list presets, save settings, test a connection, list a provider's models. Tests with fake providers,
+- [x] 2.3 `LLMSettings` passed through planner, quiz and reviser; rate-limit and fallback state per client; no globals.
+- [x] 2.4 Structured output: JSON Schema from the Pydantic models, used where the provider supports it.
+- [x] 2.5 Keys stored in `settings.json`, redacted in logs and errors; `.env` still the default.
+- [x] 2.6 API: list presets, save settings, test a connection, list a provider's models. Tests with fake providers,
       including a no-key-leak test.
 
 ## Milestone 5: Algorithm plugin architecture, new algorithms, saved-plan library

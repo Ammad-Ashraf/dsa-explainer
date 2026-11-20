@@ -111,7 +111,7 @@ def revise(request, current, quality, progress=gr.Progress()):
 with gr.Blocks(title="DSA Explainer", analytics_enabled=False) as demo:
     gr.Markdown("# DSA Explainer\nType a data-structures topic and get a narrated animation with a quiz at the end. "
                 "Every step is checked by running the real data structure before anything is drawn.")
-    if not config.LLM_API_KEY:
+    if not llm.configured():
         gr.Markdown("**No LLM API key found.** Copy `.env.example` to `.env` and add a key to plan new lessons. "
                     "Saved lessons below work without one.")
     current = gr.State(None)

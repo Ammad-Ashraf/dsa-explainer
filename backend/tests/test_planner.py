@@ -38,60 +38,49 @@ def test_no_video_after_too_many_wrong_plans(monkeypatch):
         planner.plan_lesson("stack", "beginner", log=quiet)
 
 
-def test_rate_limit_waits_then_retries(monkeypatch):
+def fake_client(create, model="main", fallback=""):
+    """An llm.Client whose API calls go to `create(**kwargs)`."""
+    client = llm.Client(llm.LLMSettings("test", "https://example.invalid/v1", "sk-test", model, fallback))
+    completions = type("Completions", (), {"create": staticmethod(create)})
+    client._openai = type("OpenAI", (), {"chat": type("Chat", (), {"completions": completions})})
+    return client
+
+
+def rate_limit(message="rate limited"):
     import httpx
     from openai import RateLimitError
 
     request = httpx.Request("POST", "https://example.invalid/chat/completions")
-    limited = RateLimitError("rate limited", response=httpx.Response(429, request=request), body=None)
-    replies = [limited, limited, "ok"]
-    waits = []
+    return RateLimitError(message, response=httpx.Response(429, request=request), body=None)
 
-    class Completions:
-        @staticmethod
-        def create(**kwargs):
-            reply = replies.pop(0)
-            if isinstance(reply, Exception):
-                raise reply
-            return reply
 
-    class Client:
-        chat = type("Chat", (), {"completions": Completions})
+def test_rate_limit_waits_then_retries(monkeypatch):
+    replies, waits = [rate_limit(), rate_limit(), "ok"], []
 
-    monkeypatch.setattr(llm, "client", lambda: Client)
-    monkeypatch.setattr(llm, "_on_fallback", False)
+    def create(**kwargs):
+        reply = replies.pop(0)
+        if isinstance(reply, Exception):
+            raise reply
+        return reply
+
     monkeypatch.setattr(llm.time, "sleep", waits.append)
-    assert llm._create(model="m", messages=[]) == "ok"
+    assert fake_client(create)._create(messages=[]) == "ok"
     assert waits == [10, 20]
 
 
 def test_daily_limit_switches_to_fallback_model(monkeypatch):
-    import httpx
-    from openai import RateLimitError
+    daily, seen = rate_limit("Quota exceeded: GenerateRequestsPerDayPerProjectPerModel-FreeTier"), []
 
-    request = httpx.Request("POST", "https://example.invalid/chat/completions")
-    daily = RateLimitError("Quota exceeded: GenerateRequestsPerDayPerProjectPerModel-FreeTier",
-                           response=httpx.Response(429, request=request), body=None)
-    seen = []
+    def create(**kwargs):
+        seen.append(kwargs["model"])
+        if kwargs["model"] == "main":
+            raise daily
+        return "ok"
 
-    class Completions:
-        @staticmethod
-        def create(**kwargs):
-            seen.append(kwargs["model"])
-            if kwargs["model"] == "main":
-                raise daily
-            return "ok"
-
-    class Client:
-        chat = type("Chat", (), {"completions": Completions})
-
-    monkeypatch.setattr(llm, "client", lambda: Client)
-    monkeypatch.setattr(llm, "_on_fallback", False)
-    monkeypatch.setattr(config, "LLM_MODEL", "main")
-    monkeypatch.setattr(config, "LLM_FALLBACK_MODEL", "lite")
     monkeypatch.setattr(llm.time, "sleep", lambda s: pytest.fail("a daily limit should not wait"))
-    assert llm._create(model="main", messages=[]) == "ok"
-    assert seen == ["main", "lite"] and llm.model_in_use() == "lite"
+    client = fake_client(create, fallback="lite")
+    assert client._create(messages=[]) == "ok"
+    assert seen == ["main", "lite"] and client.model_in_use() == "lite"
 
 
 def test_parse_json_tolerates_fences_and_text():

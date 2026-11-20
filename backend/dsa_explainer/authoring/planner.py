@@ -12,7 +12,7 @@ from __future__ import annotations
 from pydantic import ValidationError
 
 from .. import config, events
-from . import llm
+from . import llm, schemas
 from ..core.lesson import Lesson
 from ..core.structures import catalog
 from ..core.verifier import MAX_STEPS, MIN_WORDS, verify_lesson
@@ -84,7 +84,7 @@ def plan_lesson(topic: str, level: str = "beginner", log=print) -> tuple[Lesson,
     history: list[str] = []
     for attempt in range(1, config.MAX_ATTEMPTS + 1):
         log(f"Planning the lesson (attempt {attempt})", 0.05 + 0.05 * attempt)
-        reply = llm.chat(messages)
+        reply = llm.chat(messages, schema=schemas.lesson_plan())
         lesson, problems = _check(reply)
         if not problems:
             lesson.level = level if level in ("beginner", "intermediate", "advanced") else lesson.level

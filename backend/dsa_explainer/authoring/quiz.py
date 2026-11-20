@@ -11,7 +11,7 @@ import json
 from pydantic import ValidationError
 
 from .. import events
-from . import llm
+from . import llm, schemas
 from ..core.lesson import Lesson, Question
 from ..core.structures import STRUCTURES, build, fact_text
 from ..core.verifier import check_question
@@ -50,7 +50,7 @@ def make_quiz(lesson: Lesson, n: int = 2, attempts: int = 2, log=print) -> list[
     best: list[Question] = []
     for attempt in range(1, attempts + 1):
         log(f"Writing the quiz (attempt {attempt})", 0.3)
-        reply = llm.chat(messages)
+        reply = llm.chat(messages, schema=schemas.quiz())
         try:
             questions = [Question.model_validate(q) for q in llm.parse_json(reply).get("questions", [])]
         except (ValidationError, ValueError) as exc:
