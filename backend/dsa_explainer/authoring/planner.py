@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from pydantic import ValidationError
 
-from .. import config
+from .. import config, events
 from . import llm
 from ..core.lesson import Lesson
 from ..core.structures import catalog
@@ -90,7 +90,7 @@ def plan_lesson(topic: str, level: str = "beginner", log=print) -> tuple[Lesson,
             lesson.level = level if level in ("beginner", "intermediate", "advanced") else lesson.level
             return lesson, history
         history.append(f"attempt {attempt}: " + problems[0])
-        log(f"The verifier rejected attempt {attempt}: {problems[0]}")
+        events.emit(log, "rejected", stage="plan", attempt=attempt, reason=problems[0])
         messages += [
             {"role": "assistant", "content": reply},
             {"role": "user", "content": "The verifier rejected your plan:\n- " + "\n- ".join(problems[:8])

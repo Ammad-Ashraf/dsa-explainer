@@ -18,7 +18,7 @@ from pathlib import Path
 import av
 import imageio_ffmpeg
 
-from .. import config
+from .. import config, events
 from ..core.lesson import Lesson, scene_labels
 from ..core.verifier import Report, answer_index
 from . import voice
@@ -75,33 +75,72 @@ def clip_path(job: dict, quality: str) -> Path:
     return config.CACHE_DIR / "clips" / f"{key}.mp4"
 
 
-def build_video(lesson: Lesson, report: Report, out: Path, quality: str = "draft", log=print) -> dict:
+def build_video(lesson: Lesson, report: Report, out: Path, quality: str = "draft", log=None) -> dict:
+    rep = events.reporter(log)
     jobs = jobs_for(lesson, report)
+    total = len(jobs)
     clips, futures, voice_seconds = [], {}, 0.0
     started = time.perf_counter()
+
+    def clip_ready(index: int, cached: bool) -> None:
+        rep.emit("clip", index=index, total=total, name=jobs[index]["name"], key=clips[index].stem,
+                 seconds=round(clip_seconds(clips[index]), 2), cached=cached)
+
     # The voice runs here; each clip goes to a drawing process as soon as its audio
     # exists, so speaking and drawing overlap, and several clips are drawn at once.
-    with ProcessPoolExecutor(max_workers=config.RENDER_WORKERS) as pool:
+    pool = ProcessPoolExecutor(max_workers=config.RENDER_WORKERS)
+    try:
+        rep.stage("voice", "running")
+        rep.stage("draw", "running")
         for i, job in enumerate(jobs):
-            log(f"Speaking {job['name']} ({i + 1}/{len(jobs)})", 0.35 + 0.3 * i / len(jobs))
+            rep.check_cancelled()
+            rep.emit("scene", stage="voice", index=i, total=total, name=job["name"])
+            rep(f"Speaking {job['name']} ({i + 1}/{total})", 0.35 + 0.3 * i / total)
             spoken = time.perf_counter()
             job["audio"], job["duration"] = voice.speak(job["narration"], job["speed"])
             if job["kind"] == "quiz":
                 job["answer_audio"], job["answer_duration"] = voice.speak(job["answer_narration"])
             voice_seconds += time.perf_counter() - spoken
             clips.append(clip_path(job, quality))
-            if not clips[-1].exists():
-                futures[pool.submit(render_clip, job, clips[-1], quality)] = job["name"]
+            if clips[-1].exists():
+                clip_ready(i, cached=True)
+            else:
+                futures[pool.submit(render_clip, job, clips[-1], quality)] = i
+        rep.stage("voice", "done", f"{total} scenes")
         for done, future in enumerate(as_completed(futures), 1):
+            rep.check_cancelled()
             future.result()  # re-raises a drawing error
-            log(f"Drew {futures[future]} ({done}/{len(futures)} clips)", 0.65 + 0.3 * done / len(futures))
+            i = futures[future]
+            rep.emit("scene", stage="draw", index=i, total=total, name=jobs[i]["name"])
+            rep(f"Drew {jobs[i]['name']} ({done}/{len(futures)} clips)", 0.65 + 0.3 * done / len(futures))
+            clip_ready(i, cached=False)
+        rep.stage("draw", "done", f"{len(futures)} drawn, {total - len(futures)} reused")
+    except BaseException:
+        pool.shutdown(wait=False, cancel_futures=True)
+        raise
+    pool.shutdown()
     build_seconds = time.perf_counter() - started
 
-    log("Joining the clips", 0.97)
+    rep.check_cancelled()
+    rep.stage("join", "running")
+    rep("Joining the clips", 0.97)
     out.parent.mkdir(parents=True, exist_ok=True)
     concat(clips, out)
-    rendered = list(futures.values())
+    rendered = [jobs[i]["name"] for i in futures.values()]
+    seconds = clip_seconds(out)
+    rep.stage("join", "done", f"{seconds:.0f} s video")
     return {
-        "video": out, "seconds": clip_seconds(out), "clips": len(clips), "rendered": rendered,
+        "video": out, "seconds": seconds, "clips": len(clips), "rendered": rendered,
         "reused": len(clips) - len(rendered), "voice_seconds": voice_seconds, "build_seconds": build_seconds,
+        "clip_keys": [c.stem for c in clips], "chapters": chapters(jobs, clips),
     }
+
+
+def chapters(jobs: list[dict], clips: list[Path]) -> list[dict]:
+    """Where each scene starts in the joined video, for the player's chapter strip."""
+    out, at = [], 0.0
+    for job, clip in zip(jobs, clips):
+        length = clip_seconds(clip)
+        out.append({"name": job["name"], "kind": job["kind"], "start": round(at, 2), "seconds": round(length, 2)})
+        at += length
+    return out

@@ -31,8 +31,8 @@ The open questions from the vision, decided so work can proceed without waiting:
 | # | Milestone | Depends on | Status |
 | --- | --- | --- | --- |
 | 0 | Reorganise the repository and write the roadmap | | **Done** |
-| 1 | Local API server | 0 | Next |
-| 2 | Bring-your-own-key, provider-independent LLM layer | 1 | |
+| 1 | Local API server | 0 | **Done** |
+| 2 | Bring-your-own-key, provider-independent LLM layer | 1 | Next |
 | 5 | Algorithm plugin architecture, new algorithms, saved-plan library | 0 | |
 | 3 | React frontend | 1, 2, 5 (registry) | |
 | 6 | Richer, still-verified animations | 5 | |
@@ -57,13 +57,13 @@ before the frontend because the library pages are built from it.
 
 **Why.** The React app needs an HTTP API; today the pipeline is called directly from Gradio callbacks.
 
-- [ ] 1.1 Data folder and settings: `DSA_HOME`, `settings.json`, lessons index; `config` reads from them.
-- [ ] 1.2 Lesson store: list, read and delete lessons in `outputs/` (plan, report, quiz, versions, timings).
-- [ ] 1.3 Job runner: one worker thread, a queue, events per job (stage, progress, message, clip ready), cancellation.
-- [ ] 1.4 Pipeline reports structured events (stage names, per-scene progress, each finished clip) instead of only text.
-- [ ] 1.5 FastAPI app `dsa_explainer/api/`: lessons, jobs, Server-Sent Events, saved plans, revisions, video and clip
+- [x] 1.1 Data folder and settings: `DSA_HOME`, `settings.json`, lessons index; `config` reads from them.
+- [x] 1.2 Lesson store: list, read and delete lessons in `outputs/` (plan, report, quiz, versions, timings).
+- [x] 1.3 Job runner: one worker thread, a queue, events per job (stage, progress, message, clip ready), cancellation.
+- [x] 1.4 Pipeline reports structured events (stage names, per-scene progress, each finished clip) instead of only text.
+- [x] 1.5 FastAPI app `dsa_explainer/api/`: lessons, jobs, Server-Sent Events, saved plans, revisions, video and clip
       files with range requests, health.
-- [ ] 1.6 `python -m dsa_explainer serve` command; API tests with a fake LLM.
+- [x] 1.6 `python -m dsa_explainer serve` command; API tests with a fake LLM.
 
 ## Milestone 2: Bring-your-own-key, provider-independent LLM layer
 

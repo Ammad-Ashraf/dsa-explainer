@@ -28,7 +28,7 @@ from ..core.structures import DISPLAY_NAMES, natural_key
 from .voice import silence
 
 RENDER_VERSION = "3"  # change to re-render every cached clip after editing this file
-QUALITY = {"draft": (854, 480, 15), "standard": (1280, 720, 30)}
+QUALITY = {"draft": (854, 480, 15), "standard": (1280, 720, 30), "high": (1920, 1080, 30)}
 THINK_SECONDS = 3.0  # quiz: time to think before the answer is shown
 
 BG, FG, MUTED, CELL, EDGE = "#0f172a", "#e2e8f0", "#94a3b8", "#1e293b", "#64748b"

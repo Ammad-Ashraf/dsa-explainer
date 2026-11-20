@@ -15,6 +15,7 @@ import re
 
 from pydantic import ValidationError
 
+from .. import events
 from . import llm
 from ..core.lesson import Lesson, scene_labels
 from ..core.verifier import verify_lesson
@@ -39,12 +40,17 @@ Every fact must stay true: only mention values from that scene's state or operat
 Return only JSON: {{"level": "<beginner | intermediate | advanced, only if the request changes it>", "changes": [{{"scene": "<label as listed, e.g. step 2>", "narration": "...", "caption": "...", "speed": 1.0, "points": ["..."]}}]}}"""
 
 
+def is_rule_based(request: str) -> bool:
+    """True for pure speed changes, which need no language model."""
+    return bool((_SLOWER.search(request) or _FASTER.search(request)) and not _OTHER.search(request))
+
+
 def revise(lesson: Lesson, request: str, log=print, attempts: int = 3) -> tuple[Lesson, list[str]]:
     """The revised lesson and the labels of the scenes that changed."""
     request = request.strip()
     if not request:
         raise RevisionError("Type what you want changed, for example 'slow down step 2'.")
-    if (_SLOWER.search(request) or _FASTER.search(request)) and not _OTHER.search(request):
+    if is_rule_based(request):
         new = _change_speed(lesson, request)
     else:
         new = _rewrite(lesson, request, log, attempts)
@@ -112,7 +118,7 @@ def _rewrite(lesson: Lesson, request: str, log, attempts: int) -> Lesson:
             problems = verify_lesson(new).errors
             if not problems:
                 return new
-        log(f"The verifier rejected revision attempt {attempt}: {problems[0]}")
+        events.emit(log, "rejected", stage="revise", attempt=attempt, reason=problems[0])
         messages += [{"role": "assistant", "content": reply},
                      {"role": "user", "content": "The verifier rejected this revision:\n- " + "\n- ".join(problems[:8])
                       + "\nFix it and return the same JSON object."}]

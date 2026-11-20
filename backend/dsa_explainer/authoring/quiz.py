@@ -10,6 +10,7 @@ import json
 
 from pydantic import ValidationError
 
+from .. import events
 from . import llm
 from ..core.lesson import Lesson, Question
 from ..core.structures import STRUCTURES, build, fact_text
@@ -62,7 +63,7 @@ def make_quiz(lesson: Lesson, n: int = 2, attempts: int = 2, log=print) -> list[
             best = good
         if len(best) >= n:
             return best[:n]
-        log(f"Quiz attempt {attempt} had problems: {problems[0] if problems else 'too few questions'}")
+        events.emit(log, "rejected", stage="quiz", attempt=attempt, reason=problems[0] if problems else "too few questions")
         messages += [{"role": "assistant", "content": reply},
                      {"role": "user", "content": "Problems:\n- " + "\n- ".join(problems or ["too few questions"])
                       + f"\nReturn {n} corrected questions as the same JSON object."}]
