@@ -49,6 +49,8 @@ class Stack(_Linear):
     PRESETS = {"empty": [], "a few plates": [4, 9], "nearly full": [2, 5, 8, 6, 1]}
     OPS = {"push": ("value",), "pop": (), "peek": ()}
     FACTS = ("top", "size", "items")
+    STRIP = ("top", "size")
+    OP_LINES = {"push": (0,), "pop": (1,), "peek": (2,)}
     HELP = (
         "stack: initial = list of values from bottom to top, e.g. [4, 9]. "
         "ops: push(value), pop(), peek(). state = list from bottom to top. "
@@ -83,6 +85,8 @@ class Queue(_Linear):
     PRESETS = {"empty": [], "print jobs": [3, 8], "busy line": [5, 2, 7, 4]}
     OPS = {"enqueue": ("value",), "dequeue": (), "peek": ()}
     FACTS = ("front", "rear", "size", "items")
+    STRIP = ("front", "rear", "size")
+    OP_LINES = {"enqueue": (0,), "dequeue": (1,), "peek": (2,)}
     HELP = (
         "queue: initial = list of values from front to rear, e.g. [3, 8]. "
         "ops: enqueue(value) adds at the rear, dequeue() removes from the front, peek() reads the front. "
@@ -115,12 +119,16 @@ class Deque(_Linear):
                    "histories use it.")
     COMPLEXITY = {"best": "O(1)", "average": "O(1)", "worst": "O(1)", "space": "O(n)"}
     PSEUDOCODE = ("push_front(x): front = front - 1; a[front] = x", "push_back(x): a[rear] = x; rear = rear + 1",
-                  "pop_front(): x = a[front]; front = front + 1", "pop_back(): rear = rear - 1; x = a[rear]")
+                  "pop_front(): x = a[front]; front = front + 1", "pop_back(): rear = rear - 1; x = a[rear]",
+                  "peek_front(): return a[front]; peek_back(): return a[rear - 1]")
     KEYWORDS = ("deque", "double-ended", "double ended", "both ends", "sliding window")
     PRESETS = {"empty": [], "two items": [4, 6], "four items": [3, 9, 2, 7]}
     OPS = {"push_front": ("value",), "push_back": ("value",), "pop_front": (), "pop_back": (),
            "peek_front": (), "peek_back": ()}
     FACTS = ("front", "rear", "size", "items")
+    STRIP = ("front", "rear", "size")
+    OP_LINES = {"push_front": (0,), "push_back": (1,), "pop_front": (2,), "pop_back": (3,), "peek_front": (4,),
+                "peek_back": (4,)}
     HELP = (
         "deque (double-ended queue): initial = list of values from front to rear, e.g. [4, 6]. "
         "ops: push_front(value), push_back(value), pop_front(), pop_back(), peek_front(), peek_back(). "
@@ -163,6 +171,7 @@ class LinkedList(_Linear):
                    "node at a time.")
     COMPLEXITY = {"best": "O(1)", "average": "O(n)", "worst": "O(n)", "space": "O(n)"}
     PSEUDOCODE = ("insert_head(x): n = Node(x); n.next = head; head = n",
+                  "insert_tail(x): walk to the last node; last.next = Node(x)",
                   "insert_at(i, x): walk i - 1 nodes from head; n.next = cur.next; cur.next = n",
                   "delete(x): walk until cur.next.value == x; cur.next = cur.next.next",
                   "search(x): walk from head until value == x")
@@ -175,18 +184,32 @@ class LinkedList(_Linear):
         "delete": ("value",),
         "search": ("value",),
     }
-    FACTS = ("head", "tail", "size", "items")
+    FACTS = ("head", "tail", "size", "items", "walked")
+    STRIP = ("head", "tail", "size", "walked")
+    FACT_LABELS = {"walked": "nodes walked"}
+    OP_LINES = {"insert_head": (0,), "insert_tail": (1,), "insert_at": (2,), "delete": (3,), "search": (4,)}
     HELP = (
         "linked_list (singly linked): initial = list of values from head to tail, e.g. [3, 8, 12]. "
         "ops: insert_head(value), insert_tail(value), insert_at(index, value) with index 0 = head, "
         "delete(value) removes the first node holding value, search(value) walks from the head. "
-        "state = list from head to tail. facts: head, tail, size, items (head to tail)."
+        "state = list from head to tail. facts: head, tail, size, items (head to tail), walked (nodes the last "
+        "operation visited from the head)."
     )
 
+    def __init__(self, initial) -> None:
+        super().__init__(initial)
+        self.walked: int | None = None
+
+    def run(self, op: str, args: dict | None = None) -> list:
+        self.walked = None
+        return super().run(op, args)
+
     def _path(self, upto: int) -> list[int]:
+        self.walked = upto
         return [iid for iid, _ in self.items[:upto]]
 
     def op_insert_head(self, value):
+        self.walked = 0
         return [self._add(0, value)]
 
     def op_insert_tail(self, value):
@@ -219,4 +242,4 @@ class LinkedList(_Linear):
     def facts(self) -> dict:
         head = self.items[0][1] if self.items else None
         tail = self.items[-1][1] if self.items else None
-        return {"head": head, "tail": tail, "size": len(self.items), "items": self.state()}
+        return {"head": head, "tail": tail, "size": len(self.items), "items": self.state(), "walked": self.walked}

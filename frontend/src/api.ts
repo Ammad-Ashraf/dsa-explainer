@@ -28,6 +28,10 @@ export interface AlgorithmInfo {
   presets: Record<string, unknown>;
   operations: Record<string, string[]>;
   facts: string[];
+  /** facts the video shows beside the picture after every step */
+  strip: string[];
+  /** operation -> the pseudocode lines it runs (the video highlights them) */
+  op_lines: Record<string, number[]>;
   view: string;
   noun: string;
 }

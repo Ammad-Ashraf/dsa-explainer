@@ -95,6 +95,8 @@ class BFS(_Graph):
                "a star": {"edges": [["A", "B"], ["A", "C"], ["A", "D"], ["A", "E"]], "start": "A"}}
     OPS = {"bfs_step": ()}
     FACTS = ("current", "queue", "visited", "bfs_order", "size")
+    STRIP = ("current", "queue", "visited")
+    OP_LINES = {"bfs_step": (1, 2)}
     HELP = (
         'bfs (breadth-first search; also called graph): initial = {"edges": [["A", "B"], ["A", "C"]], "start": "A", '
         '"directed": false}, short node labels. ops: bfs_step() takes the node at the front of the queue, '
@@ -160,6 +162,7 @@ class DFS(_Graph):
                "with a cycle": {"edges": [["A", "B"], ["B", "C"], ["C", "A"], ["C", "D"]], "start": "A"}}
     OPS = {"dfs_step": ()}
     FACTS = ("current", "stack", "top", "visited", "dfs_order", "size")
+    STRIP = ("current", "top", "stack", "visited")
     HELP = (
         'dfs (depth-first search, recursive order): initial = {"edges": [["A", "B"], ["A", "C"]], "start": "A", '
         '"directed": false}. ops: dfs_step() visits the next node: the first step visits the start node; each '
@@ -198,6 +201,9 @@ class DFS(_Graph):
         self.current = nxt
         self.hot = [[self.stack[-2], nxt]]
         return backed + [nxt]
+
+    def code_lines(self, op):
+        return [0] if len(self.visited) == 1 else [1, 2, 0]  # the start, then: next unvisited neighbour, visit it
 
     def dfs_order(self) -> list[str]:
         order: list[str] = []
@@ -248,7 +254,10 @@ class Dijkstra(_Graph):
                "five towns": {"edges": [["A", "B", 2], ["A", "C", 6], ["B", "C", 3], ["B", "D", 7], ["C", "E", 2],
                                         ["D", "E", 1]], "start": "A"}}
     OPS = {"settle": ()}
-    FACTS = ("current", "settled", "distances", "size")
+    FACTS = ("current", "settled", "distances", "size", "improved")
+    STRIP = ("current", "settled", "improved", "distances")
+    FACT_LABELS = {"improved": "shorter route to"}
+    OP_LINES = {"settle": (1, 2)}
     HELP = (
         'dijkstra (shortest paths, non-negative weights): initial = {"edges": [["A", "B", 4], ["A", "C", 1]], '
         '"start": "A", "directed": false}, weights are whole numbers from 1 to 99. Before the first step the '
@@ -257,8 +266,8 @@ class Dijkstra(_Graph):
         "distance if going through it is shorter. "
         'state = {"current": the node just settled, "settled": [nodes in settling order], '
         '"dist": {"A": 0, "B": 3, "C": null}} (null = infinity). '
-        "facts: current, settled, distances (written like A=0, B=3, C=inf), size, and dist_<node> for each "
-        "node, e.g. dist_B."
+        "facts: current, settled, distances (written like A=0, B=3, C=inf), size, improved (the neighbours the "
+        "last step gave a shorter distance), and dist_<node> for each node, e.g. dist_B."
     )
 
     def __init__(self, initial) -> None:
@@ -307,7 +316,7 @@ class Dijkstra(_Graph):
     def facts(self) -> dict:
         distances = [f"{n}={'inf' if d is None else d}" for n, d in self._ordered_dist().items()]
         return {"current": self.current, "settled": list(self.settled), "distances": distances,
-                "size": len(self.adj), **{f"dist_{n}": ("inf" if d is None else d) for n, d in self.dist.items()}}
+                "size": len(self.adj), "improved": list(self.improved), **{f"dist_{n}": ("inf" if d is None else d) for n, d in self.dist.items()}}
 
     def snapshot(self) -> dict:
         return {**self._base_snapshot(), "current": self.current, "visited": list(self.settled),
@@ -335,6 +344,8 @@ class TopologicalSort(_Graph):
                "a chain": {"edges": [["A", "B"], ["B", "C"], ["C", "D"]]}}
     OPS = {"take": ()}
     FACTS = ("current", "ready", "order", "size")
+    STRIP = ("current", "ready", "order")
+    OP_LINES = {"take": (1, 2)}
     HELP = (
         'topological_sort (Kahn\'s algorithm, directed graph): initial = {"edges": [["A", "B"], ["A", "C"]]} where '
         '["A", "B"] means A must come before B. Before the first step, every node with no incoming edges is '

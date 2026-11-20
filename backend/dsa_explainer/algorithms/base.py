@@ -10,6 +10,9 @@ language model believes. Each simulator class declares:
               FACTS      named facts (top, size, ...) used to check narration and quiz answers
               FACT_WORDS extra narration words that name a fact ("pivot" -> "pivot")
               HELP       the reference the planner is given: initial data, operations, state format
+  video       STRIP       facts shown beside the picture after every step (the facts strip)
+              FACT_LABELS how the strip names a fact when not by its name ("sorted_count" -> "in place")
+              OP_LINES    operation -> the PSEUDOCODE lines it runs (code_lines() may refine it)
 
 and implements:
   run()       performs one operation and returns the element ids to highlight, in order;
@@ -127,6 +130,10 @@ class Structure:
     FACTS: tuple[str, ...] = ()
     FACT_WORDS: dict[str, str] = {}
     HELP = ""
+    # --- video: what the picture shows besides the structure, all computed by the simulator ---
+    STRIP: tuple[str, ...] = ()
+    FACT_LABELS: dict[str, str] = {}
+    OP_LINES: dict[str, tuple[int, ...]] = {}
 
     def __init__(self) -> None:
         self._ids = itertools.count(1)
@@ -150,6 +157,17 @@ class Structure:
         """Every value in the structure, as text (narration may mention these)."""
         return {normalize(v) for v in flatten(self.state())}
 
+    def code_lines(self, op: str) -> list[int]:
+        """The PSEUDOCODE lines the operation just run executed (called after run()).
+        Chosen from the operation and the simulator's own state, never from the plan's text."""
+        return list(self.OP_LINES.get(op, ()))
+
+    def strip(self) -> list[list[str]]:
+        """The facts strip: [label, value] for each STRIP fact the simulator has right now."""
+        facts = self.facts()
+        return [[self.FACT_LABELS.get(n, n.replace("_", " ")), "-" if facts[n] is None else fact_text(facts[n])]
+                for n in self.STRIP if n in facts]
+
     def state(self):
         raise NotImplementedError
 
@@ -168,5 +186,6 @@ class Structure:
             "summary": cls.SUMMARY, "description": cls.DESCRIPTION, "complexity": dict(cls.COMPLEXITY),
             "pseudocode": list(cls.PSEUDOCODE), "requires": cls.REQUIRES, "presets": dict(cls.PRESETS),
             "operations": {name: list(args) for name, args in cls.OPS.items()}, "facts": list(cls.FACTS),
-            "view": cls.VIEW, "noun": cls.NOUN,
+            "view": cls.VIEW, "noun": cls.NOUN, "strip": list(cls.STRIP),
+            "op_lines": {name: list(lines) for name, lines in cls.OP_LINES.items()},
         }

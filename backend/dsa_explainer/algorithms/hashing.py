@@ -24,6 +24,8 @@ class HashTable(Structure):
                "empty": {"buckets": 7, "keys": []}}
     OPS = {"insert": ("key",), "search": ("key",), "delete": ("key",)}
     FACTS = ("size", "buckets", "bucket", "chain", "found", "items")
+    STRIP = ("size", "bucket", "chain", "found")
+    OP_LINES = {"insert": (0, 1), "search": (0, 2), "delete": (0, 3)}
     HELP = (
         'hash_table (separate chaining, bucket = key mod number of buckets): initial = {"buckets": 5, '
         '"keys": [12, 7, 3]}, keys are whole numbers inserted in that order, 2 to 7 buckets. ops: insert(key) '

@@ -1,22 +1,26 @@
 """Arrays: bars for sorting (height = value) and indexed cells for searching.
 
 Each value keeps its key while it moves, so swaps, shifts and merges animate
-as values sliding to their new index. Pointers (i, low, mid, high, pivot), the
+as values travelling to their new index, on an arc (View.arc) so two values
+that swap visibly pass each other. Pointers (i, low, mid, high, pivot), the
 active range, the sorted region and faded (eliminated) cells come from the
 simulator's snapshot.
 """
 
 from __future__ import annotations
 
-from manim import Line, RoundedRectangle, VGroup
+from manim import PI, Line, RoundedRectangle, VGroup
 
-from .common import ACCENT, CELL, CURRENT, DOWN, EDGE, FG, MUTED, NEW, UP, VISITED, View, cell, fit, label, pointer
+from .common import (
+    ACCENT, CELL, CURRENT, DONE_FILL, DOWN, EDGE, FG, MUTED, NEW, UP, VISITED, View, cell, fit, label, pointer,
+)
 
 POINTER_COLOURS = {"mid": CURRENT, "pivot": CURRENT, "i": ACCENT, "low": ACCENT, "high": ACCENT}
 
 
 class ArrayView(View):
     name, enter, exit = "array", DOWN * 0.4, DOWN * 0.4
+    arc = -PI * 0.6  # swapped values pass each other, one over and one under
 
     def draw(self, snap, marks):
         mobs, items = {}, snap["items"]
@@ -35,10 +39,10 @@ class ArrayView(View):
             stroke = marks.get(iid) or (VISITED if i in sorted_ix or i == found else EDGE)
             if bars:
                 h = 0.45 + 3.3 * (value - low) / ((high - low) or 1)
-                fill = "#14532d" if i in sorted_ix else CELL
+                fill = DONE_FILL if i in sorted_ix else CELL
                 bar = RoundedRectangle(corner_radius=0.08, width=w, height=h, stroke_color=stroke, stroke_width=4,
                                        fill_color=fill, fill_opacity=1).move_to([xs[i], base + h / 2, 0])
-                text = fit(label(value, 28, FG), w - 0.1).next_to(bar, UP, buff=0.08)
+                text = fit(label(value, 28, FG, bold=True), w - 0.1).next_to(bar, UP, buff=0.08)
                 shape = VGroup(bar, text)
             else:
                 shape = cell(value, w, 0.95, stroke, 32).move_to([xs[i], 0.3, 0])

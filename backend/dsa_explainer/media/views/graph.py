@@ -12,7 +12,9 @@ from __future__ import annotations
 import numpy as np
 from manim import Circle, VGroup
 
-from .common import ACCENT, CURRENT, DOWN, EDGE, LEFT, MUTED, QUEUED, RIGHT, UP, VISITED, View, cell, label, link, node
+from .common import (
+    ACCENT, CURRENT, DOWN, EDGE, FG, LEFT, LINE, MUTED, QUEUED, RIGHT, UP, VISITED, View, cell, label, link, node,
+)
 from ...algorithms.base import natural_key
 
 
@@ -69,7 +71,7 @@ class GraphView(View):
 
         for e in snap["edges"]:
             a, b = e[0], e[1]
-            mobs[("edge", a, b)] = link(pos[a], pos[b], color=ACCENT if (a, b) in hot else MUTED,
+            mobs[("edge", a, b)] = link(pos[a], pos[b], color=ACCENT if (a, b) in hot else LINE,
                                         arrow=snap["directed"])
             if snap.get("weighted"):
                 mid = (pos[a] + pos[b]) / 2
@@ -80,7 +82,7 @@ class GraphView(View):
             mobs[("node", n)] = node(n, colour(n)).move_to(pos[n])
         for n, text in (snap.get("labels") or {}).items():  # distances, in-degrees: a small tag above the node
             hot_label = n in snap.get("improved", [])
-            tag = label(text, 20, ACCENT if hot_label else QUEUED if text != "∞" else MUTED)
+            tag = label(text, 22, ACCENT if hot_label else FG if text != "∞" else MUTED, bold=True)
             mobs[("label", n, text)] = tag.next_to(mobs[("node", n)], UP, buff=0.06)
 
         rows = [(frontier["name"], frontier["items"], VISITED if frontier["name"] == "settled" else QUEUED)]

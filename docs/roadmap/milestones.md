@@ -35,8 +35,8 @@ The open questions from the vision, decided so work can proceed without waiting:
 | 2 | Bring-your-own-key, provider-independent LLM layer | 1 | **Done** |
 | 5 | Algorithm plugin architecture, new algorithms, saved-plan library | 0 | **Done** |
 | 3 | React frontend | 1, 2, 5 (registry) | **Done** |
-| 6 | Richer, still-verified animations | 5 | Next |
-| 4 | Voice research and pluggable voice engines | 0 | |
+| 6 | Richer, still-verified animations | 5 | **Done** |
+| 4 | Voice research and pluggable voice engines | 0 | Next |
 | 7 | Stronger verification and an evaluation harness | 5 | |
 | 8 | Latency and responsiveness | 1, 3 | |
 | 9 | Open-source release | all | |
@@ -122,11 +122,32 @@ tables, the verifier's fixed fact words and the structure list hard-coded in the
 
 ## Milestone 6: Richer, still-verified animations
 
-- [ ] 6.1 Simulators report verified detail: comparisons, swaps, pointer variables, pseudocode line.
-- [ ] 6.2 Pseudocode panel in the video, highlighted from the simulator.
-- [ ] 6.3 Operation-specific animations: swap arcs, pointer re-linking, sift paths, sorting bars, DP cell fills.
-- [ ] 6.4 Video theme from the design tokens (light stage, green accents, rounded type); title and end cards; 1080p.
-- [ ] 6.5 Visual regression tests: key frames of saved plans compared with approved images.
+**Why.** The clips showed the structure and nothing else: no running counts, no link to the algorithm's code, values
+that swapped simply slid through each other, and the dark stage did not match the app.
+
+- [x] 6.1 Simulators report verified detail for the video. Each algorithm names its facts strip (`STRIP`, labels in
+      `FACT_LABELS`) and the pseudocode lines each operation runs (`OP_LINES`, refined by `code_lines()` from what the
+      simulator actually did: binary search's left or right branch, bubble sort's early stop, the traversal order).
+      Counts the simulators lacked were added (comparisons for insertion, selection, quick sort, BST and both
+      searches; swaps for quick sort and heaps; nodes walked in a linked list; Dijkstra's improved nodes; the coin
+      used) and tested against instrumented reference implementations. The verifier records both per scene
+      (`Frame.lines`, `Frame.strip_before`, `Frame.strip_after`); nothing comes from the language model.
+- [x] 6.2 Pseudocode card beside the picture, with the lines the step ran highlighted; the facts strip above the
+      picture updates with every step and marks what changed in blue (`media/panels.py`). The library's algorithm
+      page highlights the lines of the operation a learner picks, and marks the facts the strip shows.
+- [x] 6.3 Arc moves: an opt-in `View.arc`; in the array and heap views a value that moves travels on an arc, so two
+      values that swap visibly pass each other (sorting swaps, sift up and down). *Reworded:* pointer re-linking,
+      sift paths and DP cell fills were already animated by the generic morph and the ordered path pulses, so the
+      task kept only what was missing.
+- [x] 6.4 Light video theme from the design tokens: white stage, charcoal type, leaf green for new and done, blue for
+      the path, orange for the current element; Nunito is bundled (`media/fonts`, SIL OFL) and registered with
+      Pango so every machine draws the same letters. The web player's screen is white to match. The intro title
+      card and the summary end card stay; 1080p is the "high" quality. `RENDER_VERSION` 5 re-renders cached clips.
+- [x] 6.5 Layout regression tests instead of image diffs: for every saved plan, the centre and size of every shape in
+      the intro and each step (and the pseudocode card) are compared with approved JSON in
+      `tests/golden/layouts/`; `DSA_UPDATE_GOLDEN=1` approves a change, and a rule test keeps pictures clear of the
+      card and the caption. *Reworded from "key frames compared with approved images":* pixel diffs break on font
+      hinting and encoder versions across platforms and do not say what moved; the layouts do.
 
 ## Milestone 4: Voice research and pluggable voice engines
 

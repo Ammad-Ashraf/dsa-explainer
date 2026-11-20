@@ -69,6 +69,7 @@ export function AlgorithmPage() {
   const { data: health } = useHealth();
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [op, setOp] = useState<string | null>(null); // the operation whose pseudocode lines are lit
   const algo = algorithmById(catalog, algorithmId);
   if (isLoading) return <Loading />;
   if (!algo) return <div className="container page"><Notice tone="red"><span>No algorithm called “{algorithmId}”. <Link to="/library">Back to the library</Link></span></Notice></div>;
@@ -135,7 +136,14 @@ export function AlgorithmPage() {
           </section>
           <section>
             <h2 className="section-title">How it works</h2>
-            <pre className="code" style={{ marginTop: 16 }}>{algo.pseudocode.join("\n")}</pre>
+            <p className="small" style={{ margin: "8px 0 0" }}>
+              The video highlights the lines each step runs. Pick an operation to see which.
+            </p>
+            <pre className="code" style={{ marginTop: 16 }} aria-label="Pseudocode">
+              {algo.pseudocode.map((line, i) => (
+                <span key={i} className={op && algo.op_lines[op]?.includes(i) ? "lit" : undefined}>{line}</span>
+              ))}
+            </pre>
           </section>
         </div>
         <aside style={{ display: "flex", flexDirection: "column", gap: 32 }}>
@@ -151,9 +159,21 @@ export function AlgorithmPage() {
           <section>
             <h2 className="section-title" style={{ fontSize: 22 }}>What the verifier runs</h2>
             <p className="small" style={{ margin: "8px 0 12px" }}>Operations a lesson may use:</p>
-            <ul className="ops">{Object.entries(algo.operations).map(([op, args]) => <li key={op}>{op}({args.join(", ")})</li>)}</ul>
+            <ul className="ops">
+              {Object.entries(algo.operations).map(([name, args]) => (
+                <li key={name}>
+                  <button type="button" aria-pressed={op === name} onClick={() => setOp(op === name ? null : name)}
+                    title="Highlight the pseudocode lines it runs">
+                    {name}({args.join(", ")})
+                  </button>
+                </li>
+              ))}
+            </ul>
             <p className="small" style={{ margin: "16px 0 12px" }}>Facts it checks in the narration and the quiz:</p>
-            <ul className="ops">{algo.facts.map((f) => <li key={f}>{f}</li>)}</ul>
+            <ul className="ops">{algo.facts.map((f) => <li key={f} className={algo.strip.includes(f) ? "shown" : undefined}>{f}</li>)}</ul>
+            <p className="small" style={{ margin: "12px 0 0" }}>
+              <span className="swatch" aria-hidden="true" /> shown beside the picture after every step
+            </p>
           </section>
         </aside>
       </div>

@@ -118,13 +118,16 @@ class BST(_Tree):
     KEYWORDS = ("bst", "binary search tree", "search tree", "successor")
     PRESETS = {"balanced": [8, 3, 10, 1, 6, 14], "small": [5, 2, 7], "a chain": [1, 2, 3, 4]}
     OPS = {"insert": ("value",), "search": ("value",), "delete": ("value",)}
-    FACTS = ("root", "size", "min", "max", "inorder", "preorder", "postorder", "levelorder")
+    FACTS = ("root", "size", "min", "max", "inorder", "preorder", "postorder", "levelorder", "comparisons")
+    STRIP = ("root", "size", "min", "max", "comparisons")
+    OP_LINES = {"insert": (0,), "search": (1,), "delete": (2,)}
     HELP = (
         "bst (binary search tree, no duplicates): initial = list of whole numbers inserted in that order, "
         "e.g. [8, 3, 10]. ops: insert(value), search(value), delete(value); a node with two children is "
         "replaced by its in-order successor (the smallest value in its right subtree). "
         'state = nested object {"value": 8, "left": {...} or null, "right": {...} or null}, null if empty. '
-        "facts: root, size, min, max, inorder, preorder, postorder, levelorder."
+        "facts: root, size, min, max, inorder, preorder, postorder, levelorder, comparisons (values the last "
+        "operation compared on its way down from the root)."
     )
 
     def __init__(self, initial) -> None:
@@ -133,17 +136,22 @@ class BST(_Tree):
             raise OpError("initial data for a bst must be a list of whole numbers")
         for v in initial:
             self.op_insert(v)
+        self.comparisons: int | None = None
 
     def op_insert(self, value):
-        return self._insert(value)
+        focus = self._insert(value)
+        self.comparisons = len(focus) - 1  # every node on the way down; the new node is not compared
+        return focus
 
     def op_search(self, value):
         path, _, _ = self._find(self._number(value))
+        self.comparisons = len(path)
         return [n.id for n in path]
 
     def op_delete(self, value):
         value = self._number(value)
         path, parent, node = self._find(value)
+        self.comparisons = len(path)
         if node is None:
             raise OpError(f"{value} is not in the tree, so it cannot be deleted")
         focus = [n.id for n in path]
@@ -172,7 +180,7 @@ class BST(_Tree):
         return _norm_tree(claimed) == _norm_tree(self.state())
 
     def facts(self) -> dict:
-        return self._shape_facts()
+        return {**self._shape_facts(), "comparisons": self.comparisons}
 
     def snapshot(self) -> dict:
         return self._tree_snapshot()
@@ -199,6 +207,7 @@ class TreeTraversal(_Tree):
                "level order": {"values": [5, 3, 8, 2, 4, 9], "order": "levelorder"}}
     OPS = {"visit": ()}
     FACTS = ("current", "visited", "order", "root", "size")
+    STRIP = ("current", "root", "size")
     HELP = (
         'tree_traversal: initial = {"values": [8, 3, 10, 1, 6], "order": "inorder"}: the values are inserted '
         "into a binary search tree in that order; order is preorder, inorder, postorder or levelorder. "
@@ -227,6 +236,9 @@ class TreeTraversal(_Tree):
         node = self.sequence[len(self.visited)]
         self.visited.append(node)
         return [node.id]
+
+    def code_lines(self, op):
+        return [ORDERS.index(self.order)]
 
     def state(self):
         return {"current": self.visited[-1].value if self.visited else None,
@@ -261,12 +273,18 @@ class _ArrayHeap(Structure):
     def __init__(self) -> None:
         super().__init__()
         self.items: list[tuple[int, int]] = []
+        self.swaps: int | None = None  # swaps made by the last operation
+
+    def run(self, op: str, args: dict | None = None) -> list:
+        self.swaps = 0
+        return super().run(op, args)
 
     def _before(self, a: int, b: int) -> bool:
         raise NotImplementedError
 
     def _swap(self, i: int, j: int) -> None:
         self.items[i], self.items[j] = self.items[j], self.items[i]
+        self.swaps = (self.swaps or 0) + 1
 
     def _sift_up(self, i: int) -> list[int]:
         path = [self.items[i][0]]
@@ -309,13 +327,15 @@ class MinHeap(_ArrayHeap):
     KEYWORDS = ("heap", "min-heap", "min heap", "priority queue", "sift", "heapify", "extract min", "extract-min")
     PRESETS = {"empty": [], "small heap": [3, 8, 5], "six values": [9, 4, 7, 1, 8, 2]}
     OPS = {"insert": ("value",), "extract_min": (), "peek": ()}
-    FACTS = ("root", "min", "size", "items")
+    FACTS = ("root", "min", "size", "items", "swaps")
+    STRIP = ("root", "size", "swaps")
+    OP_LINES = {"insert": (0,), "extract_min": (1,), "peek": (2,)}
     HELP = (
         "min_heap (binary min-heap stored as an array, children of index i at 2i+1 and 2i+2): initial = list of "
         "whole numbers inserted in that order, e.g. [9, 4, 7]. ops: insert(value) appends then swaps with its "
         "parent while smaller; extract_min() removes the root, moves the last value to the root, then swaps it "
         "with its smaller child while larger; peek() reads the root. state = the array, e.g. [4, 9, 7]. "
-        "facts: root (= min), min, size, items (the array)."
+        "facts: root (= min), min, size, items (the array), swaps (made by the last operation)."
     )
 
     def __init__(self, initial) -> None:
@@ -324,6 +344,7 @@ class MinHeap(_ArrayHeap):
             raise OpError("initial data for a min-heap must be a list of whole numbers")
         for v in initial:
             self.op_insert(v)
+        self.swaps = None
 
     def _before(self, a, b):
         return a < b
@@ -354,7 +375,7 @@ class MinHeap(_ArrayHeap):
 
     def facts(self) -> dict:
         root = self.items[0][1] if self.items else None
-        return {"root": root, "min": root, "size": len(self.items), "items": self.state()}
+        return {"root": root, "min": root, "size": len(self.items), "items": self.state(), "swaps": self.swaps}
 
     def snapshot(self) -> dict:
         return {"items": [list(i) for i in self.items], "heap_size": len(self.items), "kind": "min"}
@@ -374,7 +395,10 @@ class HeapSort(_ArrayHeap):
     KEYWORDS = ("heap sort", "heapsort", "max-heap", "max heap")
     PRESETS = {"six values": [4, 10, 3, 5, 1, 8], "reversed": [6, 5, 4, 3, 2], "five values": [7, 2, 9, 4, 6]}
     OPS = {"build_heap": (), "extract_max": ()}
-    FACTS = ("root", "heap_size", "sorted", "size", "items")
+    FACTS = ("root", "heap_size", "sorted", "size", "items", "swaps")
+    STRIP = ("root", "heap_size", "swaps", "sorted")
+    FACT_LABELS = {"heap_size": "heap size"}
+    OP_LINES = {"build_heap": (0,), "extract_max": (1,)}
     HELP = (
         "heap_sort (in place, max-heap, children of index i at 2i+1 and 2i+2): initial = list of whole numbers. "
         "ops: build_heap() turns the array into a max-heap (sift down from index n/2 - 1 to 0), and must come "
@@ -382,7 +406,7 @@ class HeapSort(_ArrayHeap):
         "the new root down. "
         'state = {"array": [...], "heap_size": number of values still in the heap}. '
         "facts: root (largest value in the heap), heap_size, sorted (the sorted values at the end), size, "
-        "items (the whole array)."
+        "items (the whole array), swaps (made by the last operation, the root swap included)."
     )
 
     def __init__(self, initial) -> None:
@@ -427,7 +451,7 @@ class HeapSort(_ArrayHeap):
     def facts(self) -> dict:
         return {"root": self.items[0][1] if self.heap_size else None, "heap_size": self.heap_size,
                 "sorted": [v for _, v in self.items[self.heap_size:]] if self.heap_size < len(self.items) else [],
-                "size": len(self.items), "items": [v for _, v in self.items]}
+                "size": len(self.items), "items": [v for _, v in self.items], "swaps": self.swaps}
 
     def snapshot(self) -> dict:
         return {"items": [list(i) for i in self.items], "heap_size": self.heap_size, "kind": "max",

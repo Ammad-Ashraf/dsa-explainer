@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from manim import Arrow, Line, VGroup
 
-from .common import DOWN, EDGE, LEFT, MUTED, UP, View, cell, label, pointer
+from .common import DOWN, EDGE, LEFT, LINE, MUTED, UP, View, cell, label, pointer
 
 
 class StackView(View):
@@ -18,7 +18,7 @@ class StackView(View):
         mobs["walls"] = VGroup(
             Line([-x, 2.75, 0], [-x, floor, 0]), Line([-x, floor, 0], [x, floor, 0]),
             Line([x, floor, 0], [x, 2.75, 0])
-        ).set_stroke(MUTED, 4)
+        ).set_stroke(LINE, 4)
         if snap["items"]:
             mobs["top"] = pointer("top", mobs[snap["items"][-1][0]], LEFT, buff=0.45)
         else:
@@ -54,12 +54,12 @@ class LinkedListView(View):
             mobs[iid] = box
             if prev is not None:
                 mobs[("next", prev[0])] = Arrow(prev[1].get_right(), box.get_left(), buff=0.06, stroke_width=4,
-                                                color=MUTED, max_tip_length_to_length_ratio=0.3)
+                                                color=LINE, max_tip_length_to_length_ratio=0.3)
             prev, x = (iid, box), x + w + gap
         null = label("null", 26, MUTED).move_to([x - w / 2 + 0.45, 0.2, 0])
         mobs["null"] = null
         if prev is not None:
             mobs[("next", prev[0])] = Arrow(prev[1].get_right(), null.get_left(), buff=0.06, stroke_width=4,
-                                            color=MUTED, max_tip_length_to_length_ratio=0.3)
+                                            color=LINE, max_tip_length_to_length_ratio=0.3)
         mobs["head"] = pointer("head", mobs[items[0][0]] if items else null, UP)
         return mobs

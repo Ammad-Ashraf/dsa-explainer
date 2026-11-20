@@ -34,6 +34,9 @@ class Frame:
     after: dict
     focus: list
     state: object  # plain state after the scene (shown to the reviser)
+    lines: list = field(default_factory=list)  # pseudocode lines the step's operation ran (from the simulator)
+    strip_before: list = field(default_factory=list)  # the facts strip before and after the scene
+    strip_after: list = field(default_factory=list)
 
 
 @dataclass
@@ -188,8 +191,9 @@ def verify_lesson(lesson: Lesson) -> Report:
     seen_facts, seen_values = [ds.facts()], ds.values() | every_arg | counts
 
     for label, scene in zip(scene_labels(lesson), lesson.scenes):
-        before, facts_before, values_before = ds.snapshot(), ds.facts(), ds.values()
+        before, facts_before, values_before, strip_before = ds.snapshot(), ds.facts(), ds.values(), ds.strip()
         focus: list = []
+        lines: list = []
         if scene.kind == "step":
             if scene.op is None:
                 err.append(f"{label}: a step scene needs an op.")
@@ -200,6 +204,7 @@ def verify_lesson(lesson: Lesson) -> Report:
                 err.append(f"{label} ({scene.op.describe()}): {exc}")
                 break  # later states would be meaningless
             report.checks += 1
+            lines = ds.code_lines(scene.op.name)
             if scene.claimed_state is None:
                 err.append(f"{label}: claimed_state is missing.")
             elif not ds.matches(scene.claimed_state):
@@ -222,7 +227,7 @@ def verify_lesson(lesson: Lesson) -> Report:
         problems, checks = check_narration(label, scene.narration, facts_ok, allowed)
         err.extend(problems)
         report.checks += checks
-        report.frames.append(Frame(before, ds.snapshot(), focus, ds.state()))
+        report.frames.append(Frame(before, ds.snapshot(), focus, ds.state(), lines, strip_before, ds.strip()))
 
     for i, q in enumerate(lesson.quiz, 1):
         problem = check_question(lesson, q)

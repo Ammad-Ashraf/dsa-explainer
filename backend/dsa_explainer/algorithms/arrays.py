@@ -42,6 +42,7 @@ class _Array(Structure):
 
 class _Sort(_Array):
     CATEGORY = "sorting"
+    FACT_LABELS = {"sorted_count": "in place", "pivot_index": "pivot index"}
     PRESETS = {"six values": [5, 1, 4, 2, 8, 3], "reversed": [6, 5, 4, 3, 2, 1], "nearly sorted": [1, 2, 4, 3, 5]}
 
     def __init__(self, initial) -> None:
@@ -73,6 +74,8 @@ class BubbleSort(_Sort):
     KEYWORDS = ("bubble sort", "bubble", "bubblesort")
     OPS = {"bubble_pass": ()}
     FACTS = ("items", "size", "sorted_count", "swaps", "comparisons", "placed")
+    STRIP = ("comparisons", "swaps", "placed", "sorted_count")
+    OP_LINES = {"bubble_pass": (1, 2)}
     HELP = (
         "bubble_sort: initial = list of whole numbers, e.g. [5, 1, 4, 2]. ops: bubble_pass() makes one full pass "
         "over the unsorted part, comparing neighbours from the left and swapping when the left one is larger; "
@@ -103,6 +106,9 @@ class BubbleSort(_Sort):
         self.last = {"swaps": swaps, "comparisons": end - 1, "placed": placed}
         return focus or [self.items[end - 1][0]]
 
+    def code_lines(self, op):
+        return [1, 2, 3] if self.last.get("swaps") == 0 else [1, 2]
+
 
 class InsertionSort(_Sort):
     NAME, TITLE = "insertion_sort", "Insertion sort"
@@ -115,12 +121,15 @@ class InsertionSort(_Sort):
                   "    while j >= 0 and a[j] > key: a[j + 1] = a[j]; j = j - 1", "    a[j + 1] = key")
     KEYWORDS = ("insertion sort", "insertion", "playing cards", "cards")
     OPS = {"insert_next": ()}
-    FACTS = ("items", "size", "sorted_count", "key", "shifts")
+    FACTS = ("items", "size", "sorted_count", "key", "shifts", "comparisons")
+    STRIP = ("key", "comparisons", "shifts", "sorted_count")
+    OP_LINES = {"insert_next": (1, 2, 3)}
     HELP = (
         "insertion_sort: initial = list of whole numbers. The first value alone counts as sorted. ops: "
         "insert_next() takes the first value after the sorted part (the key), shifts every larger sorted value "
         "one place right, and puts the key in the gap. state = the array. facts: items, size, sorted_count "
-        "(length of the sorted part), key (the value just inserted), shifts (values shifted in the last step)."
+        "(length of the sorted part), key (the value just inserted), shifts (values shifted in the last step), "
+        "comparisons (values compared with the key in the last step)."
     )
 
     def __init__(self, initial) -> None:
@@ -139,7 +148,8 @@ class InsertionSort(_Sort):
             j -= 1
         shifted = [iid for iid, _ in self.items[j:self.k]]
         self.items.insert(j, item)
-        self.last = {"key": item[1], "shifts": self.k - j}
+        # every shifted value was compared, plus the smaller value that stopped the walk (if any)
+        self.last = {"key": item[1], "shifts": self.k - j, "comparisons": self.k - j + (1 if j > 0 else 0)}
         self.k += 1
         return [item[0]] + shifted
 
@@ -155,12 +165,15 @@ class SelectionSort(_Sort):
                   "    swap a[i] and a[m]")
     KEYWORDS = ("selection sort", "selection", "select the minimum")
     OPS = {"select_next": ()}
-    FACTS = ("items", "size", "sorted_count", "selected", "swapped")
+    FACTS = ("items", "size", "sorted_count", "selected", "swapped", "comparisons")
+    STRIP = ("selected", "comparisons", "swapped", "sorted_count")
+    OP_LINES = {"select_next": (1, 2)}
     HELP = (
         "selection_sort: initial = list of whole numbers. ops: select_next() finds the smallest value in the "
         "unsorted part (the first one if there are ties) and swaps it with the first unsorted value; when one "
         "unsorted value is left it is already in place. state = the array. facts: items, size, sorted_count, "
-        "selected (the smallest value just moved), swapped (yes or no: no when it was already in place)."
+        "selected (the smallest value just moved), swapped (yes or no: no when it was already in place), "
+        "comparisons (made while scanning in the last step)."
     )
 
     def __init__(self, initial) -> None:
@@ -178,7 +191,7 @@ class SelectionSort(_Sort):
         swapped = m != self.k
         focus = [self.items[m][0]] + ([self.items[self.k][0]] if swapped else [])
         self._swap(self.k, m)
-        self.last = {"selected": self.items[self.k][1], "swapped": swapped}
+        self.last = {"selected": self.items[self.k][1], "swapped": swapped, "comparisons": n - self.k - 1}
         self.k += 1
         if self.k == n - 1:
             self.k = n
@@ -198,6 +211,9 @@ class MergeSort(_Sort):
     KEYWORDS = ("merge sort", "mergesort", "merging", "divide and conquer")
     OPS = {"merge_next": ()}
     FACTS = ("items", "size", "width", "merged", "low", "high")
+    STRIP = ("width", "low", "high", "merged")
+    FACT_LABELS = {"width": "run width"}
+    OP_LINES = {"merge_next": (2,)}
     HELP = (
         "merge_sort (bottom-up): initial = list of whole numbers. Runs start with width 1. ops: merge_next() "
         "merges the next pair of neighbouring runs of the current width, left to right; a run with no partner "
@@ -247,7 +263,9 @@ class QuickSort(_Sort):
                   "    swap a[i], a[hi]  (the pivot is now in place)", "quicksort the left part, then the right part")
     KEYWORDS = ("quick sort", "quicksort", "pivot", "partition", "lomuto")
     OPS = {"partition_next": ()}
-    FACTS = ("items", "size", "sorted_count", "pivot", "pivot_index", "low", "high")
+    FACTS = ("items", "size", "sorted_count", "pivot", "pivot_index", "low", "high", "comparisons", "swaps")
+    STRIP = ("pivot", "pivot_index", "comparisons", "swaps", "sorted_count")
+    OP_LINES = {"partition_next": (0, 1, 2)}
     FACT_WORDS = {"pivot": "pivot"}
     HELP = (
         "quick_sort (Lomuto partition, pivot = last value of the range): initial = list of whole numbers. "
@@ -255,7 +273,8 @@ class QuickSort(_Sort):
         "front of the range in their order, then the pivot goes right after them, in its final place. The first "
         "range is the whole array; afterwards the left part is partitioned before the right part, and parts "
         "with fewer than two values are already sorted. state = the array. facts: items, size, sorted_count "
-        "(values known to be in place), pivot (value), pivot_index, low and high (the range partitioned)."
+        "(values known to be in place), pivot (value), pivot_index, low and high (the range partitioned), "
+        "comparisons (with the pivot) and swaps (that moved a value) in the last partition."
     )
 
     def __init__(self, initial) -> None:
@@ -272,13 +291,15 @@ class QuickSort(_Sort):
             raise OpError("the array is already sorted")
         lo, hi = self.pending.pop()
         pivot = self.items[hi][1]
-        i, moved = lo, []
+        i, moved, swaps = lo, [], 0
         for j in range(lo, hi):
             if self.items[j][1] < pivot:
                 if i != j:
                     moved += [self.items[j][0], self.items[i][0]]
+                    swaps += 1
                 self._swap(i, j)
                 i += 1
+        swaps += i != hi
         self._swap(i, hi)
         self.done.add(i)
         for a, b in ((lo, i - 1), (i + 1, hi)):
@@ -290,7 +311,8 @@ class QuickSort(_Sort):
             self.pending.append((lo, i - 1))
         if not self.pending:
             self.done = set(range(len(self.items)))
-        self.last = {"pivot": pivot, "pivot_index": i, "low": lo, "high": hi}
+        self.last = {"pivot": pivot, "pivot_index": i, "low": lo, "high": hi, "comparisons": hi - lo,
+                     "swaps": swaps}
         return moved + [self.items[i][0]]
 
     def snapshot(self) -> dict:
@@ -331,13 +353,15 @@ class LinearSearch(_Search):
                "not in the array": {"array": [5, 2, 8, 1], "target": 6},
                "first place": {"array": [4, 8, 1, 5], "target": 4}}
     OPS = {"check_next": ()}
-    FACTS = ("current", "index", "found", "target", "size", "items")
+    FACTS = ("current", "index", "found", "target", "size", "items", "comparisons")
+    STRIP = ("target", "index", "current", "comparisons", "found")
+    FACT_LABELS = {"current": "value"}
     HELP = (
         'linear_search: initial = {"array": [7, 3, 9, 4], "target": 9}. ops: check_next() compares the next '
         "value, from index 0, with the target; the search finishes when they are equal or the array ends. "
         'state = {"index": index just checked, "value": the value there, "found": true or false, '
         '"finished": true or false}. facts: current (the value just checked), index, found (yes or no), target, '
-        "size, items."
+        "size, items, comparisons (values checked so far)."
     )
 
     def __init__(self, initial) -> None:
@@ -362,7 +386,10 @@ class LinearSearch(_Search):
     def facts(self) -> dict:
         s = self.state()
         return {"current": s["value"], "index": s["index"], "found": s["found"], "target": self.target,
-                "size": len(self.items), "items": self.a}
+                "size": len(self.items), "items": self.a, "comparisons": self.i + 1}
+
+    def code_lines(self, op):
+        return [1, 2] if self.finished and self.found is None else [1]
 
     def snapshot(self) -> dict:
         snap = super().snapshot()
@@ -390,7 +417,8 @@ class BinarySearch(_Search):
                "not found": {"array": [2, 4, 6, 8, 10, 12], "target": 5},
                "first value": {"array": [3, 6, 9, 12, 15], "target": 3}}
     OPS = {"probe": ()}
-    FACTS = ("low", "high", "mid", "middle", "found", "target", "size", "items")
+    FACTS = ("low", "high", "mid", "middle", "found", "target", "size", "items", "comparisons")
+    STRIP = ("target", "low", "mid", "high", "comparisons", "found")
     FACT_WORDS = {"middle": "middle"}
     HELP = (
         'binary_search: initial = {"array": [1, 3, 5, 7, 9], "target": 7}; the array must be sorted ascending. '
@@ -399,7 +427,7 @@ class BinarySearch(_Search):
         "a larger one sets high = mid - 1; low > high finishes (not found). "
         'state = {"low": ..., "high": ..., "mid": index just checked, "found": true or false, "finished": true '
         'or false}. facts: low, high, mid (an index), middle (the value at mid), found (yes or no), target, '
-        "size, items."
+        "size, items, comparisons (probes so far)."
     )
 
     def __init__(self, initial) -> None:
@@ -407,11 +435,13 @@ class BinarySearch(_Search):
         if self.a != sorted(self.a):
             raise OpError("binary search needs a sorted array (ascending)")
         self.low, self.high, self.mid = 0, len(self.items) - 1, None
+        self.probes = 0
 
     def op_probe(self):
         if self.finished:
             raise OpError("the search is finished")
         self.mid = (self.low + self.high) // 2
+        self.probes += 1
         value = self.items[self.mid][1]
         if value == self.target:
             self.found, self.finished = self.mid, True
@@ -429,7 +459,10 @@ class BinarySearch(_Search):
 
     def facts(self) -> dict:
         return {**self.state(), "middle": self.items[self.mid][1] if self.mid is not None else None,
-                "target": self.target, "size": len(self.items), "items": self.a}
+                "target": self.target, "size": len(self.items), "items": self.a, "comparisons": self.probes}
+
+    def code_lines(self, op):
+        return [2, 3] if self.found is not None else [2, 4]
 
     def snapshot(self) -> dict:
         snap = super().snapshot()

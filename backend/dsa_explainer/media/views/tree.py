@@ -5,8 +5,9 @@ from __future__ import annotations
 import math
 
 import numpy as np
+from manim import PI
 
-from .common import ACCENT, CURRENT, DOWN, EDGE, MUTED, VISITED, View, cell, label, link, node
+from .common import ACCENT, CELL, CURRENT, DONE_FILL, DOWN, EDGE, MUTED, VISITED, View, cell, label, link, node
 
 
 class TreeView(View):
@@ -63,6 +64,11 @@ def heap_positions(n: int) -> list[np.ndarray]:
 
 class HeapView(View):
     name, enter, exit = "heap", DOWN * 0.4, DOWN * 0.4
+    arc = -PI * 0.5  # a sift swaps parent and child: they pass each other on the way
+
+    def arc_for(self, key):
+        """Tree nodes and their array cells both arc."""
+        return self.arc if isinstance(key, int) or (isinstance(key, tuple) and key[0] == "cell") else 0.0
 
     def draw(self, snap, marks):
         mobs, items, size = {}, snap["items"], snap["heap_size"]
@@ -81,7 +87,7 @@ class HeapView(View):
         for i, (iid, value) in enumerate(items):
             in_heap = i < size
             colour = marks.get(iid, EDGE) if in_heap else VISITED
-            mobs[("cell", iid)] = cell(value, w, 0.62, colour, 28).move_to([x0 + i * (w + gap), y, 0])
+            mobs[("cell", iid)] = cell(value, w, 0.62, colour, 28, fill=CELL if in_heap else DONE_FILL).move_to([x0 + i * (w + gap), y, 0])
             mobs[("index", i)] = label(i, 18, MUTED).move_to([x0 + i * (w + gap), y - 0.48, 0])
         title = {"min": "min-heap: every parent is smaller than its children",
                  "max": "max-heap: every parent is larger than its children"}[snap.get("kind", "min")]

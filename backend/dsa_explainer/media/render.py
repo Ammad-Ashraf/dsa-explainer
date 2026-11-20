@@ -5,7 +5,12 @@ snapshots of the real simulation. The algorithm's view (media/views) turns a
 snapshot into {key: shape}. To animate a step, `morph` moves shapes whose key
 exists in both the before and after picture, fades out keys that disappeared
 and fades in new ones, so the same code animates a push, a dequeue, a swap, a
-heap sift, a tree delete or a graph step.
+heap sift, a tree delete or a graph step. Views that opt in (View.arc) move
+elements on an arc, so two values that swap pass each other.
+
+Beside the structure, a step shows its pseudocode with the lines the operation
+ran highlighted and a strip of the simulator's facts after the step (see
+panels.py); both were recorded by the verifier, never written by the model.
 """
 
 from __future__ import annotations
@@ -16,17 +21,18 @@ import tempfile
 import textwrap
 from pathlib import Path
 
+import numpy as np
 from manim import (
-    DOWN, LEFT, RIGHT, UP, FadeIn, FadeOut, Indicate, LaggedStart, Line, Scene, Transform, VGroup, Write, linear,
-    tempconfig,
+    DOWN, LEFT, RIGHT, UP, FadeIn, FadeOut, Indicate, LaggedStart, Line, Scene, Transform, VGroup,
+    Write, linear, tempconfig,
 )
 
 from .. import config
-from . import views
+from . import panels, views
 from .views.common import ACCENT, BG, CELL, EDGE, FG, MUTED, NEW, VISITED, fit, label, option
 from .voice import silence
 
-RENDER_VERSION = "4"  # change to re-render every cached clip after editing the renderer or a view
+RENDER_VERSION = "5"  # change to re-render every cached clip after editing the renderer or a view
 QUALITY = {"draft": (854, 480, 15), "standard": (1280, 720, 30), "high": (1920, 1080, 30)}
 THINK_SECONDS = 3.0  # quiz: time to think before the answer is shown
 
@@ -62,11 +68,19 @@ class LessonScene(Scene):
     def caption(text: str):
         return fit(label(text, 28), 12.6).to_edge(DOWN, buff=0.32)
 
-    def morph(self, shown: dict, target: dict, run_time: float) -> dict:
+    def picture(self, snap: dict, marks: dict) -> dict:
+        """The view's drawing of a snapshot, placed left of the pseudocode card when the clip has one."""
+        picture = self.view.draw(snap, marks)
+        return panels.place(picture) if self.job.get("code") else picture
+
+    def morph_anims(self, shown: dict, target: dict, arcs: bool = True) -> tuple[list, dict]:
+        """Transforms for shapes in both pictures (on the view's arc when they move), fades for the rest."""
         anims, result = [], {}
         for key, mob in shown.items():
             if key in target:
-                anims.append(Transform(mob, target[key]))
+                moved = np.linalg.norm(target[key].get_center() - mob.get_center()) > 0.05
+                arc = self.view.arc_for(key) if arcs and moved else 0.0
+                anims.append(Transform(mob, target[key], path_arc=arc))
                 result[key] = mob
             else:
                 anims.append(FadeOut(mob, shift=self.view.exit))
@@ -74,9 +88,29 @@ class LessonScene(Scene):
             if key not in shown:
                 anims.append(FadeIn(mob, shift=self.view.enter))
                 result[key] = mob
+        return anims, result
+
+    def morph(self, shown: dict, target: dict, run_time: float, arcs: bool = True) -> dict:
+        anims, result = self.morph_anims(shown, target, arcs)
         if anims:
             self.play(*anims, run_time=run_time)
         return result
+
+    def code(self, job: dict) -> dict:
+        """Add the pseudocode card; returns its rows by line index."""
+        if not job.get("code"):
+            return {}
+        card, rows = panels.code_card(job["code"])
+        self.add(card, *rows.values())
+        return rows
+
+    def light_up(self, rows: dict, lines: list) -> list:
+        """Animations that highlight the pseudocode lines the step's operation ran."""
+        anims = []
+        for i in lines:
+            if i in rows:
+                anims += [FadeIn(panels.highlight(rows[i])), rows[i].animate.set_color(panels.line_colour(True))]
+        return anims
 
     def play_intro(self, job: dict) -> None:
         title = fit(label(job["title"], 52, bold=True), 12.5)
@@ -86,30 +120,42 @@ class LessonScene(Scene):
         self.wait(1.2)
         self.play(FadeOut(card, shift=UP * 0.4), run_time=0.6)
         self.header(job)
-        picture = self.view.draw(job["after"], {})
-        self.play(*[FadeIn(m) for m in picture.values()], FadeIn(self.caption(job["caption"])), run_time=0.9)
+        rows = self.code(job)
+        self.remove(*rows.values())  # the card stays; the rows fade in with the picture
+        extras = list(rows.values()) + list(panels.strip(job.get("strip_after", [])).values())
+        picture = self.picture(job["after"], {})
+        self.play(*[FadeIn(m) for m in list(picture.values()) + extras], FadeIn(self.caption(job["caption"])),
+                  run_time=0.9)
 
     def play_step(self, job: dict) -> None:
         self.header(job)
         view, slow = self.view, 1 / job["speed"]
-        shown = view.draw(job["before"], {})
+        rows = self.code(job)
+        facts = panels.strip(job.get("strip_before", []))
+        self.add(*facts.values())
+        shown = self.picture(job["before"], {})
         self.add(*shown.values())
-        self.play(FadeIn(self.caption(job["caption"])), run_time=0.4)
-        # 1. walk the path the operation takes (comparisons, traversal, the node leaving the queue)
+        # 1. the caption, and the pseudocode lines this operation runs
+        self.play(FadeIn(self.caption(job["caption"])), *self.light_up(rows, job.get("lines", [])), run_time=0.5)
+        # 2. walk the path the operation takes (comparisons, traversal, the node leaving the queue)
         path = view.path(job, shown)
         for key in path:
             self.play(Indicate(shown[key], color=ACCENT, scale_factor=1.15), run_time=min(0.6, 3.0 / len(path)) * slow)
-        # 2. morph into the true state after the operation
+        # 3. morph into the true state after the operation; the facts strip updates with it, changes in blue
         before_keys = set(shown)
-        shown = self.morph(shown, view.draw(job["after"], view.marks(job, before_keys)), 1.2 * slow)
-        # 3. pulse what is new
+        moves, shown = self.morph_anims(shown, self.picture(job["after"], view.marks(job, before_keys)))
+        changed = panels.changed_facts(job.get("strip_before", []), job.get("strip_after", []))
+        fact_moves, facts = self.morph_anims(facts, panels.strip(job.get("strip_after", []), changed), arcs=False)
+        if moves or fact_moves:
+            self.play(*moves, *fact_moves, run_time=1.2 * slow)
+        # 4. pulse what is new
         keys = [view.focus_key(f) for f in job["focus"]]
         new = [shown[k] for k in dict.fromkeys(keys) if k in shown and k not in before_keys]
         if new:
             self.play(*[Indicate(m, color=NEW, scale_factor=1.12) for m in new], run_time=0.6 * slow)
         self.hold_until(job["duration"] + 0.2 + (slow - 1) * 1.5)
-        # 4. back to plain colours, so the next clip starts from the same picture
-        self.morph(shown, view.draw(job["after"], {}), 0.3)
+        # 5. back to plain colours, so the next clip starts from the same picture
+        self.morph(shown, self.picture(job["after"], {}), 0.3, arcs=False)
 
     def play_summary(self, job: dict) -> None:
         self.header(job)
@@ -142,6 +188,20 @@ class LessonScene(Scene):
         self.play(right[0].animate.set_stroke(VISITED, width=6).set_fill(VISITED, opacity=0.3),
                   *[o.animate.set_opacity(0.3) for o in others], run_time=0.6)
         self.hold_until(reveal + job["answer_duration"] + 0.6)
+
+
+def compose(job: dict, when: str = "after") -> dict:
+    """Every shape of a scene's resting picture ({key: mobject}) as its clip shows it after (or before) the
+    operation: the placed structure, the pseudocode card and rows, and the facts strip. For the layout tests."""
+    view = views.get(job["view"])
+    picture = view.draw(job[when], {})
+    out = {("picture", k): m for k, m in (panels.place(picture) if job.get("code") else picture).items()}
+    if job.get("code"):
+        card, rows = panels.code_card(job["code"])
+        out[("code", "card")] = card
+        out.update({("code", i): r for i, r in rows.items()})
+    out.update(panels.strip(job.get("strip_" + when, [])))
+    return out
 
 
 def render_clip(job: dict, out: Path, quality: str = "draft") -> Path:

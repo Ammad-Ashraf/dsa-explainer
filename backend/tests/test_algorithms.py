@@ -422,3 +422,117 @@ def test_topics_route_to_the_right_algorithm(topic, expected):
 
 def test_the_old_graph_name_still_works():
     assert algorithms.get("graph") is algorithms.BFS and algorithms.DISPLAY_NAMES["graph"] == "Breadth-first search"
+
+
+# --- what the video shows beside the picture: counts, the facts strip, pseudocode lines ------
+
+
+@given(arrays)
+def test_insertion_and_selection_counts_match_an_instrumented_reference(values):
+    a, steps = list(values), []
+    for i in range(1, len(a)):  # textbook insertion sort, counting every comparison with the key
+        key, j, comparisons = a[i], i - 1, 0
+        while j >= 0:
+            comparisons += 1
+            if a[j] <= key:
+                break
+            a[j + 1] = a[j]
+            j -= 1
+        a[j + 1] = key
+        steps.append(comparisons)
+    ds = build("insertion_sort", values)
+    for expected in steps:
+        ds.run("insert_next")
+        assert ds.facts()["comparisons"] == expected
+    ds = build("selection_sort", values)
+    for k in range(len(values) - 1):
+        ds.run("select_next")
+        assert ds.facts()["comparisons"] == len(values) - k - 1
+
+
+@given(arrays)
+def test_quick_sort_counts_match_an_instrumented_lomuto(values):
+    a, log, pending = list(values), [], [(0, len(values) - 1)] if len(values) > 1 else []
+    while pending:
+        lo, hi = pending.pop()
+        i, swaps = lo, 0
+        for j in range(lo, hi):
+            if a[j] < a[hi]:
+                swaps += i != j
+                a[i], a[j] = a[j], a[i]
+                i += 1
+        swaps += i != hi
+        a[i], a[hi] = a[hi], a[i]
+        log.append((hi - lo, swaps))
+        pending += [r for r in ((i + 1, hi), (lo, i - 1)) if r[1] - r[0] >= 1]
+    ds = build("quick_sort", values)
+    for comparisons, swaps in log:
+        ds.run("partition_next")
+        assert (ds.facts()["comparisons"], ds.facts()["swaps"]) == (comparisons, swaps)
+    assert ds.state() == sorted(values)
+
+
+@given(st.lists(small_ints, max_size=7))
+def test_heap_swap_counts_match_the_sift_distance(values):
+    ds, heap = build("min_heap", []), []
+    for v in values:
+        heap.append(v)
+        i, swaps = len(heap) - 1, 0
+        while i and heap[i] < heap[(i - 1) // 2]:
+            heap[i], heap[(i - 1) // 2] = heap[(i - 1) // 2], heap[i]
+            i, swaps = (i - 1) // 2, swaps + 1
+        ds.run("insert", {"value": v})
+        assert ds.facts()["swaps"] == swaps and ds.state() == heap
+
+
+@given(st.lists(small_ints, min_size=1, max_size=8, unique=True), small_ints)
+def test_search_comparisons_count_the_values_checked(values, target):
+    ds = build("linear_search", {"array": values, "target": target})
+    steps = run_all(ds, "check_next")
+    assert ds.facts()["comparisons"] == steps == (values.index(target) + 1 if target in values else len(values))
+    values = sorted(values)
+    ds = build("binary_search", {"array": values, "target": target})
+    assert ds.facts()["comparisons"] == 0
+    steps = run_all(ds, "probe")
+    assert ds.facts()["comparisons"] == steps <= len(values).bit_length()
+
+
+@pytest.mark.parametrize("cls", algorithms.ALL, ids=lambda c: c.NAME)
+def test_strip_and_pseudocode_lines_come_from_the_simulator(cls):
+    assert cls.STRIP and set(cls.STRIP) <= set(cls.FACTS), "the strip shows only declared facts"
+    assert cls.PSEUDOCODE
+    for preset in cls.PRESETS.values():
+        ds = cls(preset)
+        for _ in range(4):
+            ran = False
+            for op, needs in cls.OPS.items():
+                try:
+                    ds.run(op, {a: {"value": 42, "key": 11, "index": 0}[a] for a in needs})
+                except OpError:
+                    continue
+                lines = ds.code_lines(op)
+                assert lines and all(0 <= i < len(cls.PSEUDOCODE) for i in lines), (op, lines)
+                strip = ds.strip()
+                assert [label for label, _ in strip] == [cls.FACT_LABELS.get(n, n.replace("_", " "))
+                                                        for n in cls.STRIP if n in ds.facts()]
+                facts = ds.facts()
+                for (label, text), name in zip(strip, [n for n in cls.STRIP if n in facts]):
+                    assert text == ("-" if facts[name] is None else algorithms.fact_text(facts[name]))
+                ran = True
+                break
+            if not ran:
+                break
+
+
+def test_pseudocode_lines_follow_what_the_operation_did():
+    ds = build("binary_search", {"array": [1, 3, 5, 7, 9], "target": 7})
+    ds.run("probe")  # mid = 2, value 5 < 7: go right
+    assert ds.code_lines("probe") == [2, 4]
+    ds.run("probe")  # mid = 3, found
+    assert ds.code_lines("probe") == [2, 3]
+    ds = build("bubble_sort", [1, 2, 3])
+    ds.run("bubble_pass")  # no swaps: the early stop line runs too
+    assert ds.code_lines("bubble_pass") == [1, 2, 3]
+    ds = build("tree_traversal", {"values": [2, 1, 3], "order": "postorder"})
+    ds.run("visit")
+    assert ds.code_lines("visit") == [2]

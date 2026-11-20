@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from manim import Arrow
 
-from .common import ACCENT, CURRENT, EDGE, LEFT, MUTED, NEW, RIGHT, UP, View, cell, label
+from .common import ACCENT, CURRENT, EDGE, LINE, MUTED, NEW, RIGHT, UP, View, cell, label
 
 
 class BucketsView(View):
@@ -24,10 +24,10 @@ class BucketsView(View):
             for k, (iid, key) in enumerate(chain):
                 box = cell(key, 0.95, min(0.66, dy - 0.12), marks.get(iid, EDGE), 28).move_to([-3.0 + k * 1.55, y, 0])
                 mobs[iid] = box
-                mobs[("arrow", iid)] = Arrow(prev.get_right(), box.get_left(), buff=0.05, stroke_width=3, color=MUTED,
+                mobs[("arrow", iid)] = Arrow(prev.get_right(), box.get_left(), buff=0.05, stroke_width=3, color=LINE,
                                              max_tip_length_to_length_ratio=0.3)
                 prev = box
-        mobs["rule"] = label(f"bucket = key mod {m}", 24, ACCENT).to_corner(UP + LEFT).shift([0.3, -0.55, 0])
+        mobs["rule"] = label(f"bucket = key mod {m}", 24, ACCENT).move_to([-3.4, top + 0.85, 0])
         return mobs
 
 

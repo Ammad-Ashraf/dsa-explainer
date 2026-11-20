@@ -31,6 +31,7 @@ def jobs_for(lesson: Lesson, report: Report) -> list[dict]:
     steps = sum(s.kind == "step" for s in lesson.scenes)
     cls = algorithms.get(lesson.structure)
     common = {"structure": cls.NAME, "view": cls.VIEW, "structure_title": cls.TITLE, "title": lesson.title}
+    code = list(cls.PSEUDOCODE)
     jobs = []
     for name, scene, frame in zip(labels, lesson.scenes, report.frames):
         header = f"Step {name.split()[1]} of {steps}" if scene.kind == "step" else name.title()
@@ -38,6 +39,8 @@ def jobs_for(lesson: Lesson, report: Report) -> list[dict]:
             "name": name, "kind": scene.kind, **common, "level": lesson.level, "label": header if scene.kind != "intro" else "", "caption": scene.caption,
             "points": scene.points, "narration": scene.narration, "speed": scene.speed,
             "before": frame.before, "after": frame.after, "focus": frame.focus,
+            # beside the picture: the pseudocode with the lines this step ran, and the facts strip
+            "code": code, "lines": frame.lines, "strip_before": frame.strip_before, "strip_after": frame.strip_after,
         })
     for i, q in enumerate(lesson.quiz, 1):
         right = answer_index(lesson, q)

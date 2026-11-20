@@ -43,6 +43,9 @@ class Fibonacci(_Table):
     PRESETS = {"up to F(7)": {"n": 7}, "up to F(5)": {"n": 5}, "up to F(9)": {"n": 9}}
     OPS = {"fill_next": ()}
     FACTS = ("current", "value", "table", "size")
+    STRIP = ("current", "value")
+    FACT_LABELS = {"current": "i", "value": "F[i]"}
+    OP_LINES = {"fill_next": (1,)}
     HELP = (
         'fibonacci (bottom-up table): initial = {"n": 7}, n from 2 to 10. The table has cells F[0] to F[n]; '
         "F[0] = 0 and F[1] = 1 are filled before the first step. ops: fill_next() fills the next empty cell "
@@ -89,14 +92,18 @@ class CoinChange(_Table):
                "coins 1, 2, 5 for 7": {"coins": [1, 2, 5], "amount": 7},
                "coins 2, 3 for 7": {"coins": [2, 3], "amount": 7}}
     OPS = {"fill_next": ()}
-    FACTS = ("current", "value", "table", "coins", "size")
+    FACTS = ("current", "value", "table", "coins", "size", "coin")
+    STRIP = ("coins", "current", "value", "coin")
+    FACT_LABELS = {"current": "amount", "value": "fewest coins", "coin": "last coin"}
+    OP_LINES = {"fill_next": (1, 2)}
     HELP = (
         'coin_change (fewest coins, bottom-up): initial = {"coins": [1, 3, 4], "amount": 6}, 1 to 4 distinct '
         "coins from 1 to 20, amount from 2 to 10. Cell a holds the fewest coins that pay amount a; cell 0 is 0 "
         "before the first step. ops: fill_next() fills the next cell a with 1 + the smallest of cell a - c over "
         'the coins c no larger than a, or "inf" when no coin fits a payable amount. state = the table, null for '
         'empty cells and "inf" for amounts that cannot be paid, e.g. [0, 1, 2, null]. facts: current (the '
-        "amount just filled), value (its fewest coins), table, coins, size (number of cells)."
+        "amount just filled), value (its fewest coins), table, coins, size (number of cells), coin (the coin "
+        "the best way to pay it ends with, the smallest on ties; null when it cannot be paid)."
     )
 
     def __init__(self, initial) -> None:
@@ -130,7 +137,7 @@ class CoinChange(_Table):
 
     def facts(self) -> dict:
         return {"current": self.i, "value": self.cells[self.i][1], "table": self.table(), "coins": self.coins,
-                "size": len(self.cells)}
+                "size": len(self.cells), "coin": self.used}
 
     def snapshot(self) -> dict:
         return {**super().snapshot(), "labels": [str(a) for a in range(len(self.cells))],
