@@ -32,6 +32,9 @@ class Reporter:
     def __init__(self, on_text: Callable[..., None] | None = None) -> None:
         self.on_text = on_text
         self._started: dict[str, float] = {}
+        self._t0 = time.perf_counter()
+        self.timings: dict[str, float] = {}  # seconds each finished stage took
+        self.spans: dict[str, list[float]] = {}  # stage -> [start, seconds], from when the job started
 
     # the old interface: log("message", 0.4)
     def __call__(self, message: str, fraction: float | None = None) -> None:
@@ -53,7 +56,10 @@ class Reporter:
         if status == "running":
             self._started[stage] = time.perf_counter()
         elif stage in self._started:
-            data["seconds"] = round(time.perf_counter() - self._started.pop(stage), 2)
+            began = self._started.pop(stage)
+            data["seconds"] = round(time.perf_counter() - began, 2)
+            self.timings[stage] = data["seconds"]
+            self.spans[stage] = [round(began - self._t0, 2), data["seconds"]]
         self.emit("stage", **data)
 
     def check_cancelled(self) -> None:

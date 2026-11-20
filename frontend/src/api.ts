@@ -39,7 +39,17 @@ export interface Catalog { categories: Record<string, string>; algorithms: Algor
 
 export interface PlanSummary { id: string; title: string; topic: string; structure: string; level: Level; steps: number; questions: number }
 
-export interface StageState { status: "running" | "done" | "failed" | "skipped"; detail?: string; seconds?: number }
+export interface StageState {
+  status: "running" | "done" | "failed" | "skipped"; detail?: string; seconds?: number;
+  /** server time (epoch seconds) when the stage started running, for a live timer */
+  started?: number;
+}
+export interface Timings {
+  plan_seconds?: number; quiz_seconds?: number; voice_seconds?: number; build_seconds?: number; total?: number;
+  stages?: Record<string, number>;
+  /** stage -> [start, seconds] from the start of the job; stages overlap */
+  spans?: Record<string, [number, number]>;
+}
 export interface Job {
   id: string;
   kind: "create" | "render" | "revise";
@@ -67,7 +77,7 @@ export interface VersionInfo {
   rejected?: string[];
   request?: string | null;
   changed?: string[];
-  timings?: Record<string, number>;
+  timings?: Timings;
   captions?: boolean;
 }
 export interface LessonSummary {

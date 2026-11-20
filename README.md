@@ -140,19 +140,25 @@ invented numbers, impossible operations, wrong quiz answers, too-short lessons),
 limits and the fallback model, and the revision flow (with a fake LLM, so no key is needed), plus two real clip
 renders with sound. `python backend/scripts/live_eval.py --render` runs the same checks against the real API.
 
-## Performance (AMD Ryzen 5 3600, CPU only, 4 drawing processes)
+## Performance (AMD Ryzen 5 4500U laptop, 6 cores, CPU only, 3 drawing processes, draft quality)
 
-The voice is made in the main process and each clip is handed to a drawing process as soon as its audio
-exists, so speaking and drawing overlap.
+A new 128-second stack lesson, from the moment the plan exists to the finished video, with a quiz call that takes
+60 s (a typical free-tier reply; we measured 8 to 123 s). Each run starts from an empty cache.
+`python backend/scripts/latency_benchmark.py --plan stack --quiz-seconds 60 --runs sequential,overlap --threads 0,2,4`
 
-| Measurement | Result |
-| --- | --- |
-| Stack lesson from scratch, draft 480p (129 s video, 10 clips) | 59 s (voice 52 s, drawing finishes 3 s after the last narration) |
-| BFS lesson, drawing only, draft 480p / standard 720p (142 s video) | 24 s / 36 s |
-| Revision "slow down step 2": 1 clip drawn, 9 reused | voice 5.5 s + drawing 5.7 s |
-| Example lessons (all verified) | stack 129 s, queue 126 s, linked list 138 s, BST 154 s, BFS 142 s of video |
+| Order | Voice threads | First scene playable | Finished video |
+| --- | --- | ---: | ---: |
+| Before: quiz first, then voice and drawing | default | 120 s, 127 s | 211 s, 182 s |
+| After: quiz written during voice and drawing | default | 76 s, 58 s | 155 s, 136 s |
+| After | 2 | 49 s | 122 s |
+| After | 4 | 63 s | 120 s |
 
-Planning adds one LLM call per attempt, plus one or two calls for the quiz.
+The default rows were run twice (the first pair while a download was running); runs on this laptop vary by about
+20 s. Writing the quiz during the build saves 46 to 56 s, most of the quiz call, and the first scene can be watched
+about twice as soon. Two or four voice threads may help a little while the drawing processes share the CPU, but
+the difference is within the noise, so the default stays and `VOICE_THREADS` is there for slower machines.
+
+The voice alone speaks at about twice real time (see docs/research/voice-models.md). Revisions redraw only the scenes that changed.
 
 ## Limitations
 

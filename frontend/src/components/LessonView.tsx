@@ -47,6 +47,35 @@ export function Quiz({ questions, structure }: { questions: LessonDetail["quiz"]
   );
 }
 
+const STAGE_ORDER = ["plan", "verify", "quiz", "voice", "draw", "join"];
+const STAGE_TITLES: Record<string, string> = { plan: "Plan", verify: "Verify", quiz: "Quiz", voice: "Voice", draw: "Draw", join: "Join" };
+
+/** Where the time went: one bar per stage on a shared clock; the quiz overlaps the voice and drawing. */
+function StageTimeline({ spans, total }: { spans: Record<string, [number, number]>; total?: number }) {
+  const rows = STAGE_ORDER.filter((s) => spans[s]).map((s) => ({ stage: s, start: spans[s][0], seconds: spans[s][1] }));
+  const end = Math.max(total ?? 0, ...rows.map((r) => r.start + r.seconds), 1);
+  return (
+    <div>
+      <h3 className="section-title" style={{ fontSize: 20, marginBottom: 10 }}>Where the time went</h3>
+      <ol className="timeline" aria-label="Time per stage">
+        {rows.map((r) => (
+          <li key={r.stage}>
+            <span className="label">{STAGE_TITLES[r.stage]}</span>
+            <span className="track">
+              <span className={`span ${r.stage}`} style={{ left: `${(100 * r.start) / end}%`, width: `max(3px, ${(100 * r.seconds) / end}%)` }}
+                title={`${STAGE_TITLES[r.stage]}: from ${r.start.toFixed(1)} s, for ${r.seconds.toFixed(1)} s`} />
+            </span>
+            <span className="secs">{formatSeconds(r.seconds)}</span>
+          </li>
+        ))}
+      </ol>
+      <p className="small" style={{ marginTop: 8 }}>
+        {total != null ? `${formatSeconds(total)} from start to finish. ` : ""}Bars that overlap ran at the same time.
+      </p>
+    </div>
+  );
+}
+
 function Verified({ lesson }: { lesson: LessonDetail }) {
   const v = lesson.version_info;
   const t = v.timings ?? {};
@@ -68,6 +97,7 @@ function Verified({ lesson }: { lesson: LessonDetail }) {
         {t.voice_seconds != null && <div className="stat"><b>{formatSeconds(t.voice_seconds)}</b><span>voice</span></div>}
         {t.build_seconds != null && <div className="stat"><b>{formatSeconds(t.build_seconds)}</b><span>voice and drawing</span></div>}
       </div>
+      {t.spans && Object.keys(t.spans).length > 0 && <StageTimeline spans={t.spans} total={t.total} />}
       {v.rejected && v.rejected.length > 0 && (
         <div>
           <h3 className="section-title" style={{ fontSize: 20, marginBottom: 10 }}>Sent back before this plan was accepted</h3>

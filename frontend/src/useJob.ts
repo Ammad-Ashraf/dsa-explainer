@@ -48,8 +48,9 @@ function reduce(state: JobState, event: JobEvent | { type: "reset" } | { type: "
       return { ...state, status: e.status, result: e.result ?? state.result, error: e.error ?? state.error };
     }
     case "stage": {
-      const e = event as unknown as StageState & { stage: StageName };
-      return { ...state, stages: { ...state.stages, [e.stage]: { status: e.status, detail: e.detail, seconds: e.seconds } } };
+      const e = event as unknown as StageState & { stage: StageName; time?: number };
+      const started = e.status === "running" ? e.time : state.stages[e.stage]?.started;
+      return { ...state, stages: { ...state.stages, [e.stage]: { status: e.status, detail: e.detail, seconds: e.seconds, started } } };
     }
     case "message": {
       const e = event as unknown as { text: string; fraction?: number | null };

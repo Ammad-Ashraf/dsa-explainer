@@ -4,22 +4,30 @@ before rendering, so nothing unverified ever reaches the video.
 
 Progress goes to `log`: a plain function `log(message, fraction)` or an
 events.Reporter, which also receives structured stage, scene and clip events.
+
+A new lesson's quiz is written by the language model in a background thread
+while the scenes are voiced and drawn; the quiz clips come last, so the quiz
+call no longer adds its whole time to the wait. Every stage's time is saved
+with the lesson (meta.json "timings").
 """
 
 from __future__ import annotations
 
+import contextvars
 import shutil
 import time
+from concurrent.futures import Future, ThreadPoolExecutor
 from pathlib import Path
 
 from . import config, events, store
 from .authoring import planner, quiz, revise
 from .core.lesson import Lesson
-from .core.verifier import verify_lesson
+from .core.verifier import check_question, verify_lesson
 from .media import video
 
 
-def _finish(lesson: Lesson, folder: Path, version: int, quality: str, rep: events.Reporter, extra: dict) -> dict:
+def _finish(lesson: Lesson, folder: Path, version: int, quality: str, rep: events.Reporter, extra: dict,
+            quiz_future: Future | None = None) -> dict:
     rep.check_cancelled()
     rep.stage("verify", "running")
     report = verify_lesson(lesson)
@@ -30,15 +38,21 @@ def _finish(lesson: Lesson, folder: Path, version: int, quality: str, rep: event
     new_folder = not folder.exists()
     folder.mkdir(parents=True, exist_ok=True)
     try:
-        result = video.build_video(lesson, report, folder / f"lesson_v{version}.mp4", quality, rep)
+        result = video.build_video(lesson, report, folder / f"lesson_v{version}.mp4", quality, rep, quiz=quiz_future)
     except BaseException:
         if new_folder:
             shutil.rmtree(folder, ignore_errors=True)  # no half-made lessons in the history
         else:
             (folder / f"lesson_v{version}.mp4").unlink(missing_ok=True)
         raise
+    if quiz_future is not None:  # the quiz arrived during the build: verify the whole lesson once more
+        report = verify_lesson(lesson)
+        extra["quiz_seconds"] = rep.timings.get("quiz", 0.0)
     timings = {k: round(extra[k], 2) for k in ("plan_seconds", "quiz_seconds") if k in extra}
     timings.update(voice_seconds=round(result["voice_seconds"], 2), build_seconds=round(result["build_seconds"], 2))
+    timings["stages"] = dict(rep.timings)  # wall-clock seconds of every stage, as the app showed them
+    timings["spans"] = dict(rep.spans)  # when each stage ran: stages overlap (the quiz runs beside the drawing)
+    timings["total"] = round(time.perf_counter() - extra.get("started", time.perf_counter()), 2)
     info = {
         "source": extra.get("source", "llm"), "quality": quality, "seconds": round(result["seconds"], 2),
         "clips": result["clips"], "rendered": result["rendered"], "reused": result["reused"],
@@ -55,7 +69,7 @@ def _finish(lesson: Lesson, folder: Path, version: int, quality: str, rep: event
 def make_lesson(topic: str, level: str = "beginner", quality: str = "draft", log=None) -> dict:
     rep = events.reporter(log)
     rep.stage("plan", "running")
-    started = time.perf_counter()
+    started = job_started = time.perf_counter()
     try:
         lesson, rejected = planner.plan_lesson(topic, level, rep)
     except Exception as exc:
@@ -64,19 +78,36 @@ def make_lesson(topic: str, level: str = "beginner", quality: str = "draft", log
     plan_seconds = time.perf_counter() - started
     rep.stage("plan", "done", f"accepted after {len(rejected) + 1} attempt(s)")
     rep.check_cancelled()
+    lesson.quiz = []
+    extra = {"rejected": rejected, "plan_seconds": plan_seconds, "started": job_started}
+    return _finish(lesson, config.OUTPUT_DIR / store.new_id(lesson.title), 1, quality, rep, extra,
+                   quiz_future=start_quiz(lesson, rep))
+
+
+def write_quiz(lesson: Lesson, rep: events.Reporter) -> list:
+    """Verified questions for a lesson; questions built from the lesson if the language model fails."""
     rep.stage("quiz", "running")
-    started = time.perf_counter()
     try:
-        lesson.quiz = quiz.make_quiz(lesson, log=rep)
-        rep.stage("quiz", "done", f"{len(lesson.quiz)} verified question(s)")
+        questions = [q for q in quiz.make_quiz(lesson.model_copy(deep=True), log=rep) if check_question(lesson, q) is None]
+        if not questions:
+            raise ValueError("no question survived the verifier")
+        rep.stage("quiz", "done", f"{len(questions)} verified question(s)")
+        return questions
     except events.Cancelled:
         raise
     except Exception as exc:  # the lesson is verified and ready: a quiz problem must not throw it away
-        lesson.quiz = quiz.builtin_questions(lesson, 2)
+        questions = quiz.builtin_questions(lesson, 2)
         rep(f"The quiz writer failed ({str(exc)[:200]}); using questions built from the lesson.")
-        rep.stage("quiz", "done", f"{len(lesson.quiz)} built-in question(s) (the language model did not answer)")
-    extra = {"rejected": rejected, "plan_seconds": plan_seconds, "quiz_seconds": time.perf_counter() - started}
-    return _finish(lesson, config.OUTPUT_DIR / store.new_id(lesson.title), 1, quality, rep, extra)
+        rep.stage("quiz", "done", f"{len(questions)} built-in question(s) (the language model did not answer)")
+        return questions
+
+
+def start_quiz(lesson: Lesson, rep: events.Reporter) -> Future:
+    """Write the quiz in a background thread (with this job's language-model settings) while the video is built."""
+    executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="dsa-quiz")
+    future = executor.submit(contextvars.copy_context().run, write_quiz, lesson, rep)
+    executor.shutdown(wait=False)
+    return future
 
 
 def from_file(path: str | Path, quality: str = "draft", log=None) -> dict:

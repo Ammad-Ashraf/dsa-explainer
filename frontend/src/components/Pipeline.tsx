@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { STAGES, type JobState, type StageName } from "../useJob";
 import { Spinner } from "./ui";
 
@@ -11,8 +12,20 @@ const WAITING: Record<StageName, string> = {
   join: "The clips become one video",
 };
 
+/** The current time, ticking once a second while `active`. */
+function useNow(active: boolean): number {
+  const [now, setNow] = useState(() => Date.now() / 1000);
+  useEffect(() => {
+    if (!active) return;
+    const timer = window.setInterval(() => setNow(Date.now() / 1000), 1000);
+    return () => window.clearInterval(timer);
+  }, [active]);
+  return now;
+}
+
 export function PipelineRail({ job }: { job: JobState }) {
   const { scenes } = job;
+  const now = useNow(Object.values(job.stages).some((s) => s?.status === "running"));
   return (
     <ol className="rail" aria-label="Pipeline progress">
       {STAGES.map((stage, i) => {
@@ -41,6 +54,9 @@ export function PipelineRail({ job }: { job: JobState }) {
                 {NAMES[stage]}
                 {status === "running" && <Spinner />}
                 {s?.seconds != null && <span className="time">{s.seconds.toFixed(1)} s</span>}
+                {status === "running" && s?.started != null && (
+                  <span className="time" aria-label="Running for">{Math.max(0, Math.round(now - s.started))} s</span>
+                )}
               </div>
               <div className="detail">{detail}</div>
               {progress != null && <div className="bar"><span style={{ width: `${Math.round(progress * 100)}%` }} /></div>}

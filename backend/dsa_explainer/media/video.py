@@ -14,7 +14,7 @@ import hashlib
 import json
 import subprocess
 import time
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import Future, ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 import av
@@ -27,13 +27,24 @@ from . import voices
 from .render import QUIZ_INTRO_SECONDS, RENDER_VERSION, THINK_SECONDS, render_clip
 
 
+QUIZ_SIZE = 2  # questions a new lesson usually gets (only for progress, until the quiz is written)
+
+
+def _common(lesson: Lesson) -> dict:
+    cls = algorithms.get(lesson.structure)
+    return {"structure": cls.NAME, "view": cls.VIEW, "structure_title": cls.TITLE, "title": lesson.title}
+
+
 def jobs_for(lesson: Lesson, report: Report) -> list[dict]:
-    """Everything the renderer needs for each clip, as plain data."""
+    """Everything the renderer needs for each clip (scenes, then quiz questions), as plain data."""
+    return scene_jobs(lesson, report) + quiz_jobs(lesson)
+
+
+def scene_jobs(lesson: Lesson, report: Report) -> list[dict]:
     labels = scene_labels(lesson)
     steps = sum(s.kind == "step" for s in lesson.scenes)
-    cls = algorithms.get(lesson.structure)
-    common = {"structure": cls.NAME, "view": cls.VIEW, "structure_title": cls.TITLE, "title": lesson.title}
-    code = list(cls.PSEUDOCODE)
+    common = _common(lesson)
+    code = list(algorithms.get(lesson.structure).PSEUDOCODE)
     jobs = []
     for name, scene, frame in zip(labels, lesson.scenes, report.frames):
         header = f"Step {name.split()[1]} of {steps}" if scene.kind == "step" else name.title()
@@ -44,6 +55,11 @@ def jobs_for(lesson: Lesson, report: Report) -> list[dict]:
             # beside the picture: the pseudocode with the lines this step ran, and the facts strip
             "code": code, "lines": frame.lines, "strip_before": frame.strip_before, "strip_after": frame.strip_after,
         })
+    return jobs
+
+
+def quiz_jobs(lesson: Lesson) -> list[dict]:
+    common, jobs = _common(lesson), []
     for i, q in enumerate(lesson.quiz, 1):
         right = answer_index(lesson, q)
         spoken = [f"{letter}: {text}" for letter, text in zip("ABCD", q.options)]
@@ -87,10 +103,13 @@ def clip_path(job: dict, quality: str) -> Path:
     return config.CACHE_DIR / "clips" / f"{key}.mp4"
 
 
-def build_video(lesson: Lesson, report: Report, out: Path, quality: str = "draft", log=None) -> dict:
+def build_video(lesson: Lesson, report: Report, out: Path, quality: str = "draft", log=None,
+                quiz: Future | None = None) -> dict:
+    """Voice, draw and join every clip. With `quiz` (a Future of verified questions, written while this runs),
+    the lesson's scenes are voiced and drawn first and the quiz clips are added once the questions are ready."""
     rep = events.reporter(log)
-    jobs = jobs_for(lesson, report)
-    total = len(jobs)
+    jobs = scene_jobs(lesson, report) if quiz is not None else jobs_for(lesson, report)
+    total = len(jobs) + (QUIZ_SIZE if quiz is not None else 0)
     clips, futures, voice_seconds, cues = [], {}, 0.0, []
     started = time.perf_counter()
 
@@ -115,7 +134,19 @@ def build_video(lesson: Lesson, report: Report, out: Path, quality: str = "draft
     try:
         rep.stage("voice", "running")
         rep.stage("draw", "running")
-        for i, job in enumerate(jobs):
+        i = 0
+        while i < len(jobs) or quiz is not None:
+            if i == len(jobs):  # every scene is voiced: now the quiz clips, as soon as the questions exist
+                while not quiz.done():
+                    rep.check_cancelled()
+                    report_finished()
+                    time.sleep(0.2)
+                lesson.quiz = quiz.result()
+                quiz = None
+                jobs += quiz_jobs(lesson)
+                total = len(jobs)
+                continue
+            job = jobs[i]
             rep.check_cancelled()
             report_finished()
             rep.emit("scene", stage="voice", index=i, total=total, name=job["name"])
@@ -136,6 +167,7 @@ def build_video(lesson: Lesson, report: Report, out: Path, quality: str = "draft
                 clip_ready(i, cached=True)
             else:
                 futures[pool.submit(render_clip, job, clips[-1], quality)] = i
+            i += 1
         rep.stage("voice", "done", f"{total} scenes")
         for future in as_completed(futures):
             rep.check_cancelled()

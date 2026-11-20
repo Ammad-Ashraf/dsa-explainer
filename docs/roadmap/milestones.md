@@ -38,7 +38,7 @@ The open questions from the vision, decided so work can proceed without waiting:
 | 6 | Richer, still-verified animations | 5 | **Done** |
 | 4 | Voice research and pluggable voice engines | 0 | **Done** |
 | 7 | Stronger verification and an evaluation harness | 5 | **Done** |
-| 8 | Latency and responsiveness | 1, 3 | |
+| 8 | Latency and responsiveness | 1, 3 | **Done** |
 | 9 | Open-source release | all | |
 
 Milestone numbers are names, not order: the table is in the order the work happens. Milestone 5's registry comes
@@ -206,13 +206,39 @@ model wrote, and there was no measure of how much the verifier actually catches.
 
 ## Milestone 8: Latency and responsiveness
 
-- [ ] 8.1 Per-stage timings recorded for every job and shown in the app.
-- [ ] 8.2 Write the quiz while lesson scenes are voiced and drawn. (Done already: a quiz request is capped at 90 s, and
-      a failed quiz no longer fails the lesson; the built-in question is used instead.)
+**Why.** A new lesson waited for the quiz call (one to two minutes on a free tier) before the first scene was even
+voiced, and the app showed stage times only for stages that had finished.
+
+- [x] 8.1 Per-stage timings: the reporter records every stage's duration and when it started; each lesson version
+      saves them (`meta.json` `timings.stages`, `timings.spans`, `timings.total`). The pipeline rail shows a live
+      timer on the running stage, and the Verified tab draws "Where the time went": one bar per stage on a shared
+      clock, so the quiz overlapping the drawing is visible.
+- [x] 8.2 The quiz is written in a background thread (with the job's language-model settings) while the scenes are
+      voiced and drawn; `build_video` adds the quiz clips last, when the questions are ready, and keeps announcing
+      finished clips while it waits. A failed or empty quiz falls back to built-in questions, as before.
 - [x] 8.3 Progressive playback: clips are announced as soon as they are drawn, even while later scenes are still
       being voiced, and the Studio plays them in order.
-- [ ] 8.4 Voice speed: ONNX Runtime thread tuning, optional GPU execution providers.
-- [ ] 8.5 Before and after measurements in the README.
+- [x] 8.4 Voice speed: ONNX Runtime threads (`VOICE_THREADS`) and execution providers (`VOICE_PROVIDERS`, for
+      example DirectML or CUDA, with the CPU as the fallback) are configurable; measured by thread count in
+      [docs/research/voice-models.md](../research/voice-models.md). The default (one thread per core) is within 6%
+      of the best setting, so it stays.
+- [x] 8.5 Before and after measurements (`scripts/latency_benchmark.py`, in the README):
+
+A new 128-second stack lesson, from the moment the plan exists to the finished video, with a quiz call that takes
+60 s (a typical free-tier reply; we measured 8 to 123 s). Each run starts from an empty cache.
+`python backend/scripts/latency_benchmark.py --plan stack --quiz-seconds 60 --runs sequential,overlap --threads 0,2,4`
+
+| Order | Voice threads | First scene playable | Finished video |
+| --- | --- | ---: | ---: |
+| Before: quiz first, then voice and drawing | default | 120 s, 127 s | 211 s, 182 s |
+| After: quiz written during voice and drawing | default | 76 s, 58 s | 155 s, 136 s |
+| After | 2 | 49 s | 122 s |
+| After | 4 | 63 s | 120 s |
+
+The default rows were run twice (the first pair while a download was running); runs on this laptop vary by about
+20 s. Writing the quiz during the build saves 46 to 56 s, most of the quiz call, and the first scene can be watched
+about twice as soon. Two or four voice threads may help a little while the drawing processes share the CPU, but
+the difference is within the noise, so the default stays and `VOICE_THREADS` is there for slower machines.
 
 ## Milestone 9: Open-source release
 
