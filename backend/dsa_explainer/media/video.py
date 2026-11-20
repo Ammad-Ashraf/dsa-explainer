@@ -26,7 +26,6 @@ from ..core.verifier import Report, answer_index
 from . import voices
 from .render import QUIZ_INTRO_SECONDS, RENDER_VERSION, THINK_SECONDS, render_clip
 
-
 QUIZ_SIZE = 2  # questions a new lesson usually gets (only for progress, until the quiz is written)
 
 
@@ -49,7 +48,8 @@ def scene_jobs(lesson: Lesson, report: Report) -> list[dict]:
     for name, scene, frame in zip(labels, lesson.scenes, report.frames):
         header = f"Step {name.split()[1]} of {steps}" if scene.kind == "step" else name.title()
         jobs.append({
-            "name": name, "kind": scene.kind, **common, "level": lesson.level, "label": header if scene.kind != "intro" else "", "caption": scene.caption,
+            "name": name, "kind": scene.kind, **common, "level": lesson.level,
+            "label": header if scene.kind != "intro" else "", "caption": scene.caption,
             "points": scene.points, "narration": scene.narration, "speed": scene.speed,
             "before": frame.before, "after": frame.after, "focus": frame.focus,
             # beside the picture: the pseudocode with the lines this step ran, and the facts strip
@@ -177,7 +177,8 @@ def build_video(lesson: Lesson, report: Report, out: Path, quality: str = "draft
             reported.add(future)
             i = futures[future]
             rep.emit("scene", stage="draw", index=i, total=total, name=jobs[i]["name"])
-            rep(f"Drew {jobs[i]['name']} ({len(reported)}/{len(futures)} clips)", 0.65 + 0.3 * len(reported) / len(futures))
+            rep(f"Drew {jobs[i]['name']} ({len(reported)}/{len(futures)} clips)",
+                0.65 + 0.3 * len(reported) / len(futures))
             clip_ready(i, cached=False)
         rep.stage("draw", "done", f"{len(futures)} drawn, {total - len(futures)} reused")
     except BaseException:

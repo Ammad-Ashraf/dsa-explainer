@@ -79,8 +79,8 @@ def env_settings() -> dict | None:
     """The provider configured in .env, used when none was chosen in the app."""
     if not config.LLM_API_KEY:
         return None
-    same = next((p for p in PRESETS.values() if p.base_url and p.base_url.rstrip("/") == config.LLM_BASE_URL.rstrip("/")),
-                None)
+    url = config.LLM_BASE_URL.rstrip("/")
+    same = next((p for p in PRESETS.values() if p.base_url and p.base_url.rstrip("/") == url), None)
     return {"provider": "env", "base_url": config.LLM_BASE_URL, "api_key": config.LLM_API_KEY,
             "model": config.LLM_MODEL, "fallback_model": config.LLM_FALLBACK_MODEL,
             "structured": same.structured if same else "json_object"}

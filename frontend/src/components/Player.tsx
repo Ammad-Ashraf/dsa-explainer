@@ -34,7 +34,7 @@ export function ProgressivePlayer({ clips, total, finished }: { clips: Record<nu
         {current && (
           <video ref={video} key={current.key} src={`/api/clips/${current.key}`} controls={started} playsInline
             onEnded={() => setIndex((i) => i + 1)}>
-            {track && <track kind="captions" srcLang="en" label="English" src={track} default />}
+            {track && <track kind="captions" srcLang="en" label="English" src={track} />}
           </video>
         )}
         {!started && (
@@ -88,7 +88,8 @@ export function LessonPlayer({ src, captions, chapters, ops }: {
       <div className="screen">
         <video ref={video} key={src} src={src} controls playsInline preload="metadata"
           onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}>
-          {captions && <track kind="captions" srcLang="en" label="English" src={captions} default />}
+          {/* off until the learner turns it on (CC): every scene already shows its own short caption */}
+          {captions && <track kind="captions" srcLang="en" label="English" src={captions} />}
         </video>
       </div>
       {chapters.length > 0 && (

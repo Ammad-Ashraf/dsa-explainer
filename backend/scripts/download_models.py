@@ -1,9 +1,8 @@
-"""Download the local voice model (Kokoro-82M, ~350 MB) into ./models. Run once:
+"""Download the local voice model (Kokoro-82M, ~350 MB) into the data folder. Run once:
 
     python backend/scripts/download_models.py
 
-Plain HTTPS downloads that resume if interrupted; files already complete are skipped.
-Source: https://github.com/thewh1teagle/kokoro-onnx/releases (Apache 2.0 weights).
+The installed command does this by itself on first run (`dsa-explainer`); see dsa_explainer/models.py.
 """
 
 from __future__ import annotations
@@ -11,38 +10,13 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import httpx
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-ROOT = Path(__file__).resolve().parents[2]  # repository root: models/ lives there
-GH = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0"
-FILES = {
-    "models/kokoro/kokoro-v1.0.onnx": f"{GH}/kokoro-v1.0.onnx",
-    "models/kokoro/voices-v1.0.bin": f"{GH}/voices-v1.0.bin",
-}
-
-
-def fetch(client: httpx.Client, url: str, dest: Path) -> None:
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    size = int(client.head(url, follow_redirects=True).headers.get("content-length", 0))
-    if dest.exists() and size and dest.stat().st_size == size:
-        print(f"ok       {dest.relative_to(ROOT)}")
-        return
-    part = dest.with_suffix(dest.suffix + ".part")
-    have = part.stat().st_size if part.exists() else 0
-    headers = {"Range": f"bytes={have}-"} if have else {}
-    with client.stream("GET", url, headers=headers, follow_redirects=True) as response:
-        response.raise_for_status()
-        with part.open("ab" if response.status_code == 206 else "wb") as fh:
-            for block in response.iter_bytes(1 << 20):
-                fh.write(block)
-    part.replace(dest)
-    print(f"fetched  {dest.relative_to(ROOT)} ({dest.stat().st_size / 1e6:.0f} MB)")
+from dsa_explainer import models  # noqa: E402
 
 
 def main() -> int:
-    with httpx.Client(timeout=httpx.Timeout(60.0, connect=15.0)) as client:
-        for rel, url in FILES.items():
-            fetch(client, url, ROOT / rel)
+    models.download()
     print("voice model ready")
     return 0
 

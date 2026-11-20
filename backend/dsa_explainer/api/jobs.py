@@ -13,8 +13,8 @@ import threading
 import time
 import traceback
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
 
 from .. import events
 
@@ -27,7 +27,7 @@ FINAL = ("done", "failed", "cancelled")
 class Job:
     kind: str
     params: dict
-    run: Callable[["JobReporter"], dict]
+    run: Callable[[JobReporter], dict]
     id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
     status: str = "queued"  # queued | running | done | failed | cancelled
     created: float = field(default_factory=time.time)

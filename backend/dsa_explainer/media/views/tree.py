@@ -34,7 +34,8 @@ class TreeView(View):
         top = 2.35 if not visited else 2.55
         dx = min(1.5, 12.0 / len(order))
         dy = min(1.3, (4.9 if not visited else 3.6) / max(1, max(depth.values())))
-        pos = {nid: np.array([(i - (len(order) - 1) / 2) * dx, top - depth[nid] * dy, 0]) for i, nid in enumerate(order)}
+        pos = {nid: np.array([(i - (len(order) - 1) / 2) * dx, top - depth[nid] * dy, 0])
+               for i, nid in enumerate(order)}
         for nid in order:
             value, left, right = nodes[nid]
             colour = marks.get(nid) or (CURRENT if nid == current else VISITED if nid in visited else EDGE)
@@ -87,7 +88,8 @@ class HeapView(View):
         for i, (iid, value) in enumerate(items):
             in_heap = i < size
             colour = marks.get(iid, EDGE) if in_heap else VISITED
-            mobs[("cell", iid)] = cell(value, w, 0.62, colour, 28, fill=CELL if in_heap else DONE_FILL).move_to([x0 + i * (w + gap), y, 0])
+            box = cell(value, w, 0.62, colour, 28, fill=CELL if in_heap else DONE_FILL)  # sorted: pale green
+            mobs[("cell", iid)] = box.move_to([x0 + i * (w + gap), y, 0])
             mobs[("index", i)] = label(i, 18, MUTED).move_to([x0 + i * (w + gap), y - 0.48, 0])
         title = {"min": "min-heap: every parent is smaller than its children",
                  "max": "max-heap: every parent is larger than its children"}[snap.get("kind", "min")]

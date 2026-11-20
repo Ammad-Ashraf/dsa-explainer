@@ -21,3 +21,9 @@ GeminiAPIKey.txt
 *apikey*
 /backend/plans-draft/
 .hypothesis/
+
+# The web app copied into the package for a wheel (backend/scripts/bundle_frontend.py)
+/backend/dsa_explainer/web/
+/dist/
+/build/
+*.egg-info/

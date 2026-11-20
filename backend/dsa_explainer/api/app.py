@@ -35,10 +35,9 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Streamin
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from .. import config, pipeline, settings, store
-from ..authoring import llm, providers
+from .. import algorithms, config, pipeline, settings, store
+from ..authoring import llm, mistakes, providers
 from ..core.lesson import Lesson, scene_labels
-from .. import algorithms
 from ..core.verifier import answer_index, verify_lesson
 from ..media import voices
 from .jobs import JobManager, JobReporter
@@ -88,7 +87,8 @@ def _plan_files() -> dict[str, object]:
 
 def plan_summary(plan_id: str, lesson: Lesson) -> dict:
     steps = sum(s.kind == "step" for s in lesson.scenes)
-    return {"id": plan_id, "title": lesson.title, "topic": lesson.topic, "structure": algorithms.resolve(lesson.structure),
+    return {"id": plan_id, "title": lesson.title, "topic": lesson.topic,
+            "structure": algorithms.resolve(lesson.structure),
             "level": lesson.level, "steps": steps, "questions": len(lesson.quiz)}
 
 
@@ -104,12 +104,22 @@ def lesson_view(lesson: Lesson) -> dict:
             right = answer_index(lesson, q)
         except Exception:  # an unverifiable question is never shown
             continue
-        why = {i: q.why_wrong[o] for i, o in enumerate(q.options) if o in q.why_wrong and i != right}
+        reasons = q.why_wrong or _simulated_mistakes(lesson, q)
+        why = {i: reasons[o] for i, o in enumerate(q.options) if o in reasons and i != right}
         quiz.append({"question": q.question, "options": q.options, "answer": right, "explanation": q.explanation,
                      "why_wrong": why})
     return {"scenes": scenes, "quiz": quiz,
             "verified": {"ok": report.ok, "checks": report.checks, "errors": report.errors[:5]},
             "plan": lesson.model_dump(mode="json")}
+
+
+def _simulated_mistakes(lesson: Lesson, q) -> dict:
+    """{option: the mistake that gives it} for questions saved without reasons (older and hand-written ones)."""
+    try:
+        found = mistakes.mistakes(lesson, q)
+    except Exception:  # an option we cannot explain is simply shown without a reason
+        return {}
+    return {o: why for o in q.options for value, why in found.items() if mistakes.same_answer(o, value)}
 
 
 def _llm_public(s: llm.LLMSettings | None) -> dict:
@@ -211,7 +221,8 @@ def create_app() -> FastAPI:
     def create_lesson(body: CreateLesson):
         chosen = llm.active_settings()  # fixed now: changing Settings later does not affect this job
         if chosen is None:
-            raise HTTPException(400, "No language model is set up. Add an API key in Settings, or watch a saved lesson.")
+            raise HTTPException(400, "No language model is set up. Add an API key in Settings, "
+                                     "or watch a saved lesson.")
         quality = _quality(body.quality)
 
         def run(rep: JobReporter) -> dict:

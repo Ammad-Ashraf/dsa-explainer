@@ -48,7 +48,7 @@ class LLMSettings:
     structured: str = "json_object"
 
     @classmethod
-    def from_dict(cls, data: dict) -> "LLMSettings":
+    def from_dict(cls, data: dict) -> LLMSettings:
         return cls(**{k: data[k] for k in ("provider", "base_url", "api_key", "model", "fallback_model", "structured")
                       if k in data})
 
@@ -69,7 +69,8 @@ class Client:
     def openai(self) -> OpenAI:
         if self._openai is None:
             self._openai = OpenAI(base_url=self.settings.base_url, api_key=self.settings.api_key or "not-needed",
-                                  timeout=config.LLM_TIMEOUT, max_retries=1)  # a slow model should not wait 3 x the timeout
+                                  # one retry: a slow model should not wait three times the timeout
+                                  timeout=config.LLM_TIMEOUT, max_retries=1)
         return self._openai
 
     def model_in_use(self) -> str:

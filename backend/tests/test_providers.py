@@ -4,12 +4,11 @@ import json
 
 import httpx
 import pytest
-from fastapi.testclient import TestClient
-from openai import BadRequestError
-
 from dsa_explainer import config
 from dsa_explainer.api import create_app
 from dsa_explainer.authoring import llm, providers, schemas
+from fastapi.testclient import TestClient
+from openai import BadRequestError
 
 KEY = "sk-secret-0123456789abcdef"
 

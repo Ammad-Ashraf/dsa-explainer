@@ -12,9 +12,8 @@ ROOT = Path(__file__).resolve().parents[1]  # backend/, so dsa_explainer imports
 sys.path.insert(0, str(ROOT))
 
 import numpy as np  # noqa: E402
-from manim import DOWN, LEFT, RIGHT, UP, Arrow, CurvedArrow, RoundedRectangle, Scene, VGroup, tempconfig  # noqa: E402
-
 from dsa_explainer.media.render import ACCENT, BG, CELL, FG, MUTED, label  # noqa: E402
+from manim import DOWN, LEFT, RIGHT, UP, Arrow, CurvedArrow, RoundedRectangle, Scene, VGroup, tempconfig  # noqa: E402
 
 API, LOCAL, PERSON = "#60a5fa", "#4ade80", "#e2e8f0"
 W, H = 2.75, 1.2

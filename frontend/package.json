@@ -1,7 +1,7 @@
 {
   "name": "dsa-explainer-web",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "description": "The web app for DSA Explainer: verified, narrated algorithm lessons made on your own computer.",
   "scripts": {
@@ -9,7 +9,8 @@
     "build": "tsc --noEmit && eslint . && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest run"
   },
   "dependencies": {
     "@fontsource/nunito": "^5.2.5",
@@ -29,6 +30,7 @@
     "globals": "^16.5.0",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.73.0",
-    "vite": "^7.0.0"
+    "vite": "^7.0.0",
+    "vitest": "^3.2.7"
   }
 }

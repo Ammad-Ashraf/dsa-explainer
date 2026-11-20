@@ -12,7 +12,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 _SOURCE_ROOT = PACKAGE_DIR.parents[1]  # backend/dsa_explainer -> backend -> repository root

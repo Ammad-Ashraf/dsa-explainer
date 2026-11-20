@@ -89,7 +89,8 @@ def main() -> None:
     args = parser.parse_args()
     print(f"Plan {args.plan}, {args.quality} quality, {config.RENDER_WORKERS} drawing processes, quiz answers after "
           f"{args.quiz_seconds:.0f} s.\n")
-    print("| Order | Voice threads | First clip playable | Finished video | Quiz | Voice | Draw | Join | Video length |")
+    print("| Order | Voice threads | First clip playable | Finished video | Quiz | Voice | Draw | Join "
+          "| Video length |")
     print("| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
     for threads in [int(t) for t in args.threads.split(",")]:
         for mode in args.runs.split(","):

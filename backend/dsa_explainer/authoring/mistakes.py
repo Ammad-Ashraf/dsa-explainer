@@ -54,7 +54,7 @@ def answer(structure: str, start, ops: list[Op], ask: str) -> str:
     return fact_text(facts[ask])
 
 
-def _same(a: str, b: str) -> bool:
+def same_answer(a: str, b: str) -> bool:
     return re.sub(r"[\s\[\]'\"]", "", a).lower() == re.sub(r"[\s\[\]'\"]", "", b).lower()
 
 
@@ -86,7 +86,7 @@ def mistakes(lesson: Lesson, q: Question) -> dict[str, str]:
             continue  # the mistaken sequence cannot even run: no option from it
         if value in ("-", "empty") and truth not in ("-", "empty"):
             continue  # "nothing yet" is not a believable answer to a question about the end of the lesson
-        if not _same(value, truth) and not any(_same(value, v) for v in found):
+        if not same_answer(value, truth) and not any(same_answer(value, v) for v in found):
             found[value] = why
     return found
 
@@ -113,12 +113,13 @@ def with_options(lesson: Lesson, q: Question, keep: list[str] | None = None, siz
     reasons = {**near_misses(truth), **mistakes(lesson, q)}
     wrong: list[str] = []
     for option in (keep or []) + list(reasons):
-        if not _same(option, truth) and not any(_same(option, w) for w in wrong):
+        if not same_answer(option, truth) and not any(same_answer(option, w) for w in wrong):
             wrong.append(option)
     options = [truth] + wrong[: size - 1]
     if len(options) < 2:
         raise OpError("no wrong answer could be simulated for this question")
     options.sort(key=lambda o: (len(o), o))  # a stable order that does not give the answer away
     q = q.model_copy(update={"options": options, "answer": truth})
-    q.why_wrong = {o: reasons[o] for o in options if o in reasons and not _same(o, truth) and reasons[o] != "off by one"}
+    q.why_wrong = {o: reasons[o] for o in options
+                   if o in reasons and not same_answer(o, truth) and reasons[o] != "off by one"}
     return q

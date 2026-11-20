@@ -1,5 +1,4 @@
 import pytest
-
 from dsa_explainer.core.lesson import Op
 from dsa_explainer.core.verifier import fact_claims, stray_numbers, verify_lesson
 

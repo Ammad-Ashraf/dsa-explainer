@@ -39,7 +39,7 @@ The open questions from the vision, decided so work can proceed without waiting:
 | 4 | Voice research and pluggable voice engines | 0 | **Done** |
 | 7 | Stronger verification and an evaluation harness | 5 | **Done** |
 | 8 | Latency and responsiveness | 1, 3 | **Done** |
-| 9 | Open-source release | all | |
+| 9 | Open-source release | all | **Done** |
 
 Milestone numbers are names, not order: the table is in the order the work happens. Milestone 5's registry comes
 before the frontend because the library pages are built from it.
@@ -242,9 +242,17 @@ the difference is within the noise, so the default stays and `VOICE_THREADS` is 
 
 ## Milestone 9: Open-source release
 
-- [ ] 9.1 `LICENSE` (MIT) and `THIRD_PARTY_NOTICES.md`.
-- [ ] 9.2 Packaging: `pyproject.toml` metadata, `dsa-explainer` command, models downloaded on first run, built
-      frontend bundled.
-- [ ] 9.3 GitHub Actions on Windows, macOS and Linux: backend tests, `ruff`, frontend build and tests.
-- [ ] 9.4 `CONTRIBUTING.md` with an "add an algorithm" guide, code of conduct, issue and pull-request templates.
-- [ ] 9.5 README rewritten for the open-source project; course material linked from it.
+- [x] 9.1 `LICENSE` (MIT, Ahmed Javaid and Ammad Ashraf) and `THIRD_PARTY_NOTICES.md` (models, fonts, every runtime
+      and development dependency with its licence, and the GPL position of the voice's phonemiser).
+- [x] 9.2 Packaging: a root `pyproject.toml` (setuptools, package in `backend/`), the `dsa-explainer` command
+      (no arguments: download the voice model if missing, serve, open the browser; `serve`, `download-models`,
+      `--version`, or a topic), model download moved into the package (`dsa_explainer/models.py`), and the built
+      web app bundled into wheels (`scripts/bundle_frontend.py` copies `frontend/dist` to `dsa_explainer/web`).
+- [x] 9.3 GitHub Actions (`.github/workflows/ci.yml`): backend tests, `ruff` and the command on Windows, macOS and
+      Linux (Python 3.12, plus 3.13 on Linux); the web app's unit tests (Vitest) and build (type check, ESLint,
+      Vite); a wheel with the web app inside, checked for its contents and kept as an artifact.
+- [x] 9.4 `CONTRIBUTING.md` with the one rule, setup, checks, and guides to add an algorithm, a voice engine and a
+      provider; `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1); issue templates (bug, idea or new algorithm) and a
+      pull-request checklist.
+- [x] 9.5 README rewritten for the open-source project (what it does, quick start, how it works, performance,
+      development, limitations, licence), with the course material linked from it.

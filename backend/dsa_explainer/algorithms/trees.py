@@ -208,6 +208,7 @@ class TreeTraversal(_Tree):
     OPS = {"visit": ()}
     FACTS = ("current", "visited", "order", "root", "size")
     STRIP = ("current", "root", "size")
+    OP_LINES = {"visit": (0, 1, 2, 3)}  # every order's line; code_lines() picks the lesson's order
     HELP = (
         'tree_traversal: initial = {"values": [8, 3, 10, 1, 6], "order": "inorder"}: the values are inserted '
         "into a binary search tree in that order; order is preorder, inorder, postorder or levelorder. "

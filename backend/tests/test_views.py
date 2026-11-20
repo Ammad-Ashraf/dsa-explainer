@@ -1,7 +1,6 @@
 """Every algorithm's view draws every state its simulator reaches (no video is made: fast)."""
 
 import pytest
-
 from dsa_explainer import algorithms
 from dsa_explainer.algorithms import OpError
 from dsa_explainer.media import views

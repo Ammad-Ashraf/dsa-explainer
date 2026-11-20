@@ -13,7 +13,14 @@ import re
 
 from .arrays import BinarySearch, BubbleSort, InsertionSort, LinearSearch, MergeSort, QuickSort, SelectionSort
 from .base import (
-    CATEGORIES, MAX_ITEMS, OpError, Structure, as_value, fact_text, natural_key, normalize,
+    CATEGORIES,
+    MAX_ITEMS,
+    OpError,
+    Structure,
+    as_value,
+    fact_text,
+    natural_key,
+    normalize,
 )
 from .dp import CoinChange, Fibonacci
 from .graphs import BFS, DFS, Dijkstra, TopologicalSort

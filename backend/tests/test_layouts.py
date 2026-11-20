@@ -20,7 +20,6 @@ import os
 from pathlib import Path
 
 import pytest
-
 from dsa_explainer.core.verifier import verify_lesson
 from dsa_explainer.media import panels, render, video
 

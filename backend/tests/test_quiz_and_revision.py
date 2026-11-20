@@ -1,7 +1,6 @@
 import json
 
 import pytest
-
 from dsa_explainer.authoring import quiz, revise
 from dsa_explainer.core.lesson import Question
 from dsa_explainer.core.verifier import check_question, verify_lesson
@@ -55,7 +54,8 @@ def test_unknown_step_is_refused():
 
 def test_rewrite_keeps_facts_true(monkeypatch):
     lesson = load("stack")
-    wrong = {"changes": [{"scene": "step 2", "narration": "We push 7 onto the stack. The top is now 9, the oldest one."}]}
+    wrong = {"changes": [{"scene": "step 2",
+                          "narration": "We push 7 onto the stack. The top is now 9, the oldest one."}]}
     right = {"changes": [{"scene": "step 2", "narration": "Imagine adding one more plate to the pile. We push 7 "
                                                           "and it sits on the very top. The top is now 7."}]}
     calls = fake_llm(monkeypatch, [json.dumps(wrong), json.dumps(right)])

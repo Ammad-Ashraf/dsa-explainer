@@ -9,11 +9,10 @@ import heapq
 from collections import deque
 
 import pytest
-from hypothesis import HealthCheck, given, settings
-from hypothesis import strategies as st
-
 from dsa_explainer import algorithms
 from dsa_explainer.algorithms import OpError, build
+from hypothesis import HealthCheck, given, settings
+from hypothesis import strategies as st
 
 settings.register_profile("dsa", max_examples=60, deadline=None, suppress_health_check=[HealthCheck.too_slow])
 settings.load_profile("dsa")
@@ -500,7 +499,7 @@ def test_search_comparisons_count_the_values_checked(values, target):
 @pytest.mark.parametrize("cls", algorithms.ALL, ids=lambda c: c.NAME)
 def test_strip_and_pseudocode_lines_come_from_the_simulator(cls):
     assert cls.STRIP and set(cls.STRIP) <= set(cls.FACTS), "the strip shows only declared facts"
-    assert cls.PSEUDOCODE
+    assert cls.PSEUDOCODE and set(cls.OP_LINES) == set(cls.OPS), "every operation names its pseudocode lines"
     for preset in cls.PRESETS.values():
         ds = cls(preset)
         for _ in range(4):
@@ -512,11 +511,12 @@ def test_strip_and_pseudocode_lines_come_from_the_simulator(cls):
                     continue
                 lines = ds.code_lines(op)
                 assert lines and all(0 <= i < len(cls.PSEUDOCODE) for i in lines), (op, lines)
+                assert set(lines) <= set(cls.OP_LINES[op]), "the lines a step runs are among those its op declares"
                 strip = ds.strip()
                 assert [label for label, _ in strip] == [cls.FACT_LABELS.get(n, n.replace("_", " "))
                                                         for n in cls.STRIP if n in ds.facts()]
                 facts = ds.facts()
-                for (label, text), name in zip(strip, [n for n in cls.STRIP if n in facts]):
+                for (_, text), name in zip(strip, [n for n in cls.STRIP if n in facts]):
                     assert text == ("-" if facts[name] is None else algorithms.fact_text(facts[name]))
                 ran = True
                 break

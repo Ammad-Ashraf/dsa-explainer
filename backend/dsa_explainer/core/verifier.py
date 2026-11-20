@@ -22,9 +22,9 @@ import json
 import re
 from dataclasses import dataclass, field
 
-from .lesson import Lesson, Question, Scene, scene_labels
 from .. import algorithms
 from ..algorithms import MAX_ITEMS, OpError, build, fact_text, normalize
+from .lesson import Lesson, Question, Scene, scene_labels
 
 MIN_WORDS = 90  # about 36 s of speech: the video must last at least 30 s
 MIN_STEPS, MAX_STEPS = 3, 10

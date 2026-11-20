@@ -15,13 +15,11 @@ import zlib
 
 from pydantic import ValidationError
 
-from .. import events
-from . import llm, schemas
-from ..core.lesson import Lesson, Question
-from .. import algorithms
+from .. import algorithms, events
 from ..algorithms import OpError, build
+from ..core.lesson import Lesson, Question
 from ..core.verifier import check_question, question_answer
-from . import mistakes
+from . import llm, mistakes, schemas
 
 QUIZ_TIMEOUT = 90  # seconds per request: the quiz is the least important part, so it never holds a lesson up for long
 
@@ -86,13 +84,13 @@ def repair(lesson: Lesson, q: Question) -> Question:
         truth = question_answer(lesson, q)
     except OpError:
         return q  # check_question reports it
-    if q.claim is not None or not mistakes._same(q.answer, truth):
+    if q.claim is not None or not mistakes.same_answer(q.answer, truth):
         return q  # a true/false question, or a wrong answer: the model must fix it
     problem = check_question(lesson, q)
     try:
         if problem is None:
             reasons = mistakes.mistakes(lesson, q)
-            q.why_wrong = {o: why for o in q.options for v, why in reasons.items() if mistakes._same(o, v)}
+            q.why_wrong = {o: why for o in q.options for v, why in reasons.items() if mistakes.same_answer(o, v)}
             return q
         if "option" in problem:
             return mistakes.with_options(lesson, q, keep=q.options)

@@ -12,7 +12,22 @@ from __future__ import annotations
 from manim import PI, Line, RoundedRectangle, VGroup
 
 from .common import (
-    ACCENT, CELL, CURRENT, DONE_FILL, DOWN, EDGE, FG, MUTED, NEW, UP, VISITED, View, cell, fit, label, pointer,
+    ACCENT,
+    CELL,
+    CURRENT,
+    DONE_FILL,
+    DOWN,
+    EDGE,
+    FG,
+    MUTED,
+    NEW,
+    UP,
+    VISITED,
+    View,
+    cell,
+    fit,
+    label,
+    pointer,
 )
 
 POINTER_COLOURS = {"mid": CURRENT, "pivot": CURRENT, "i": ACCENT, "low": ACCENT, "high": ACCENT}

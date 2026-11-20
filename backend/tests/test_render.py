@@ -1,7 +1,6 @@
 """Renders one real clip (voice + animation). Takes about 10 seconds."""
 
 import pytest
-
 from dsa_explainer import config
 from dsa_explainer.core.verifier import verify_lesson
 from dsa_explainer.media import render, video, voices

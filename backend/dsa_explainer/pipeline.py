@@ -88,7 +88,8 @@ def write_quiz(lesson: Lesson, rep: events.Reporter) -> list:
     """Verified questions for a lesson; questions built from the lesson if the language model fails."""
     rep.stage("quiz", "running")
     try:
-        questions = [q for q in quiz.make_quiz(lesson.model_copy(deep=True), log=rep) if check_question(lesson, q) is None]
+        written = quiz.make_quiz(lesson.model_copy(deep=True), log=rep)
+        questions = [q for q in written if check_question(lesson, q) is None]
         if not questions:
             raise ValueError("no question survived the verifier")
         rep.stage("quiz", "done", f"{len(questions)} verified question(s)")

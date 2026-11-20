@@ -163,6 +163,7 @@ class DFS(_Graph):
     OPS = {"dfs_step": ()}
     FACTS = ("current", "stack", "top", "visited", "dfs_order", "size")
     STRIP = ("current", "top", "stack", "visited")
+    OP_LINES = {"dfs_step": (0, 1, 2)}  # code_lines() narrows it to what the step did
     HELP = (
         'dfs (depth-first search, recursive order): initial = {"edges": [["A", "B"], ["A", "C"]], "start": "A", '
         '"directed": false}. ops: dfs_step() visits the next node: the first step visits the start node; each '
@@ -316,7 +317,8 @@ class Dijkstra(_Graph):
     def facts(self) -> dict:
         distances = [f"{n}={'inf' if d is None else d}" for n, d in self._ordered_dist().items()]
         return {"current": self.current, "settled": list(self.settled), "distances": distances,
-                "size": len(self.adj), "improved": list(self.improved), **{f"dist_{n}": ("inf" if d is None else d) for n, d in self.dist.items()}}
+                "size": len(self.adj), "improved": list(self.improved),
+                **{f"dist_{n}": ("inf" if d is None else d) for n, d in self.dist.items()}}
 
     def snapshot(self) -> dict:
         return {**self._base_snapshot(), "current": self.current, "visited": list(self.settled),

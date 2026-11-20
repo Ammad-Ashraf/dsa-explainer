@@ -198,7 +198,8 @@ def main() -> None:
                 save(row)
             time.sleep(10)  # stay gentle with free-tier rate limits
         rows.append(row)
-        print(f"{n}. {topic} -> {row['result']}" + (f" after {row['attempts']} attempt(s)" if "attempts" in row else ""),
+        after = f" after {row['attempts']} attempt(s)" if "attempts" in row else ""
+        print(f"{n}. {topic} -> {row['result']}" + after,
               flush=True)
     first = next((r for r in rows if r["result"] == "lesson"), None)
     revisions = run_revisions(first["lesson"]) if first else []

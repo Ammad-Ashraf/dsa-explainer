@@ -16,7 +16,7 @@ wraps it so they keep working and simply see the text of every event.
 from __future__ import annotations
 
 import time
-from typing import Callable
+from collections.abc import Callable
 
 STAGES = ("plan", "verify", "quiz", "voice", "draw", "join")
 STAGE_NAMES = {"plan": "Plan", "verify": "Verify", "quiz": "Quiz", "voice": "Voice", "draw": "Draw", "join": "Join"}

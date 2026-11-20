@@ -1,0 +1,90 @@
+# Packaging and tool settings for DSA Explainer. The Python package lives in backend/dsa_explainer.
+#
+#   pip install .                      the app, with the `dsa-explainer` command
+#   pip install -e ".[dev]"            for development (tests, ruff)
+#
+# A wheel bundles the built web app: run `npm run build` in frontend/, then
+# `python backend/scripts/bundle_frontend.py` (copies frontend/dist to dsa_explainer/web), then `python -m build`.
+# The exact versions the project is tested with are in backend/requirements.txt.
+
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dsa-explainer"
+dynamic = ["version"]
+description = "Verified, narrated data-structure lessons, voiced and animated on your own computer."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
+authors = [{ name = "Ahmed Javaid" }, { name = "Ammad Ashraf" }]
+requires-python = ">=3.11"
+keywords = ["data structures", "algorithms", "education", "manim", "text-to-speech", "llm"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Education",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Education",
+    "Topic :: Multimedia :: Video",
+]
+dependencies = [
+    "manim>=0.19,<0.23",
+    "manimpango>=0.6",
+    "av>=13",
+    "imageio-ffmpeg>=0.5",
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "openai>=1.50",
+    "pydantic>=2.7",
+    "python-dotenv>=1.0",
+    "kokoro-onnx>=0.4",
+    "numpy>=1.26",
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "hypothesis>=6.100", "ruff>=0.6", "markdown>=3.6", "build>=1.2"]
+gpu = ["onnxruntime-gpu>=1.20; platform_system != 'Darwin'"]
+
+[project.scripts]
+dsa-explainer = "dsa_explainer.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/Ahmed-Javaid/NLP-Project-2026"
+Documentation = "https://github.com/Ahmed-Javaid/NLP-Project-2026#readme"
+Roadmap = "https://github.com/Ahmed-Javaid/NLP-Project-2026/blob/feat/open-source-platform/docs/roadmap/milestones.md"
+
+[tool.setuptools.dynamic]
+version = { attr = "dsa_explainer.config.VERSION" }
+
+[tool.setuptools.packages.find]
+where = ["backend"]
+include = ["dsa_explainer*"]
+
+[tool.setuptools.package-data]
+dsa_explainer = ["plans/*.json", "media/fonts/*", "web/**/*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = ["backend/dsa_explainer/web", "frontend"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = [
+    "E731",  # a lambda assigned to a name reads well in tables of small rules
+    "B008",  # FastAPI-style defaults
+    "UP007", # `X | None` and `Optional[X]` are both fine
+    "B905",  # zip() without strict=: the pipeline zips lists it built to the same length on purpose
+]
+
+[tool.ruff.lint.per-file-ignores]
+"backend/tests/*" = ["E402"]  # tests group their imports by milestone section
+# prompts are written one rule per line, as the language model reads them
+"backend/dsa_explainer/authoring/planner.py" = ["E501"]
+"backend/dsa_explainer/authoring/quiz.py" = ["E501"]
+"backend/dsa_explainer/authoring/revise.py" = ["E501"]
+"backend/scripts/*" = ["E402"]
+"docs/research/*" = ["E402"]  # scripts put the backend on sys.path before importing it

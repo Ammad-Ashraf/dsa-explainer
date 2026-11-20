@@ -12,10 +12,26 @@ from __future__ import annotations
 import numpy as np
 from manim import Circle, VGroup
 
-from .common import (
-    ACCENT, CURRENT, DOWN, EDGE, FG, LEFT, LINE, MUTED, QUEUED, RIGHT, UP, VISITED, View, cell, label, link, node,
-)
 from ...algorithms.base import natural_key
+from .common import (
+    ACCENT,
+    CURRENT,
+    DOWN,
+    EDGE,
+    FG,
+    LEFT,
+    LINE,
+    MUTED,
+    QUEUED,
+    RIGHT,
+    UP,
+    VISITED,
+    View,
+    cell,
+    label,
+    link,
+    node,
+)
 
 
 def graph_positions(snap: dict) -> dict:

@@ -75,7 +75,7 @@ class BubbleSort(_Sort):
     OPS = {"bubble_pass": ()}
     FACTS = ("items", "size", "sorted_count", "swaps", "comparisons", "placed")
     STRIP = ("comparisons", "swaps", "placed", "sorted_count")
-    OP_LINES = {"bubble_pass": (1, 2)}
+    OP_LINES = {"bubble_pass": (1, 2, 3)}  # line 3 (stop early) only when the pass made no swaps
     HELP = (
         "bubble_sort: initial = list of whole numbers, e.g. [5, 1, 4, 2]. ops: bubble_pass() makes one full pass "
         "over the unsorted part, comparing neighbours from the left and swapping when the left one is larger; "
@@ -355,6 +355,7 @@ class LinearSearch(_Search):
     OPS = {"check_next": ()}
     FACTS = ("current", "index", "found", "target", "size", "items", "comparisons")
     STRIP = ("target", "index", "current", "comparisons", "found")
+    OP_LINES = {"check_next": (1, 2)}  # code_lines() adds line 2 only when the search ends without finding it
     FACT_LABELS = {"current": "value"}
     HELP = (
         'linear_search: initial = {"array": [7, 3, 9, 4], "target": 9}. ops: check_next() compares the next '
@@ -419,6 +420,7 @@ class BinarySearch(_Search):
     OPS = {"probe": ()}
     FACTS = ("low", "high", "mid", "middle", "found", "target", "size", "items", "comparisons")
     STRIP = ("target", "low", "mid", "high", "comparisons", "found")
+    OP_LINES = {"probe": (2, 3, 4)}  # code_lines() picks "found" or the half that is kept
     FACT_WORDS = {"middle": "middle"}
     HELP = (
         'binary_search: initial = {"array": [1, 3, 5, 7, 9], "target": 7}; the array must be sorted ascending. '

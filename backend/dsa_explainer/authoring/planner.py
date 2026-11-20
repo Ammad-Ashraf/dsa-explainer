@@ -11,11 +11,10 @@ from __future__ import annotations
 
 from pydantic import ValidationError
 
-from .. import config, events
-from . import llm, schemas
+from .. import algorithms, config, events
 from ..core.lesson import Lesson
-from .. import algorithms
 from ..core.verifier import MAX_STEPS, MIN_WORDS, verify_lesson
+from . import llm, schemas
 
 
 class PlanError(RuntimeError):

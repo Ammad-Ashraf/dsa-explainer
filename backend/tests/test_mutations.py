@@ -7,7 +7,6 @@ docs/research/verification.md. These thresholds only move up.
 from collections import defaultdict
 
 import pytest
-
 from dsa_explainer.core import mutants
 
 from .helpers import EXAMPLES, load

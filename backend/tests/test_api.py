@@ -8,10 +8,9 @@ import json
 import time
 
 import pytest
-from fastapi.testclient import TestClient
-
 from dsa_explainer import config, pipeline, store
 from dsa_explainer.api import create_app
+from fastapi.testclient import TestClient
 
 from .helpers import load
 
@@ -76,6 +75,16 @@ def test_saved_plans_are_listed_with_checked_quiz_answers(client):
     for q in stack["quiz"]:
         assert 0 <= q["answer"] < len(q["options"])
     assert client.get("/api/plans/nope").status_code == 404
+
+
+def test_quiz_options_come_with_the_mistake_that_gives_them(client):
+    """Saved questions carry no reasons; the API simulates the mistakes, and never explains the right answer."""
+    explained = 0
+    for plan in ("min_heap", "queue", "stack"):
+        for q in client.get(f"/api/plans/{plan}").json()["quiz"]:
+            assert str(q["answer"]) not in q["why_wrong"]
+            explained += len(q["why_wrong"])
+    assert explained > 0
 
 
 def test_render_saved_plan_job_streams_events_and_records_the_lesson(client, monkeypatch):
@@ -159,7 +168,8 @@ def test_revision_creates_version_two(client, monkeypatch):
 
     monkeypatch.setattr(pipeline, "revise_lesson", revise_lesson)
     monkeypatch.setattr(config, "LLM_API_KEY", "")  # a speed change needs no language model
-    job = wait(client, client.post(f"/api/lessons/{lesson_id}/revisions", json={"request": "slow down step 2"}).json()["id"])
+    started = client.post(f"/api/lessons/{lesson_id}/revisions", json={"request": "slow down step 2"}).json()
+    job = wait(client, started["id"])
     assert job["status"] == "done" and job["result"]["version"] == 2
     detail = client.get(f"/api/lessons/{lesson_id}").json()
     assert [v["version"] for v in detail["versions"]] == [1, 2] and detail["version_info"]["changed"] == ["step 2"]

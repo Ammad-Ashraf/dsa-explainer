@@ -23,8 +23,21 @@ from pathlib import Path
 
 import numpy as np
 from manim import (
-    DOWN, LEFT, RIGHT, UP, FadeIn, FadeOut, Indicate, LaggedStart, Line, Scene, Transform, VGroup,
-    Write, linear, tempconfig,
+    DOWN,
+    LEFT,
+    RIGHT,
+    UP,
+    FadeIn,
+    FadeOut,
+    Indicate,
+    LaggedStart,
+    Line,
+    Scene,
+    Transform,
+    VGroup,
+    Write,
+    linear,
+    tempconfig,
 )
 
 from .. import config

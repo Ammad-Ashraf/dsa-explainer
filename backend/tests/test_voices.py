@@ -9,13 +9,12 @@ import wave
 
 import numpy as np
 import pytest
-from fastapi.testclient import TestClient
-
 from dsa_explainer import config, settings
 from dsa_explainer.api import create_app
 from dsa_explainer.media import voices
 from dsa_explainer.media.voices import lexicon
 from dsa_explainer.media.voices.base import Engine, Voice
+from fastapi.testclient import TestClient
 
 from .helpers import load
 
@@ -58,7 +57,8 @@ def tone(tmp_path, monkeypatch):
 
 @pytest.mark.parametrize("written, spoken", [
     ("BFS visits A first.", "B F S visits A first."),
-    ("Sorting takes O(n log n) time, bubble sort O(n^2).", "Sorting takes O of n log n time, bubble sort O of n squared."),
+    ("Sorting takes O(n log n) time, bubble sort O(n^2).",
+     "Sorting takes O of n log n time, bubble sort O of n squared."),
     ("It runs in O(V + E).", "It runs in O of V plus E."),
     ("We dequeue 3 and enqueue 8.", "We dee-queue 3 and en-queue 8."),
     ("A deque has two ends.", "A deck has two ends."),
@@ -164,7 +164,8 @@ def test_captions_are_served_for_a_lesson_version(tone, tmp_path, monkeypatch):
     (folder / "lesson_v1.vtt").write_text(voices.captions_vtt([[0, 1, "Hello."]]), encoding="utf-8")
     with TestClient(create_app()) as client:
         reply = client.get("/api/lessons/20261120-120000-stack/captions/1")
-        assert reply.status_code == 200 and reply.text.startswith("WEBVTT") and "text/vtt" in reply.headers["content-type"]
+        assert reply.status_code == 200 and reply.text.startswith("WEBVTT")
+        assert "text/vtt" in reply.headers["content-type"]
         assert client.get("/api/lessons/20261120-120000-stack/captions/2").status_code == 404
 
 
