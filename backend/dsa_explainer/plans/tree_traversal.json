@@ -1,0 +1,220 @@
+{
+  "topic": "Show an in-order traversal of a binary search tree",
+  "level": "beginner",
+  "title": "In-Order Traversal, Step by Step",
+  "structure": "tree_traversal",
+  "initial": {
+    "values": [
+      8,
+      3,
+      10,
+      1,
+      6,
+      14
+    ],
+    "order": "inorder"
+  },
+  "scenes": [
+    {
+      "kind": "intro",
+      "narration": "A traversal visits every node of a tree exactly once. In order means: first the whole left subtree, then the node itself, then the right subtree. On a binary search tree that lists the values from smallest to largest.",
+      "caption": "Left, node, right",
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "From 8 we go left to 3, then left again to 1. It has no left child, so 1 is visited first.",
+      "caption": "visit 1",
+      "op": {
+        "name": "visit",
+        "args": {}
+      },
+      "claimed_state": {
+        "current": 1,
+        "visited": [
+          1
+        ]
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "The left subtree of 3 is done, so now we visit 3 itself, before going to its right side.",
+      "caption": "visit 3",
+      "op": {
+        "name": "visit",
+        "args": {}
+      },
+      "claimed_state": {
+        "current": 3,
+        "visited": [
+          1,
+          3
+        ]
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Next comes the right subtree of 3, which is just the node 6. That finishes everything on the left of 8.",
+      "caption": "visit 6",
+      "op": {
+        "name": "visit",
+        "args": {}
+      },
+      "claimed_state": {
+        "current": 6,
+        "visited": [
+          1,
+          3,
+          6
+        ]
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "With the whole left side done, we visit 8. Notice the order so far: 1, 3, 6, 8, already sorted.",
+      "caption": "visit 8",
+      "op": {
+        "name": "visit",
+        "args": {}
+      },
+      "claimed_state": {
+        "current": 8,
+        "visited": [
+          1,
+          3,
+          6,
+          8
+        ]
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Now the right subtree of 8. Its smallest node is 10, which has no left child, so 10 is next.",
+      "caption": "visit 10",
+      "op": {
+        "name": "visit",
+        "args": {}
+      },
+      "claimed_state": {
+        "current": 10,
+        "visited": [
+          1,
+          3,
+          6,
+          8,
+          10
+        ]
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Last comes 14, the right child of 10. Every node was visited once, in increasing order.",
+      "caption": "visit 14",
+      "op": {
+        "name": "visit",
+        "args": {}
+      },
+      "claimed_state": {
+        "current": 14,
+        "visited": [
+          1,
+          3,
+          6,
+          8,
+          10,
+          14
+        ]
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "summary",
+      "narration": "In-order traversal gave us 1, 3, 6, 8, 10 and 14. Pre-order and post-order use the same walk but visit the node before or after its children.",
+      "caption": "Summary",
+      "points": [
+        "In-order: left subtree, node, right subtree",
+        "On a BST it lists values in sorted order",
+        "Every node is visited once: O(n)"
+      ],
+      "speed": 1.0
+    }
+  ],
+  "quiz": [
+    {
+      "question": "Insert 5, 3, 8, 2 and 4 into a BST. A pre-order traversal visits three nodes. Which ones, in order?",
+      "start": {
+        "values": [
+          5,
+          3,
+          8,
+          2,
+          4
+        ],
+        "order": "preorder"
+      },
+      "ops": [
+        {
+          "name": "visit",
+          "args": {}
+        },
+        {
+          "name": "visit",
+          "args": {}
+        },
+        {
+          "name": "visit",
+          "args": {}
+        }
+      ],
+      "ask": "visited",
+      "options": [
+        "5, 3, 2",
+        "2, 3, 4",
+        "5, 3, 8",
+        "3, 2, 4"
+      ],
+      "answer": "5, 3, 2",
+      "explanation": "Pre-order visits a node before its children: 5, then its left child 3, then 2."
+    },
+    {
+      "question": "Insert 5, 3, 8, 2 and 4 into a BST. What is its full post-order traversal?",
+      "start": {
+        "values": [
+          5,
+          3,
+          8,
+          2,
+          4
+        ],
+        "order": "postorder"
+      },
+      "ops": [],
+      "ask": "order",
+      "options": [
+        "2, 4, 3, 8, 5",
+        "2, 3, 4, 5, 8",
+        "5, 3, 2, 4, 8",
+        "2, 4, 8, 3, 5"
+      ],
+      "answer": "2, 4, 3, 8, 5",
+      "explanation": "Post-order visits both children first, so the root 5 comes last."
+    }
+  ],
+  "provenance": {
+    "author": "Claude (Anthropic), hand-written for DSA Explainer",
+    "written": "2026-11-20",
+    "checked_by": "DSA Explainer verifier (scripts/author_plans.py)"
+  }
+}

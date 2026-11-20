@@ -1,0 +1,291 @@
+{
+  "topic": "Show depth-first search on a tree-shaped graph from A",
+  "level": "intermediate",
+  "title": "Depth-First Search and Backtracking",
+  "structure": "dfs",
+  "initial": {
+    "edges": [
+      [
+        "A",
+        "B"
+      ],
+      [
+        "A",
+        "C"
+      ],
+      [
+        "B",
+        "D"
+      ],
+      [
+        "B",
+        "E"
+      ],
+      [
+        "C",
+        "F"
+      ]
+    ],
+    "start": "A"
+  },
+  "scenes": [
+    {
+      "kind": "intro",
+      "narration": "Depth first search follows one path as far as it can, then backs up to the last node that still has somewhere new to go. A stack holds the path we are on. We start at A and take neighbours in alphabetical order.",
+      "caption": "Go deep, then back up",
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "We visit A and put it on the stack. The current node is A.",
+      "caption": "visit A",
+      "op": {
+        "name": "dfs_step",
+        "args": {}
+      },
+      "claimed_state": {
+        "current": "A",
+        "stack": [
+          "A"
+        ],
+        "visited": [
+          "A"
+        ]
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "A's first unvisited neighbour is B, so we go deeper to B and push it. The top of the stack is B.",
+      "caption": "A to B",
+      "op": {
+        "name": "dfs_step",
+        "args": {}
+      },
+      "claimed_state": {
+        "current": "B",
+        "stack": [
+          "A",
+          "B"
+        ],
+        "visited": [
+          "A",
+          "B"
+        ]
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "From B we go on to D. The stack now holds the whole path: A, B, D.",
+      "caption": "B to D",
+      "op": {
+        "name": "dfs_step",
+        "args": {}
+      },
+      "claimed_state": {
+        "current": "D",
+        "stack": [
+          "A",
+          "B",
+          "D"
+        ],
+        "visited": [
+          "A",
+          "B",
+          "D"
+        ]
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "D has nowhere new to go, so we pop it and back up to B. B still has E, so we visit E next.",
+      "caption": "back to B, then E",
+      "op": {
+        "name": "dfs_step",
+        "args": {}
+      },
+      "claimed_state": {
+        "current": "E",
+        "stack": [
+          "A",
+          "B",
+          "E"
+        ],
+        "visited": [
+          "A",
+          "B",
+          "D",
+          "E"
+        ]
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "E is a dead end and so is B now. We pop both and back up to A, whose next neighbour is C.",
+      "caption": "back to A, then C",
+      "op": {
+        "name": "dfs_step",
+        "args": {}
+      },
+      "claimed_state": {
+        "current": "C",
+        "stack": [
+          "A",
+          "C"
+        ],
+        "visited": [
+          "A",
+          "B",
+          "D",
+          "E",
+          "C"
+        ]
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "From C we reach F. Every node has been visited, in the order A, B, D, E, C, F.",
+      "caption": "C to F",
+      "op": {
+        "name": "dfs_step",
+        "args": {}
+      },
+      "claimed_state": {
+        "current": "F",
+        "stack": [
+          "A",
+          "C",
+          "F"
+        ],
+        "visited": [
+          "A",
+          "B",
+          "D",
+          "E",
+          "C",
+          "F"
+        ]
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "summary",
+      "narration": "The stack is the same as the call stack of a recursive search. Depth first search finds paths, connected parts and cycles, and it is the base of topological sorting.",
+      "caption": "Summary",
+      "points": [
+        "Follow one path as deep as it goes",
+        "A stack remembers the way back",
+        "Visits every reachable node in O(V + E)"
+      ],
+      "speed": 1.0
+    }
+  ],
+  "quiz": [
+    {
+      "question": "A graph has edges A-B, A-C and B-D. Depth first search from A takes four steps. In what order are the nodes visited?",
+      "start": {
+        "edges": [
+          [
+            "A",
+            "B"
+          ],
+          [
+            "A",
+            "C"
+          ],
+          [
+            "B",
+            "D"
+          ]
+        ],
+        "start": "A"
+      },
+      "ops": [
+        {
+          "name": "dfs_step",
+          "args": {}
+        },
+        {
+          "name": "dfs_step",
+          "args": {}
+        },
+        {
+          "name": "dfs_step",
+          "args": {}
+        },
+        {
+          "name": "dfs_step",
+          "args": {}
+        }
+      ],
+      "ask": "visited",
+      "options": [
+        "A, B, D, C",
+        "A, B, C, D",
+        "A, C, B, D",
+        "A, D, B, C"
+      ],
+      "answer": "A, B, D, C",
+      "explanation": "From B the search goes deeper to D before it backs up to C."
+    },
+    {
+      "question": "A graph has edges A-B, B-C and A-D. After three depth first steps from A, which node is on top of the stack?",
+      "start": {
+        "edges": [
+          [
+            "A",
+            "B"
+          ],
+          [
+            "B",
+            "C"
+          ],
+          [
+            "A",
+            "D"
+          ]
+        ],
+        "start": "A"
+      },
+      "ops": [
+        {
+          "name": "dfs_step",
+          "args": {}
+        },
+        {
+          "name": "dfs_step",
+          "args": {}
+        },
+        {
+          "name": "dfs_step",
+          "args": {}
+        }
+      ],
+      "ask": "top",
+      "options": [
+        "C",
+        "A",
+        "B",
+        "D"
+      ],
+      "answer": "C",
+      "explanation": "The path is A, B, C, so C is on top."
+    }
+  ],
+  "provenance": {
+    "author": "Claude (Anthropic), hand-written for DSA Explainer",
+    "written": "2026-11-20",
+    "checked_by": "DSA Explainer verifier (scripts/author_plans.py)"
+  }
+}

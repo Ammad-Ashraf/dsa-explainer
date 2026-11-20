@@ -1,0 +1,37 @@
+name: Bug report
+description: Something does not work, or a video shows something wrong
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. A wrong fact that got past the verifier is the most valuable bug this project can get:
+        please attach the lesson's plan (Plan tab, "Download plan").
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where
+      options: [A video shows something wrong, The pipeline failed, The web app, Voice, Installation, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to make it happen again
+      description: The topic you typed, the level and quality, or the saved lesson you rendered.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Your setup
+      description: Operating system, Python version, `dsa-explainer --version`, and the language-model provider and model (never the key).
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error messages or logs
+      render: text

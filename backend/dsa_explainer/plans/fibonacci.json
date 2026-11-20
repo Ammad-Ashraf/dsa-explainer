@@ -1,0 +1,220 @@
+{
+  "topic": "Explain Fibonacci with dynamic programming",
+  "level": "beginner",
+  "title": "Fibonacci with a Table",
+  "structure": "fibonacci",
+  "initial": {
+    "n": 7
+  },
+  "scenes": [
+    {
+      "kind": "intro",
+      "narration": "Each Fibonacci number is the sum of the two before it. Computing them by plain recursion repeats the same work again and again. Instead we fill a table from the start: F of 0 is 0 and F of 1 is 1.",
+      "caption": "Remember answers instead of recomputing",
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "F of 2 adds the two cells before it: 1 plus 0 gives 1.",
+      "caption": "F(2) = F(1) + F(0)",
+      "op": {
+        "name": "fill_next",
+        "args": {}
+      },
+      "claimed_state": [
+        0,
+        1,
+        1,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "F of 3 is 1 plus 1, which is 2. We read both from the table instead of recomputing them.",
+      "caption": "F(3) = F(2) + F(1)",
+      "op": {
+        "name": "fill_next",
+        "args": {}
+      },
+      "claimed_state": [
+        0,
+        1,
+        1,
+        2,
+        null,
+        null,
+        null,
+        null
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "F of 4 is 2 plus 1, so 3.",
+      "caption": "F(4) = F(3) + F(2)",
+      "op": {
+        "name": "fill_next",
+        "args": {}
+      },
+      "claimed_state": [
+        0,
+        1,
+        1,
+        2,
+        3,
+        null,
+        null,
+        null
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "F of 5 is 3 plus 2, which is 5.",
+      "caption": "F(5) = F(4) + F(3)",
+      "op": {
+        "name": "fill_next",
+        "args": {}
+      },
+      "claimed_state": [
+        0,
+        1,
+        1,
+        2,
+        3,
+        5,
+        null,
+        null
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "F of 6 is 5 plus 3, giving 8.",
+      "caption": "F(6) = F(5) + F(4)",
+      "op": {
+        "name": "fill_next",
+        "args": {}
+      },
+      "claimed_state": [
+        0,
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        null
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Finally F of 7 is 8 plus 5, which is 13. Each cell took a single addition.",
+      "caption": "F(7) = F(6) + F(5)",
+      "op": {
+        "name": "fill_next",
+        "args": {}
+      },
+      "claimed_state": [
+        0,
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "summary",
+      "narration": "The table turned an exponential recursion into 6 quick additions. That is the core idea of dynamic programming: solve each smaller problem once and reuse it.",
+      "caption": "Summary",
+      "points": [
+        "Store each answer in a table",
+        "Build from the smallest cases up",
+        "O(n) time instead of exponential"
+      ],
+      "speed": 1.0
+    }
+  ],
+  "quiz": [
+    {
+      "question": "A Fibonacci table up to F of 5 starts with F of 0 and F of 1. After filling two more cells, what is the value just filled?",
+      "start": {
+        "n": 5
+      },
+      "ops": [
+        {
+          "name": "fill_next",
+          "args": {}
+        },
+        {
+          "name": "fill_next",
+          "args": {}
+        }
+      ],
+      "ask": "value",
+      "options": [
+        "2",
+        "1",
+        "3",
+        "5"
+      ],
+      "answer": "2",
+      "explanation": "The second cell filled is F of 3, which is 1 plus 1."
+    },
+    {
+      "question": "A Fibonacci table up to F of 6 starts with F of 0 and F of 1. After filling four more cells, what is the value just filled?",
+      "start": {
+        "n": 6
+      },
+      "ops": [
+        {
+          "name": "fill_next",
+          "args": {}
+        },
+        {
+          "name": "fill_next",
+          "args": {}
+        },
+        {
+          "name": "fill_next",
+          "args": {}
+        },
+        {
+          "name": "fill_next",
+          "args": {}
+        }
+      ],
+      "ask": "value",
+      "options": [
+        "5",
+        "3",
+        "8",
+        "4"
+      ],
+      "answer": "5",
+      "explanation": "The fourth cell filled is F of 5, which is 3 plus 2."
+    }
+  ],
+  "provenance": {
+    "author": "Claude (Anthropic), hand-written for DSA Explainer",
+    "written": "2026-11-20",
+    "checked_by": "DSA Explainer verifier (scripts/author_plans.py)"
+  }
+}

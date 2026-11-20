@@ -1,0 +1,164 @@
+{
+  "topic": "Explain quick sort with a pivot on 5, 1, 4, 2, 8, 3",
+  "level": "advanced",
+  "title": "Quick Sort and Partitioning",
+  "structure": "quick_sort",
+  "initial": [
+    5,
+    1,
+    4,
+    2,
+    8,
+    3
+  ],
+  "scenes": [
+    {
+      "kind": "intro",
+      "narration": "Quick sort picks a pivot, here the last value of the range. It moves every smaller value before the pivot, which puts the pivot in its final place, then sorts each side the same way.",
+      "caption": "Pick a pivot, split around it",
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "The pivot is 3. The smaller values 1 and 2 move to the front, and 3 lands right after them at index 2, its final place.",
+      "caption": "partition all, pivot 3",
+      "op": {
+        "name": "partition_next",
+        "args": {}
+      },
+      "claimed_state": [
+        1,
+        2,
+        3,
+        5,
+        8,
+        4
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Now the left part, 1 and 2. The pivot is 2, and 1 is already smaller, so 2 stays at index 1. Both are in place.",
+      "caption": "partition left, pivot 2",
+      "op": {
+        "name": "partition_next",
+        "args": {}
+      },
+      "claimed_state": [
+        1,
+        2,
+        3,
+        5,
+        8,
+        4
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "On the right, 5, 8 and 4, the pivot is 4. Nothing is smaller, so 4 swaps to the front of the range.",
+      "caption": "partition right, pivot 4",
+      "op": {
+        "name": "partition_next",
+        "args": {}
+      },
+      "claimed_state": [
+        1,
+        2,
+        3,
+        4,
+        8,
+        5
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "The last range holds 8 and 5. The pivot is 5, which swaps in front of 8. The array is sorted.",
+      "caption": "partition 8 | 5, pivot 5",
+      "op": {
+        "name": "partition_next",
+        "args": {}
+      },
+      "claimed_state": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        8
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "summary",
+      "narration": "Each partition fixed one pivot for good and split the work in two. A bad pivot, like the largest value every time, is what makes the worst case slow.",
+      "caption": "Summary",
+      "points": [
+        "The pivot ends in its final place",
+        "Smaller values go left, the rest go right",
+        "O(n log n) on average, O(n squared) at worst"
+      ],
+      "speed": 1.0
+    }
+  ],
+  "quiz": [
+    {
+      "question": "Quick sort partitions 3, 1, 2 once, using the last value as the pivot. At which index does the pivot end up?",
+      "start": [
+        3,
+        1,
+        2
+      ],
+      "ops": [
+        {
+          "name": "partition_next",
+          "args": {}
+        }
+      ],
+      "ask": "pivot_index",
+      "options": [
+        "1",
+        "0",
+        "2",
+        "3"
+      ],
+      "answer": "1",
+      "explanation": "Only 1 is smaller than the pivot 2, so 2 ends at index 1."
+    },
+    {
+      "question": "Quick sort partitions 4, 7, 2, 5 once, with the last value as the pivot. What is the array afterwards?",
+      "start": [
+        4,
+        7,
+        2,
+        5
+      ],
+      "ops": [
+        {
+          "name": "partition_next",
+          "args": {}
+        }
+      ],
+      "ask": "items",
+      "options": [
+        "4, 2, 5, 7",
+        "2, 4, 5, 7",
+        "4, 5, 2, 7",
+        "5, 4, 2, 7"
+      ],
+      "answer": "4, 2, 5, 7",
+      "explanation": "4 and 2 are smaller than 5 and keep their order; 5 goes right after them."
+    }
+  ],
+  "provenance": {
+    "author": "Claude (Anthropic), hand-written for DSA Explainer",
+    "written": "2026-11-20",
+    "checked_by": "DSA Explainer verifier (scripts/author_plans.py)"
+  }
+}

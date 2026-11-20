@@ -1,0 +1,19 @@
+name: Idea or new algorithm
+description: Suggest a feature, an algorithm to add, or a better animation
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Who does it help, and how?
+  - type: textarea
+    id: verify
+    attributes:
+      label: How would it be verified?
+      description: Every fact on screen must come from a real simulation. For a new algorithm, what are its operations, its state and the facts the verifier should check?
