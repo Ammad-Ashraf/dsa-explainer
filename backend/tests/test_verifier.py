@@ -1,7 +1,7 @@
 import pytest
 
-from dsa_explainer.lesson import Op
-from dsa_explainer.verifier import fact_claims, stray_numbers, verify_lesson
+from dsa_explainer.core.lesson import Op
+from dsa_explainer.core.verifier import fact_claims, stray_numbers, verify_lesson
 
 from .helpers import EXAMPLES, load
 

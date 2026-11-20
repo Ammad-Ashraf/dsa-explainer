@@ -9,9 +9,11 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from . import config, planner, quiz, revise, video
-from .lesson import Lesson
-from .verifier import verify_lesson
+from . import config
+from .authoring import planner, quiz, revise
+from .core.lesson import Lesson
+from .core.verifier import verify_lesson
+from .media import video
 
 
 def _quiet(msg: str, progress: float | None = None) -> None:
@@ -46,7 +48,7 @@ def make_lesson(topic: str, level: str = "beginner", quality: str = "draft", log
 
 
 def from_file(path: str | Path, quality: str = "draft", log=_quiet) -> dict:
-    """Render a saved lesson plan (examples/*.json): no API needed."""
+    """Render a saved lesson plan (dsa_explainer/plans/*.json): no API needed."""
     lesson = Lesson.model_validate_json(Path(path).read_text(encoding="utf-8"))
     return _finish(lesson, _new_dir(lesson.title), 1, quality, log, {"rejected": []})
 

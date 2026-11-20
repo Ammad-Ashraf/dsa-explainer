@@ -1,0 +1,8 @@
+# Tool settings for the Python backend. Packaging metadata arrives with the
+# open-source release milestone (docs/roadmap/milestones.md); until then install
+# the pinned versions with:  pip install -r backend/requirements.txt
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+filterwarnings = ["ignore:'audioop' is deprecated:DeprecationWarning"]

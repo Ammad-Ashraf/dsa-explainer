@@ -16,8 +16,8 @@ import re
 from pydantic import ValidationError
 
 from . import llm
-from .lesson import Lesson, scene_labels
-from .verifier import verify_lesson
+from ..core.lesson import Lesson, scene_labels
+from ..core.verifier import verify_lesson
 
 
 class RevisionError(RuntimeError):

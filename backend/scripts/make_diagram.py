@@ -1,6 +1,6 @@
-"""Draws the system architecture diagram, docs/architecture.png, with Manim.
+"""Draws the system architecture diagram, docs/course/architecture.png, with Manim.
 
-    python scripts/make_diagram.py
+    python backend/scripts/make_diagram.py
 """
 
 from __future__ import annotations
@@ -8,13 +8,13 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[1]  # backend/, so dsa_explainer imports
 sys.path.insert(0, str(ROOT))
 
 import numpy as np  # noqa: E402
 from manim import DOWN, LEFT, RIGHT, UP, Arrow, CurvedArrow, RoundedRectangle, Scene, VGroup, tempconfig  # noqa: E402
 
-from dsa_explainer.render import ACCENT, BG, CELL, FG, MUTED, label  # noqa: E402
+from dsa_explainer.media.render import ACCENT, BG, CELL, FG, MUTED, label  # noqa: E402
 
 API, LOCAL, PERSON = "#60a5fa", "#4ade80", "#e2e8f0"
 W, H = 2.75, 1.2
@@ -91,7 +91,7 @@ class Architecture(Scene):
 
 
 def main() -> None:
-    out = ROOT / "docs" / "architecture.png"
+    out = ROOT.parent / "docs" / "course" / "architecture.png"
     out.parent.mkdir(exist_ok=True)
     with tempconfig({"pixel_width": 1920, "pixel_height": 1080, "background_color": BG, "disable_caching": True,
                      "verbosity": "ERROR", "progress_bar": "none"}):

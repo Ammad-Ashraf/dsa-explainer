@@ -1,7 +1,7 @@
 """Command line, for testing without the web page:
 
     python -m dsa_explainer "how does a queue work" --level beginner
-    python -m dsa_explainer --file examples/stack.json --quality standard
+    python -m dsa_explainer --file dsa_explainer/plans/stack.json --quality standard
 """
 
 import argparse

@@ -1,10 +1,10 @@
 """Live evaluation of every part that uses the language model, with the API set in .env.
 
-    python scripts/live_eval.py            # plan + quiz for each topic, then two revisions
-    python scripts/live_eval.py --render   # also make each video
-    python scripts/live_eval.py --resume   # keep topics that already finished (after a rate limit)
+    python backend/scripts/live_eval.py            # plan + quiz for each topic, then two revisions
+    python backend/scripts/live_eval.py --render   # also make each video
+    python backend/scripts/live_eval.py --resume   # keep topics that already finished (after a rate limit)
 
-Writes docs/live-eval.md; accepted plans (and videos) go to outputs/live-eval/.
+Writes docs/course/live-eval.md; accepted plans (and videos) go to outputs/live-eval/.
 """
 
 from __future__ import annotations
@@ -17,12 +17,14 @@ import time
 from datetime import date
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[1]  # backend/, so dsa_explainer imports
 sys.path.insert(0, str(ROOT))
 
-from dsa_explainer import config, llm, planner, quiz, revise, video  # noqa: E402
-from dsa_explainer.lesson import Lesson  # noqa: E402
-from dsa_explainer.verifier import verify_lesson  # noqa: E402
+from dsa_explainer import config  # noqa: E402
+from dsa_explainer.authoring import llm, planner, quiz, revise  # noqa: E402
+from dsa_explainer.core.lesson import Lesson  # noqa: E402
+from dsa_explainer.core.verifier import verify_lesson  # noqa: E402
+from dsa_explainer.media import video  # noqa: E402
 
 # (topic, level, should the app make a lesson?)
 TOPICS = [
@@ -112,7 +114,7 @@ def write_report(rows: list[dict], revisions: list[dict], render: bool) -> Path:
         "",
         f"Provider: `{config.LLM_BASE_URL}`. Main model `{config.LLM_MODEL}`, fallback `{config.LLM_FALLBACK_MODEL}` "
         f"(used once the main model's daily free allowance runs out). Updated {date.today():%d %B %Y} with "
-        f"`python scripts/live_eval.py{' --render' if render else ''}`.",
+        f"`python backend/scripts/live_eval.py{' --render' if render else ''}`.",
         "",
         "| # | Topic | Level | Expected | Result | Model | Plan attempts | Steps | Words | Quiz | Checks | Plan time |"
         + (" Video |" if render else ""),
@@ -158,7 +160,7 @@ def write_report(rows: list[dict], revisions: list[dict], render: bool) -> Path:
             lines.append(f"| {v['request']} | {', '.join(v['changed'])} | {v['attempts']} | "
                          f"{'yes' if v['verified'] else 'no'} | {v['seconds']:.0f} s |")
     lines.append("")
-    path = ROOT / "docs" / "live-eval.md"
+    path = ROOT.parent / "docs" / "course" / "live-eval.md"
     path.parent.mkdir(exist_ok=True)
     path.write_text("\n".join(lines), encoding="utf-8")
     return path

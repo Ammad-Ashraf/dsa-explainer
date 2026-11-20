@@ -3,10 +3,17 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .env
-models/
-cache/
-outputs/
-media/
+
+# Runtime data, kept at the repository root (see backend/dsa_explainer/config.py).
+# Anchored with a leading / so they never hide source folders of the same name,
+# such as the backend/dsa_explainer/media package.
+/models/
+/cache/
+/outputs/
+# Manim's default output folder, wherever a script is run from
+/media/
+/backend/media/
+/backend/scripts/media/
 
 # API keys: never commit
 GeminiAPIKey.txt

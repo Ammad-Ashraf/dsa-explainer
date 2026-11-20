@@ -15,7 +15,7 @@ from pathlib import Path
 
 import numpy as np
 
-from . import config
+from .. import config
 
 _engine = None
 _lock = threading.Lock()  # Kokoro's phonemizer is not thread-safe
@@ -26,7 +26,7 @@ def _kokoro():
     global _engine
     if _engine is None:
         if not config.KOKORO_MODEL.exists() or not config.KOKORO_VOICES.exists():
-            raise FileNotFoundError("Kokoro voice files are missing: run  python scripts/download_models.py")
+            raise FileNotFoundError("Kokoro voice files are missing: run  python backend/scripts/download_models.py")
         from kokoro_onnx import Kokoro
 
         _engine = Kokoro(str(config.KOKORO_MODEL), str(config.KOKORO_VOICES))

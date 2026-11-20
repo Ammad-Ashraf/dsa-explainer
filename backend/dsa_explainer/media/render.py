@@ -23,8 +23,8 @@ from manim import (
     RoundedRectangle, Scene, Text, Transform, VGroup, Write, linear, tempconfig,
 )
 
-from . import config
-from .structures import DISPLAY_NAMES, natural_key
+from .. import config
+from ..core.structures import DISPLAY_NAMES, natural_key
 from .voice import silence
 
 RENDER_VERSION = "3"  # change to re-render every cached clip after editing this file

@@ -1,4 +1,7 @@
-"""DSA Explainer web app.   Run:  python app.py   then open http://127.0.0.1:7860"""
+"""DSA Explainer web app (Gradio; replaced by the React frontend in a later milestone).
+
+Run from the repository root:  python backend/app.py   then open http://127.0.0.1:7860
+"""
 
 from __future__ import annotations
 
@@ -7,10 +10,11 @@ import traceback
 
 import gradio as gr
 
-from dsa_explainer import config, llm, pipeline
-from dsa_explainer.lesson import Lesson, scene_labels
-from dsa_explainer.structures import DISPLAY_NAMES
-from dsa_explainer.verifier import answer_index
+from dsa_explainer import config, pipeline
+from dsa_explainer.authoring import llm
+from dsa_explainer.core.lesson import Lesson, scene_labels
+from dsa_explainer.core.structures import DISPLAY_NAMES
+from dsa_explainer.core.verifier import answer_index
 
 QUALITIES = {"Draft (480p, faster)": "draft", "Standard (720p)": "standard"}
 EXAMPLE_TOPICS = [
@@ -20,7 +24,7 @@ EXAMPLE_TOPICS = [
     ["Insert 8, 3, 10, 1, 6, 14 into a BST, then delete 3", "intermediate"],
     ["Show BFS on this graph: A-B, A-C, B-D, C-E, D-E, start at A", "beginner"],
 ]
-SAVED_PLANS = sorted(p.stem for p in config.EXAMPLES_DIR.glob("*.json"))
+SAVED_PLANS = sorted(p.stem for p in config.PLANS_DIR.glob("*.json"))
 
 
 def _logger(progress: gr.Progress):
@@ -93,7 +97,7 @@ def create(topic, level, quality, progress=gr.Progress()):
 
 
 def play_saved(name, quality, progress=gr.Progress()):
-    path = config.EXAMPLES_DIR / f"{name}.json"
+    path = config.PLANS_DIR / f"{name}.json"
     return _run(lambda: pipeline.from_file(path, QUALITIES[quality], _logger(progress)))
 
 

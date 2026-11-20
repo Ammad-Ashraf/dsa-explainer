@@ -5,7 +5,10 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-ROOT = Path(__file__).resolve().parent.parent
+PACKAGE_DIR = Path(__file__).resolve().parent
+# The repository root (backend/dsa_explainer -> backend -> root). .env, models/,
+# outputs/ and cache/ live there, so the layout of backend/ can change freely.
+ROOT = PACKAGE_DIR.parents[1]
 load_dotenv(ROOT / ".env")
 
 # Language model: any provider with an OpenAI-compatible chat API.
@@ -26,4 +29,4 @@ RENDER_WORKERS = int(os.getenv("RENDER_WORKERS", str(max(1, min(4, (os.cpu_count
 
 OUTPUT_DIR = ROOT / "outputs"
 CACHE_DIR = ROOT / "cache"
-EXAMPLES_DIR = ROOT / "examples"
+PLANS_DIR = PACKAGE_DIR / "plans"  # verified lesson plans that render without an API key

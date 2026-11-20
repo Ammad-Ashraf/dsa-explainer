@@ -1,9 +1,8 @@
 import json
-from pathlib import Path
 
-from dsa_explainer.lesson import Lesson
+from dsa_explainer.config import PLANS_DIR as EXAMPLES_DIR
+from dsa_explainer.core.lesson import Lesson
 
-EXAMPLES_DIR = Path(__file__).resolve().parent.parent / "examples"
 EXAMPLES = sorted(p.stem for p in EXAMPLES_DIR.glob("*.json"))
 
 
@@ -17,7 +16,7 @@ def raw(name: str) -> dict:
 
 def fake_llm(monkeypatch, replies: list[str]) -> list[list[dict]]:
     """Replace the API with canned replies; returns the messages each call received."""
-    from dsa_explainer import llm
+    from dsa_explainer.authoring import llm
 
     calls, queue = [], list(replies)
 

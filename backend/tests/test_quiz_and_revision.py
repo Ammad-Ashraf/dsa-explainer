@@ -2,9 +2,9 @@ import json
 
 import pytest
 
-from dsa_explainer import quiz, revise
-from dsa_explainer.lesson import Question
-from dsa_explainer.verifier import check_question, verify_lesson
+from dsa_explainer.authoring import quiz, revise
+from dsa_explainer.core.lesson import Question
+from dsa_explainer.core.verifier import check_question, verify_lesson
 
 from .helpers import fake_llm, load, raw
 

@@ -1,6 +1,6 @@
 """Download the local voice model (Kokoro-82M, ~350 MB) into ./models. Run once:
 
-    python scripts/download_models.py
+    python backend/scripts/download_models.py
 
 Plain HTTPS downloads that resume if interrupted; files already complete are skipped.
 Source: https://github.com/thewh1teagle/kokoro-onnx/releases (Apache 2.0 weights).
@@ -13,7 +13,7 @@ from pathlib import Path
 
 import httpx
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]  # repository root: models/ lives there
 GH = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0"
 FILES = {
     "models/kokoro/kokoro-v1.0.onnx": f"{GH}/kokoro-v1.0.onnx",

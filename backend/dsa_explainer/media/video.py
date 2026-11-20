@@ -18,10 +18,11 @@ from pathlib import Path
 import av
 import imageio_ffmpeg
 
-from . import config, voice
-from .lesson import Lesson, scene_labels
+from .. import config
+from ..core.lesson import Lesson, scene_labels
+from ..core.verifier import Report, answer_index
+from . import voice
 from .render import RENDER_VERSION, render_clip
-from .verifier import Report, answer_index
 
 
 def jobs_for(lesson: Lesson, report: Report) -> list[dict]:

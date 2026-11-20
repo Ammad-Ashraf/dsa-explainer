@@ -16,23 +16,53 @@ Covered: **stacks, queues, linked lists, binary search trees, and breadth-first 
 
 **Demo video:** *add the Loom link*
 
+> **Where this is going.** The course version is submitted from `main`. This branch turns DSA Explainer into an
+> open-source, local-first platform: a React frontend, bring-your-own LLM key, newer local voice models, many more
+> algorithms, and richer verified animations. The plan is in [docs/roadmap/](docs/roadmap/):
+> [the ideas](docs/roadmap/vision.md) and [the milestones](docs/roadmap/milestones.md).
+
 ## Documents
 
 | Document | What it is |
 | --- | --- |
-| [Report](docs/report.md) ([PDF](docs/report.pdf)) | The project report: Complex Computing Problem analysis (problem statement, complexity drivers, design justification, trade-offs, societal and ethical impact), core modules, setup, technical details, testing and evaluation |
-| [Architecture diagram](docs/architecture.png) | The system architecture (drawn by `scripts/make_diagram.py`) |
-| [Live evaluation](docs/live-eval.md) | Results of nine real requests to the language model (`scripts/live_eval.py`) |
-| [Loom video guide](docs/loom-video-guide.md) | Script and checklist for the 2 to 3 minute demo video |
-| [AI prompts](docs/ai-prompts.md) | The prompts we gave our AI coding assistant |
-| [Submission checklist](docs/submission-checklist.md) | What is done and what is left before submitting |
+| [Vision](docs/roadmap/vision.md) and [milestones](docs/roadmap/milestones.md) | Where the project goes after the course, and in what order |
+| [Report](docs/course/report.md) ([PDF](docs/course/report.pdf)) | The project report: Complex Computing Problem analysis (problem statement, complexity drivers, design justification, trade-offs, societal and ethical impact), core modules, setup, technical details, testing and evaluation |
+| [Architecture diagram](docs/course/architecture.png) | The system architecture (drawn by `backend/scripts/make_diagram.py`) |
+| [Live evaluation](docs/course/live-eval.md) | Results of nine real requests to the language model (`backend/scripts/live_eval.py`) |
+| [Loom video guide](docs/course/loom-video-guide.md) | Script and checklist for the 2 to 3 minute demo video |
+| [AI prompts](docs/course/ai-prompts.md) | The prompts we gave our AI coding assistant |
+| [Submission checklist](docs/course/submission-checklist.md) | What is done and what is left before submitting |
+
+The course documents in `docs/course/` describe the submitted version on `main`, so their file paths use that
+branch's layout (`dsa_explainer/`, `app.py` and `scripts/` at the top level).
+
+## Repository layout
+
+```
+backend/                    Python: the whole pipeline, run locally
+  app.py                    web interface (Gradio; replaced by frontend/ in a later milestone)
+  dsa_explainer/
+    core/                   lesson schema, data-structure simulators, step verifier (no AI, no I/O)
+    authoring/              everything the language model writes: planner, quiz, revisions, API client
+    media/                  local voice (Kokoro), animation (Manim), joining clips into a video
+    plans/                  verified lesson plans that render without an API key
+    pipeline.py             plan -> verify -> quiz -> voice -> animation -> video
+    config.py               settings from .env
+  scripts/                  model download, live evaluation, diagram, report PDF
+  tests/
+docs/
+  roadmap/                  vision and milestones for the open-source platform
+  course/                   the course submission: report, diagram, live evaluation, Loom guide
+.env.example                copy to .env and add an API key
+models/  outputs/  cache/   created at run time, not in git
+```
 
 ## Models, APIs and what runs locally
 
 | Part | Model / tool | Where it runs |
 | --- | --- | --- |
 | Lesson planning, narration text, quiz questions, revisions | Any OpenAI-compatible LLM API; default **Gemini 3.5 Flash** (free tier), switching to **Gemini 3.5 Flash-Lite** when the daily free allowance runs out. Groq, Claude, OpenAI or a local Ollama model work by changing `.env` | API (allowed by the brief) |
-| Step verifier, quiz answer checking | Plain Python data structures (`dsa_explainer/structures.py`) | Local |
+| Step verifier, quiz answer checking | Plain Python data structures (`dsa_explainer/core/structures.py`) | Local |
 | Text to speech | **Kokoro-82M** (ONNX, CPU) via `kokoro-onnx` | **Local** (required by the brief) |
 | Animation | **Manim Community 0.22** (Cairo renderer, no LaTeX) | Local |
 | Joining clips | ffmpeg (bundled by `imageio-ffmpeg`) | Local |
@@ -40,7 +70,7 @@ Covered: **stacks, queues, linked lists, binary search trees, and breadth-first 
 
 ## Architecture
 
-![DSA Explainer system architecture](docs/architecture.png)
+![DSA Explainer system architecture](docs/course/architecture.png)
 
 **The key idea: the language model never draws and never has the last word on facts.**
 It writes a *structured plan*: the starting data, one operation per step (`push(7)`, `insert(6)`, `bfs_step()`),
@@ -54,42 +84,47 @@ only ever draws the verifier's snapshots of the real structure, never the model'
 
 | Module (brief) | File | How it works |
 | --- | --- | --- |
-| 1. Lesson planner | `planner.py`, `lesson.py` | Topic + level → JSON plan (intro, 4–8 steps, summary). Validated with Pydantic, then by the verifier; errors are fed back for repair. |
-| 2. Animation renderer | `render.py` | Manim. Each structure has a drawer that turns a snapshot into named shapes; one generic `morph` animates any step by moving shapes that exist before and after, fading out removed ones and fading in new ones. Paths (BST comparisons, list walks) are highlighted first. |
-| 3. Step verifier | `verifier.py`, `structures.py` | Runs every operation; compares `claimed_state` with the true state; checks narration claims (top/front/rear/head/tail/root/size/current node) and flags any number that is not in the structure or the operation; checks the video will last over 30 s. |
-| 4. Narration and voice | `voice.py`, `video.py` | Kokoro-82M on the CPU. Each scene's audio is made first and the animation is timed to it, so voice and picture stay in sync. |
-| 5. Quiz generator | `quiz.py` | The LLM writes multiple-choice questions that carry their own operations; each answer is checked by running them. Wrong questions are sent back; if none survive, a question is built from the lesson itself. |
-| 6. Revision control | `revise.py`, `video.py` | "Slow down / speed up step N" is handled by rules; other requests go to the LLM, which may only change narration, captions, speed and summary points. The result is verified again. Clips are cached by a hash of their content, so only changed scenes are re-rendered. |
+| 1. Lesson planner | `authoring/planner.py`, `core/lesson.py` | Topic + level → JSON plan (intro, 4–8 steps, summary). Validated with Pydantic, then by the verifier; errors are fed back for repair. |
+| 2. Animation renderer | `media/render.py` | Manim. Each structure has a drawer that turns a snapshot into named shapes; one generic `morph` animates any step by moving shapes that exist before and after, fading out removed ones and fading in new ones. Paths (BST comparisons, list walks) are highlighted first. |
+| 3. Step verifier | `core/verifier.py`, `core/structures.py` | Runs every operation; compares `claimed_state` with the true state; checks narration claims (top/front/rear/head/tail/root/size/current node) and flags any number that is not in the structure or the operation; checks the video will last over 30 s. |
+| 4. Narration and voice | `media/voice.py`, `media/video.py` | Kokoro-82M on the CPU. Each scene's audio is made first and the animation is timed to it, so voice and picture stay in sync. |
+| 5. Quiz generator | `authoring/quiz.py` | The LLM writes multiple-choice questions that carry their own operations; each answer is checked by running them. Wrong questions are sent back; if none survive, a question is built from the lesson itself. |
+| 6. Revision control | `authoring/revise.py`, `media/video.py` | "Slow down / speed up step N" is handled by rules; other requests go to the LLM, which may only change narration, captions, speed and summary points. The result is verified again. Clips are cached by a hash of their content, so only changed scenes are re-rendered. |
 
-`pipeline.py` ties the modules together; `app.py` is the web interface.
+All module paths are inside `backend/dsa_explainer/`. `pipeline.py` ties the modules together; `backend/app.py` is
+the web interface.
 
-## Setup (Windows, macOS or Linux; Python 3.11)
+## Setup (Windows, macOS or Linux; Python 3.11 to 3.13)
+
+Run these from the repository root:
 
 ```bash
 python -m venv .venv
-.venv\Scripts\activate          # macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt
-python scripts/download_models.py   # Kokoro voice, ~350 MB, once
-copy .env.example .env              # macOS/Linux: cp .env.example .env
+.venv\Scripts\activate                      # macOS/Linux: source .venv/bin/activate
+pip install -r backend/requirements.txt
+python backend/scripts/download_models.py   # Kokoro voice, ~350 MB, once
+copy .env.example .env                      # macOS/Linux: cp .env.example .env
 ```
 
 Put an API key in `.env` (a free Gemini key from https://aistudio.google.com/apikey works), then check it:
 
 ```bash
-python -m dsa_explainer.llm
+cd backend
+python -m dsa_explainer.authoring.llm
 ```
 
 ## Run
 
 ```bash
-python app.py
+python backend/app.py
 ```
 
 Open http://127.0.0.1:7860, type a topic, pick a level and press **Make video**. Under the video, type a change
 such as `slow down step 4` or `explain step 2 for a beginner`.
 
-Without an API key you can still make videos from the saved lesson plans in `examples/` (in the app, open
-**"No API key? Make a video from a saved lesson plan"**, or run `python -m dsa_explainer --file examples/bst.json`).
+Without an API key you can still make videos from the saved lesson plans in `backend/dsa_explainer/plans/` (in the
+app, open **"No API key? Make a video from a saved lesson plan"**, or run
+`python -m dsa_explainer --file dsa_explainer/plans/bst.json` inside `backend/`).
 
 Videos are saved in `outputs/<time>-<title>/`: `lesson_v1.mp4`, then `lesson_v2.mp4` after a change, and
 the verified plan `lesson.json`.
@@ -97,13 +132,13 @@ the verified plan `lesson.json`.
 ## Tests
 
 ```bash
-python -m pytest
+python -m pytest backend
 ```
 
 The 35 tests cover every data structure, the verifier catching each kind of mistake (wrong state, false narration,
 invented numbers, impossible operations, wrong quiz answers, too-short lessons), the planner's repair loop, rate
 limits and the fallback model, and the revision flow (with a fake LLM, so no key is needed), plus two real clip
-renders with sound. `python scripts/live_eval.py --render` runs the same checks against the real API.
+renders with sound. `python backend/scripts/live_eval.py --render` runs the same checks against the real API.
 
 ## Performance (AMD Ryzen 5 3600, CPU only, 4 drawing processes)
 

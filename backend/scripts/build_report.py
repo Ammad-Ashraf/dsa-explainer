@@ -1,6 +1,6 @@
-"""Builds docs/report.pdf from docs/report.md, using Microsoft Edge or Google Chrome to print it.
+"""Builds docs/course/report.pdf from docs/course/report.md, using Microsoft Edge or Google Chrome to print it.
 
-    python scripts/build_report.py
+    python backend/scripts/build_report.py
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ from pathlib import Path
 
 import markdown
 
-DOCS = Path(__file__).resolve().parents[1] / "docs"
+DOCS = Path(__file__).resolve().parents[2] / "docs" / "course"
 BROWSERS = [
     r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
     r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",

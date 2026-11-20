@@ -2,8 +2,9 @@
 
 import pytest
 
-from dsa_explainer import config, render, video, voice
-from dsa_explainer.verifier import verify_lesson
+from dsa_explainer import config
+from dsa_explainer.core.verifier import verify_lesson
+from dsa_explainer.media import render, video, voice
 
 from .helpers import load
 

@@ -11,9 +11,9 @@ import json
 from pydantic import ValidationError
 
 from . import llm
-from .lesson import Lesson, Question
-from .structures import STRUCTURES, build, fact_text
-from .verifier import check_question
+from ..core.lesson import Lesson, Question
+from ..core.structures import STRUCTURES, build, fact_text
+from ..core.verifier import check_question
 
 PROMPT = """Write {n} multiple-choice quiz questions for the end of a video lesson.
 Lesson: "{title}" ({level} level) about a {structure}.

@@ -2,7 +2,8 @@ import json
 
 import pytest
 
-from dsa_explainer import config, llm, planner
+from dsa_explainer import config
+from dsa_explainer.authoring import llm, planner
 
 from .helpers import fake_llm, raw
 
