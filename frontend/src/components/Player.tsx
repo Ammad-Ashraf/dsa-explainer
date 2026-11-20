@@ -63,7 +63,7 @@ export function ProgressivePlayer({ clips, total, finished }: { clips: Record<nu
         )}
         {started && current && <span className="badge">Preview · scene {index + 1} of {total || "?"}</span>}
       </div>
-      <div className="chapters" aria-label="Scenes">
+      <div className="chapters" aria-label="Scenes" style={{ "--cols": Math.ceil(total / 2) } as React.CSSProperties}>
         {Array.from({ length: total }, (_, i) => clips[i]).map((clip, i) => (
           <button key={i} type="button" className={`chapter${i === index && started ? " current" : ""}${clip ? " ready" : " pending"}`}
             disabled={!clip} onClick={() => { setIndex(i); setStarted(true); }}>
@@ -93,7 +93,7 @@ export function LessonPlayer({ src, captions, chapters, ops }: {
         </video>
       </div>
       {chapters.length > 0 && (
-        <div className="chapters" aria-label="Chapters">
+        <div className="chapters" aria-label="Chapters" style={{ "--cols": Math.ceil(chapters.length / 2) } as React.CSSProperties}>
           {chapters.map((c, i) => (
             <button key={c.name} type="button" className={`chapter${i === current ? " current" : ""}`}
               onClick={() => { if (video.current) { video.current.currentTime = c.start + 0.01; video.current.play().catch(() => {}); } }}>

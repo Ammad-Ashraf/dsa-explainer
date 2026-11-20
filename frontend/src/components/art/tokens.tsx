@@ -16,13 +16,21 @@ export function Helper({ r = 60, mood = "happy", arms = true }: { r?: number; mo
       <circle cx={0} cy={r * 0.12} r={r} fill={C.greenSide} />
       <circle cx={0} cy={0} r={r} fill={C.green} />
       <ellipse cx={-r * 0.38} cy={-r * 0.55} rx={r * 0.24} ry={r * 0.12} fill={C.greenLight} transform={`rotate(-25 ${-r * 0.38} ${-r * 0.55})`} />
-      <g className="blink">
-        <ellipse cx={-r * 0.36} cy={-r * 0.06} rx={e} ry={e * 1.12} fill={C.white} />
-        <ellipse cx={r * 0.36} cy={-r * 0.06} rx={e} ry={e * 1.12} fill={C.white} />
-        <circle cx={-r * 0.3} cy={-r * 0.02} r={e * 0.55} fill={C.ink} />
-        <circle cx={r * 0.42} cy={-r * 0.02} r={e * 0.55} fill={C.ink} />
-        <circle cx={-r * 0.25} cy={-r * 0.1} r={e * 0.18} fill={C.white} />
-        <circle cx={r * 0.47} cy={-r * 0.1} r={e * 0.18} fill={C.white} />
+      {/* The blink is an SVG animation, not a CSS scale: a scaled CSS layer inside the floating helper is
+          rasterised once and stretched, which looked blurry. SVG re-draws the vector on every frame. */}
+      <g transform={`translate(0 ${-r * 0.06})`}>
+        <g>
+          <animateTransform attributeName="transform" type="scale" dur="4.5s" repeatCount="indefinite"
+            keyTimes="0;0.92;0.945;0.975;1" values="1 1;1 1;1 0.12;1 1;1 1" />
+          <g transform={`translate(0 ${r * 0.06})`}>
+            <ellipse cx={-r * 0.36} cy={-r * 0.06} rx={e} ry={e * 1.12} fill={C.white} />
+            <ellipse cx={r * 0.36} cy={-r * 0.06} rx={e} ry={e * 1.12} fill={C.white} />
+            <circle cx={-r * 0.3} cy={-r * 0.02} r={e * 0.55} fill={C.ink} />
+            <circle cx={r * 0.42} cy={-r * 0.02} r={e * 0.55} fill={C.ink} />
+            <circle cx={-r * 0.25} cy={-r * 0.1} r={e * 0.18} fill={C.white} />
+            <circle cx={r * 0.47} cy={-r * 0.1} r={e * 0.18} fill={C.white} />
+          </g>
+        </g>
       </g>
       {mood === "happy" ? (
         <path d={`M ${-r * 0.3} ${r * 0.34} Q 0 ${r * 0.62} ${r * 0.3} ${r * 0.34}`} stroke={C.white} strokeWidth={r * 0.1} fill="none" strokeLinecap="round" />
@@ -106,7 +114,14 @@ export function VoiceBubble() {
       <path d="M -34 -24 h 68 a 12 12 0 0 1 12 12 v 26 a 12 12 0 0 1 -12 12 h -40 l -14 12 v -12 h -14 a 12 12 0 0 1 -12 -12 v -26 a 12 12 0 0 1 12 -12 z" fill={C.blue} />
       {[-18, -6, 6, 18].map((x, i) => {
         const h = [10, 22, 16, 8][i];
-        return <rect key={x} className="wave" style={{ animationDelay: `${i * 0.15}s` }} x={x - 3} y={-h / 2 + 1} width={6} height={h} rx={3} fill={C.white} />;
+        const low = h * 0.4;
+        // SVG-native animation (redrawn as vector each frame) rather than a CSS scale, which blurs when composited
+        return (
+          <rect key={x} x={x - 3} y={-h / 2 + 1} width={6} height={h} rx={3} fill={C.white}>
+            <animate attributeName="height" values={`${h};${low};${h}`} dur="1.1s" begin={`${i * 0.15}s`} repeatCount="indefinite" />
+            <animate attributeName="y" values={`${-h / 2 + 1};${-low / 2 + 1};${-h / 2 + 1}`} dur="1.1s" begin={`${i * 0.15}s`} repeatCount="indefinite" />
+          </rect>
+        );
       })}
     </g>
   );

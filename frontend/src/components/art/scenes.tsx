@@ -1,27 +1,70 @@
 // Whole illustrations for the home and library pages. Objects float (see .float); placement stays in At.
-import { At, Bars, Block, C, Device, Float, Label } from "./primitives";
-import { Badge, GraphToken, Helper, QueueToken, StackToken, TreeToken, VerifiedBadge, VoiceBubble } from "./tokens";
+import { At, Bars, Block, C, Float, Label } from "./primitives";
+import { Badge, Helper, VerifiedBadge, VoiceBubble } from "./tokens";
 
-/** The opening: the helper beside a phone that is sorting, surrounded by what the app teaches. */
+/** The opening: one sorting lesson told as three step cards, each compared, swapped and checked, ending in "sorted";
+    the voice bubble with moving sound bars says it is narrated, a shield says every step was checked by code. */
 export function HeroArt() {
+  type Step = { n: number; bars: number[]; hot: [number, number] | null; caption: string; done?: boolean };
+  const steps: Step[] = [
+    { n: 1, bars: [3, 1, 2], hot: [0, 1], caption: "3 > 1, swap them" },
+    { n: 2, bars: [1, 3, 2], hot: [1, 2], caption: "3 > 2, swap them" },
+    { n: 3, bars: [1, 2, 3], hot: null, caption: "sorted!", done: true },
+  ];
+  const place = [{ x: 108, y: 84, r: -4 }, { x: 206, y: 206, r: 2 }, { x: 304, y: 328, r: -3 }];
+  const bx = (i: number) => -44 + i * 44; // bar centres
   return (
-    <svg viewBox="0 0 424 424" role="img" aria-label="A friendly node character beside a phone playing a sorting lesson, surrounded by a stack, a queue, a tree, a graph, a verified badge and a voice bubble">
-      <At x={248} y={214} rotate={10}>
-        <Float slow>
-          <Device>
-            <Bars values={[2, 3, 5, 7, 4, 6]} sorted={3} pointer={4} animate />
-            <rect x={-44} y={60} width={88} height={8} rx={4} fill={C.blue} opacity={0.3} />
-            <rect x={-44} y={60} width={52} height={8} rx={4} fill={C.blue} className="progress" />
-          </Device>
-        </Float>
+    <svg viewBox="0 0 424 424" role="img"
+      aria-label="A sorting lesson as three step cards: compare and swap three and one, compare and swap three and two, then sorted. Each step has a green check. A voice bubble with moving sound bars shows the narration, and a shield shows every step was checked">
+      {steps.map((st, i) => (
+        <At key={st.n} x={place[i].x} y={place[i].y} rotate={place[i].r}>
+          <Float slow delay={i * 0.6}>
+            <Block x={-100} y={-62} w={200} h={124} r={22} face={C.white} side={st.done ? C.greenSide : C.rule} stroke={st.done ? C.green : C.rule} dy={6} />
+            <Label x={-82} y={-38} size={12} fill={C.muted} anchor="start">STEP {st.n}</Label>
+            <circle cx={78} cy={-42} r={12} fill={C.green} />
+            <path d="M 72 -42 l 4.5 5 l 8 -10" stroke={C.white} strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            {st.bars.map((v, k) => {
+              const h = 12 + v * 13;
+              const hot = st.hot && (k === st.hot[0] || k === st.hot[1]);
+              const face = st.done ? C.green : hot ? C.orange : C.blue;
+              const side = st.done ? C.greenSide : hot ? C.orangeSide : C.blueSide;
+              return (
+                <g key={k}>
+                  <rect x={bx(k) - 15} y={30 - h + 4} width={30} height={h} rx={8} fill={side} />
+                  <rect x={bx(k) - 15} y={30 - h} width={30} height={h} rx={8} fill={face} />
+                  <Label x={bx(k)} y={30 - h + 20} size={16} fill={C.white}>{v}</Label>
+                </g>
+              );
+            })}
+            {st.hot && (() => {
+              // from just above the first bar, up and over, down onto the second: the arrowhead touches its target
+              const [from, to] = st.hot;
+              const top = (k: number) => 30 - (12 + st.bars[k] * 13);
+              const y1 = top(from) - 6, y2 = top(to) - 7, x1 = bx(from), x2 = bx(to);
+              return (
+                <g stroke={C.orange} strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" fill="none">
+                  <path d={`M ${x1} ${y1} C ${x1} ${y1 - 18} ${x2} ${y1 - 18} ${x2} ${y2 - 4}`} />
+                  <path d={`M ${x2 - 6} ${y2 - 9} L ${x2} ${y2} L ${x2 + 6} ${y2 - 9}`} />
+                </g>
+              );
+            })()}
+            <Label x={0} y={50} size={13} fill={st.done ? C.greenSide : C.ink}>{st.caption}</Label>
+          </Float>
+        </At>
+      ))}
+
+      {/* narrated video */}
+      <At x={338} y={66}>
+        <Float delay={0.4}><At x={0} y={0} scale={1.25}><VoiceBubble /></At></Float>
+        <Label x={0} y={68} size={12} fill={C.blue}>NARRATED</Label>
       </At>
-      <At x={104} y={302}><Float delay={0.4}><Helper r={58} /></Float></At>
-      <At x={80} y={118} rotate={-10}><Float delay={0.8}><StackToken /></Float></At>
-      <At x={205} y={58} rotate={-6}><Float delay={1.6}><GraphToken /></Float></At>
-      <At x={355} y={72} rotate={8}><Float delay={1.2}><TreeToken /></Float></At>
-      <At x={360} y={360} rotate={-8}><Float delay={2}><QueueToken /></Float></At>
-      <At x={48} y={208} rotate={-8}><Float delay={2.4}><VerifiedBadge size={0.75} /></Float></At>
-      <At x={372} y={208} rotate={6}><Float delay={0.2}><VoiceBubble /></Float></At>
+
+      {/* checked by code */}
+      <At x={82} y={330} rotate={-6}>
+        <Float delay={1}><VerifiedBadge size={1.15} /></Float>
+        <Label x={0} y={62} size={12} fill={C.greenSide}>CHECKED BY CODE</Label>
+      </At>
+
     </svg>
   );
 }
@@ -178,25 +221,28 @@ export function BenefitArt({ kind }: { kind: BenefitArtKind }) {
   );
 }
 
-/** The closing landscape: a white valley cut into green, with the finished lesson in the middle. */
-export function Valley() {
+/** The layered top edge of the footer: a white valley cut into green, with a darker lip and lighter bands that
+    settle into the exact footer green, so no seam shows where the artwork ends. */
+export function FooterLayers() {
+  const valley = (side: number, dip: number) =>
+    `M 0 0 H 1440 V ${side} C 1240 ${side} 1130 ${dip} 720 ${dip} C 310 ${dip} 200 ${side} 0 ${side} Z`;
   return (
-    <svg viewBox="0 0 1440 360" preserveAspectRatio="xMidYMax slice" className="valley-art" aria-hidden="true">
-      <rect width={1440} height={360} fill={C.green} />
-      <path d="M 0 0 H 1440 V 110 C 1230 110 1150 320 720 320 C 290 320 210 110 0 110 Z" fill={C.white} />
-      <At x={720} y={196} rotate={-6}>
-        <Float slow>
-          <Device w={164} h={226}>
-            <Bars values={[1, 2, 3, 4, 5, 6]} sorted={6} />
-            <g transform="translate(0 64)"><VerifiedBadge size={0.45} /></g>
-          </Device>
-        </Float>
-      </At>
-      <At x={548} y={214} rotate={-12}><Float delay={0.5}><Badge kind="star" r={28} /></Float></At>
-      <At x={884} y={226} rotate={10}><Float delay={1.1}><VerifiedBadge size={0.8} /></Float></At>
-      <At x={452} y={170} rotate={-8}><Float delay={1.6}><StackToken /></Float></At>
-      <At x={1000} y={168} rotate={8}><Float delay={0.9}><TreeToken /></Float></At>
-      <At x={830} y={300}><Float delay={0.3}><Helper r={40} /></Float></At>
+    <svg viewBox="0 0 1440 260" preserveAspectRatio="none" className="footer-layers" aria-hidden="true">
+      <rect width={1440} height={260} fill={C.green} />
+      <path d={valley(150, 246)} fill={C.greenLight} opacity={0.14} />
+      <path d={valley(125, 226)} fill={C.greenLight} opacity={0.2} />
+      <path d={valley(100, 206)} fill={C.greenLight} opacity={0.28} />
+      <path d={valley(70, 190)} fill={C.greenSide} />
+      <path d={valley(70, 172)} fill={C.white} />
+    </svg>
+  );
+}
+
+/** The helper face on its own, floating above the closing call to action. */
+export function CtaHelper() {
+  return (
+    <svg viewBox="-80 -80 160 160" className="cta-helper" aria-hidden="true">
+      <Float><Helper r={50} /></Float>
     </svg>
   );
 }

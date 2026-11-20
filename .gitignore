@@ -10,6 +10,8 @@ __pycache__/
 /models/
 /cache/
 /outputs/
+# Choices saved in the app (voice, quality, ...); personal to each person, never commit
+/settings.json
 # Manim's default output folder, wherever a script is run from
 /media/
 /backend/media/

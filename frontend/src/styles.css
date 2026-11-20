@@ -147,6 +147,29 @@ a.card:hover { text-decoration: none; border-color: var(--blue); transform: tran
 }
 .input:focus, .select:focus, .textarea:focus { outline: none; border-color: var(--blue); background: #fff; }
 .textarea { resize: vertical; min-height: 96px; }
+
+/* dropdowns: a themed, rounded list with a thin scrollbar (where the browser supports customisable selects) */
+.select, .select::picker(select) { scrollbar-width: thin; scrollbar-color: var(--rule) transparent; }
+@supports (appearance: base-select) {
+  .select, .select::picker(select) { appearance: base-select; }
+  .select { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+  .select::picker-icon { color: var(--muted); transition: transform 0.15s; }
+  .select:open::picker-icon { transform: rotate(180deg); }
+  .select::picker(select) {
+    box-sizing: border-box; margin-top: 6px; padding: 6px; max-height: 320px;
+    border: 2px solid var(--rule); border-radius: 16px; background: #fff; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  }
+  .select option { font: 400 16px/22px var(--font-body); color: var(--ink); }
+  /* category titles: bold (options set their own weight, so only the label is affected) */
+  .select optgroup { padding-top: 6px; font: 800 14px/22px var(--font-body); color: var(--ink); }
+  .select option { padding: 8px 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+  .select option:hover, .select option:focus-visible { background: var(--wash); outline: none; }
+  .select option:checked { background: var(--sky); color: var(--sky-ink); font-weight: 700; }
+  .select option::checkmark { display: none; }
+  .select::picker(select)::-webkit-scrollbar { width: 6px; }
+  .select::picker(select)::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+  .select::picker(select)::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 999px; }
+}
 .segmented { display: inline-flex; border: 2px solid var(--rule); border-radius: var(--radius); overflow: hidden; }
 .segmented button {
   border: 0; background: #fff; padding: 10px 16px; font: 700 14px/1 var(--font-body); color: var(--body); cursor: pointer;
@@ -186,15 +209,17 @@ a.card:hover { text-decoration: none; border-color: var(--blue); transform: tran
 .icon-btn:hover { background: var(--wash); color: var(--ink); text-decoration: none; }
 .menu-toggle { display: none; }
 
-.site-footer { background: var(--green); color: var(--footer-link); }
+/* footer text: deep forest green on the bright green, for strong contrast */
+.site-footer { --footer-ink: #0d2f00; --footer-link-ink: #174000; background: var(--green); color: var(--footer-link-ink); }
 .site-footer .columns {
   display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px; padding: 96px 16px 48px;
 }
-.site-footer h4 { font: 700 19px/1.4 var(--font-body); color: var(--footer-heading); margin-bottom: 14px; }
+.site-footer h4 { font: 800 19px/1.4 var(--font-display); color: var(--footer-ink); margin-bottom: 14px; }
 .site-footer ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
-.site-footer a { color: var(--footer-link); font: 700 15px/22px var(--font-body); }
+.site-footer a { color: var(--footer-link-ink); font: 700 16px/22px var(--font-body); }
+.site-footer a:hover { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
 .site-footer .legal {
-  border-top: 2px solid var(--footer-link); padding: 28px 16px 64px; color: var(--footer-heading); font-size: 15px;
+  border-top: 2px solid rgba(13, 47, 0, 0.3); padding: 28px 16px 64px; color: var(--footer-ink); font: 700 15px/1.5 var(--font-body);
   display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between;
 }
 .compact-footer { border-top: 2px solid var(--rule); padding: 28px 16px; text-align: center; }
@@ -236,9 +261,21 @@ a.card:hover { text-decoration: none; border-color: var(--blue); transform: tran
 .pipeline-tile .where { font: 700 11px/1 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--blue); }
 .popular { padding: 96px 0 48px; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-.lesson-card { display: flex; flex-direction: column; gap: 12px; height: 100%; }
-.lesson-card h3 { font: 800 22px/1.2 var(--font-display); }
-.lesson-card .tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.grid-3 { gap: 32px; }
+.lesson-card { display: flex; flex-direction: column; gap: 24px; height: 100%; padding: 28px; border-top-width: 8px; }
+.lesson-card.level-beginner { border-top-color: var(--green); }
+.lesson-card.level-intermediate { border-top-color: var(--orange); }
+.lesson-card.level-advanced { border-top-color: var(--pink); }
+.lc-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.lc-level {
+  display: inline-flex; align-items: center; height: 30px; padding: 0 14px; border-radius: 999px; border: 2px solid;
+  font: 800 13px/1 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase;
+}
+.lc-body { display: flex; flex-direction: column; gap: 12px; }
+.lesson-card h3 { font: 800 24px/1.2 var(--font-display); }
+.lc-body p { font-size: 16px; line-height: 1.65; color: var(--body); }
+/* the button and the link always sit on separate lines, under a thin rule */
+.lc-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; margin-top: auto; padding-top: 24px; border-top: 2px solid var(--rule); }
 .faq { max-width: 643px; margin: 0 auto; padding: 48px 16px 96px; display: flex; flex-direction: column; gap: 32px; }
 .faq details { border-bottom: 2px solid var(--rule); padding-bottom: 28px; }
 .faq summary {
@@ -249,9 +286,11 @@ a.card:hover { text-decoration: none; border-color: var(--blue); transform: tran
 .faq summary::after { content: ""; width: 12px; height: 12px; border-right: 3px solid var(--muted); border-bottom: 3px solid var(--muted); transform: rotate(45deg); margin-top: 2px; flex: none; transition: transform 0.15s; }
 .faq details[open] summary::after { transform: rotate(-135deg); margin-top: 8px; }
 .faq details p { margin-top: 16px; }
-.green-close { background: var(--green); position: relative; }
-.green-close .valley { background: #fff; text-align: center; padding: 96px 16px 0; }
+.green-close { background: #fff; position: relative; }
+.green-close .valley { text-align: center; padding: 96px 16px 0; }
+.footer-layers { display: block; width: 100%; height: 260px; margin-bottom: -1px; }
 .green-close .valley .display { margin-bottom: 48px; }
+.cta-helper { display: block; width: 120px; height: 120px; margin: 0 auto 16px; overflow: visible; }
 
 /* ---------- error pages ---------- */
 .error-page { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px; max-width: 720px; }
@@ -285,7 +324,6 @@ a.card:hover { text-decoration: none; border-color: var(--blue); transform: tran
 @keyframes tile-turn { 0% { opacity: 0; } 4%, 14% { opacity: 1; } 20%, 100% { opacity: 0; } }
 .category-rail a:hover .emblem { animation: wiggle 0.5s ease; }
 @keyframes wiggle { 25% { transform: rotate(-10deg); } 75% { transform: rotate(10deg); } }
-.valley-art { display: block; width: 100%; height: auto; min-height: 220px; }
 
 /* ---------- app pages ---------- */
 .page { padding-top: 48px; padding-bottom: 96px; } /* keeps the container's side gutter */
@@ -348,9 +386,10 @@ a.card:hover { text-decoration: none; border-color: var(--blue); transform: tran
   background: var(--sky); color: var(--sky-ink); border-radius: 8px;
   padding: 6px 10px; font: 700 12px/1 var(--font-body); letter-spacing: 0.05em; text-transform: uppercase;
 }
-.chapters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; }
+/* the steps fill two rows that share the full width, so nothing scrolls sideways */
+.chapters { display: grid; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); gap: 8px; }
 .chapter {
-  flex: none; display: flex; flex-direction: column; gap: 4px; min-width: 112px; padding: 10px 12px; text-align: left;
+  display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 10px 12px; text-align: left;
   border: 2px solid var(--rule); border-bottom-width: 4px; border-radius: var(--radius); background: #fff; cursor: pointer;
 }
 .chapter .n { font: 700 12px/1 var(--font-body); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
@@ -360,7 +399,7 @@ a.card:hover { text-decoration: none; border-color: var(--blue); transform: tran
 .chapter.pending { opacity: 0.5; cursor: default; }
 .chapter.ready { border-color: #bdeb8f; }
 
-.tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--rule); overflow-x: auto; }
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 2px solid var(--rule); }
 .tabs button {
   border: 0; background: none; padding: 12px 14px; font: 700 15px/1 var(--font-body); letter-spacing: 0.05em;
   text-transform: uppercase; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px;
@@ -389,8 +428,9 @@ a.card:hover { text-decoration: none; border-color: var(--blue); transform: tran
 .quiz-option:disabled { cursor: default; }
 
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
-.stat { border: 2px solid var(--rule); border-radius: var(--radius-lg); padding: 14px 16px; }
-.stat b { display: block; font: 800 28px/1.1 var(--font-display); color: var(--ink); }
+.stat { border: 2px solid var(--rule); border-radius: var(--radius-lg); padding: 14px 16px; container-type: inline-size; }
+/* the figure always stays on one line: it shrinks with its box instead of wrapping */
+.stat b { display: block; white-space: nowrap; font: 800 clamp(16px, 13cqi, 28px)/1.1 var(--font-display); color: var(--ink); }
 .stat span { font-size: 14px; }
 .transcript { display: flex; flex-direction: column; gap: 4px; }
 .transcript .line { display: grid; grid-template-columns: 110px 1fr; gap: 16px; padding: 12px 0; border-bottom: 2px solid var(--rule); }
@@ -398,18 +438,25 @@ a.card:hover { text-decoration: none; border-color: var(--blue); transform: tran
 pre.json {
   background: var(--wash); border: 2px solid var(--rule); border-radius: var(--radius-lg); padding: 16px; overflow: auto;
   max-height: 480px; font-size: 13px; line-height: 18px; color: var(--ink);
+  scrollbar-width: thin; scrollbar-color: var(--muted) transparent;
 }
 
 /* library */
 .toolbar { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin-bottom: 28px; }
 .toolbar .input { max-width: 340px; }
-.algo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-.algo-card { display: flex; flex-direction: column; gap: 12px; height: 100%; }
-.algo-card .top { display: flex; align-items: center; gap: 12px; }
-.algo-card h3 { font: 800 21px/1.2 var(--font-display); }
-.algo-card .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
-.category-group + .category-group { margin-top: 48px; }
-.category-group > h2 { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.lib-filters { display: flex; flex-direction: column; gap: 20px; }
+.lib-search { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; }
+.lib-search .input { max-width: 340px; }
+.lib-divider { margin: 32px 0 40px; }
+.algo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 32px; }
+a.algo-card { display: flex; flex-direction: column; gap: 22px; height: 100%; min-height: 260px; padding: 32px 28px 28px; }
+.algo-card .top { display: flex; align-items: center; gap: 16px; }
+.algo-card h3 { font: 800 22px/1.25 var(--font-display); }
+.algo-card p { font-size: 16px; line-height: 1.65; }
+/* the tags sit apart from the text, under a thin rule, so the card reads as two parts */
+.algo-card .meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; padding-top: 18px; border-top: 2px solid var(--rule); }
+.category-group + .category-group { margin-top: 64px; }
+.category-group > h2 { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
 
 /* algorithm page */
 .algo-head { display: grid; grid-template-columns: 1fr 260px; gap: 40px; align-items: center; }

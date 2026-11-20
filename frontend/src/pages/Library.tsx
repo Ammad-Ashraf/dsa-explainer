@@ -26,8 +26,11 @@ export function LibraryPage() {
         <p>{catalog.algorithms.length} data structures and algorithms, each with a simulator the verifier trusts and a
           ready-made lesson you can watch without an API key.</p>
       </div>
-      <div className="toolbar">
-        <input className="input" type="search" placeholder="Search algorithms" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search algorithms" />
+      <div className="lib-filters">
+        <div className="lib-search">
+          <input className="input" type="search" placeholder="Search algorithms" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search algorithms" />
+          <Segmented<Level | "any"> label="Difficulty" options={["any", ...LEVELS]} value={level} onChange={setLevel} />
+        </div>
         <div className="chips" aria-label="Category">
           <button type="button" className="chip" aria-pressed={category === "all"} onClick={() => setParams({})}>All</button>
           {Object.entries(catalog.categories).map(([id, title]) => (
@@ -36,8 +39,8 @@ export function LibraryPage() {
             </button>
           ))}
         </div>
-        <Segmented<Level | "any"> label="Difficulty" options={["any", ...LEVELS]} value={level} onChange={setLevel} />
       </div>
+      <hr className="rule lib-divider" />
       {groups.length === 0 && <div className="empty">Nothing matches. Try another word, or <Link to="/studio">ask the Studio</Link>.</div>}
       {groups.map((g) => (
         <section key={g.id} className="category-group">

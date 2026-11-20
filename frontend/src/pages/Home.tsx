@@ -1,8 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
 import { algorithmById, api, useCatalog, usePlans } from "../api";
-import { BenefitArt, type BenefitArtKind, Emblem, HeroArt, StageIcon, type StageIconKind, Valley } from "../components/art";
+import { BenefitArt, type BenefitArtKind, CtaHelper, Emblem, FooterLayers, HeroArt, StageIcon, type StageIconKind } from "../components/art";
 import { Reveal } from "../components/Reveal";
-import { LevelTag, LinkButton, Tag } from "../components/ui";
+import { LinkButton } from "../components/ui";
 
 const BENEFITS: { id: string; kind: BenefitArtKind; title: string; body: React.ReactNode }[] = [
   {
@@ -37,6 +37,12 @@ const PIPELINE: { kind: StageIconKind; title: string; text: string; where: strin
   { kind: "join", title: "Join", text: "Clips joined into one video, ready to replay.", where: "on your computer" },
 ];
 
+const FAVOURITES = [
+  { id: "bubble_sort", label: "Easy" },
+  { id: "binary_search", label: "Intermediate" },
+  { id: "dijkstra", label: "Advanced" },
+];
+
 const FAQ: [string, React.ReactNode][] = [
   ["Do I need an API key?", <>Only to make new lessons from your own topics. Every lesson in the <Link to="/library">library</Link> plays
     without one, and you can bring a free key (Google Gemini or Groq) or run a model locally with Ollama.</>],
@@ -57,9 +63,10 @@ export default function Home() {
   const { data: catalog } = useCatalog();
   const { data: plans } = usePlans();
   const navigate = useNavigate();
-  const popular = ["binary_search", "dijkstra", "merge_sort"]
-    .map((id) => plans?.find((p) => p.id === id))
-    .filter((p): p is NonNullable<typeof p> => !!p);
+  // one favourite per level: easy, intermediate, advanced
+  const popular = FAVOURITES
+    .map(({ id, label }) => ({ plan: plans?.find((p) => p.id === id), label }))
+    .filter((f): f is { plan: NonNullable<typeof f.plan>; label: string } => !!f.plan);
 
   async function watch(planId: string) {
     const job = await api.renderPlan(planId);
@@ -125,17 +132,19 @@ export default function Home() {
           <p>Ready-made lessons, checked and ready to play. No API key needed.</p>
         </div>
         <div className="grid-3">
-          {popular.map((p) => {
+          {popular.map(({ plan: p, label }) => {
             const algo = algorithmById(catalog, p.structure);
             return (
-              <div key={p.id} className="card lesson-card">
-                <div className="tags">
-                  <LevelTag level={p.level} />
-                  {algo && <Tag mono>{algo.complexity.average}</Tag>}
+              <div key={p.id} className={`card lesson-card level-${p.level}`}>
+                <div className="lc-head">
+                  <span className={`lc-level tag-${p.level}`}>{label}</span>
+                  {algo && <Emblem category={algo.category} size={44} />}
                 </div>
-                <h3>{p.title}</h3>
-                <p className="small">{algo?.summary}</p>
-                <div className="actions-row" style={{ marginTop: "auto" }}>
+                <div className="lc-body">
+                  <h3>{p.title}</h3>
+                  <p>{algo?.summary}</p>
+                </div>
+                <div className="lc-actions">
                   <button type="button" className="btn btn-primary btn-small" onClick={() => watch(p.id)}>Watch</button>
                   {algo && <Link to={`/library/${algo.id}`}>About {algo.title.toLowerCase()}</Link>}
                 </div>
@@ -157,10 +166,11 @@ export default function Home() {
 
       <section className="green-close">
         <div className="valley">
+          <CtaHelper />
           <h2 className="display">ready to see it move?</h2>
           <LinkButton to="/studio" wide>Make a lesson</LinkButton>
         </div>
-        <Valley />
+        <FooterLayers />
       </section>
     </>
   );
