@@ -33,6 +33,9 @@ export function Quiz({ questions, structure }: { questions: LessonDetail["quiz"]
             {choice != null && (
               <Notice tone={choice === q.answer ? "green" : "blue"}>
                 <span><b>{choice === q.answer ? "Right!" : `The answer is ${"ABCD"[q.answer]}.`}</b> {q.explanation}{" "}
+                  {choice !== q.answer && q.why_wrong?.[choice] && (
+                    <>{"ABCD"[choice]} is what you get by {q.why_wrong[choice]}.{" "}</>
+                  )}
                   <span className="small">(Checked by running the operations on a real {structure}.)</span></span>
               </Notice>
             )}

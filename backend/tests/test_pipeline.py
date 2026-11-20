@@ -35,7 +35,7 @@ def test_a_quiz_failure_keeps_the_verified_lesson(tmp_path, monkeypatch):
     monkeypatch.setattr(video, "build_video", fake_build)
     rep = Recorder()
     result = pipeline.make_lesson("how does a stack work", "beginner", "draft", rep)
-    assert len(result["lesson"].quiz) == 1  # the built-in question
+    assert len(result["lesson"].quiz) == 2  # the built-in questions
     quiz_done = [d for t, d in rep.events if t == "stage" and d["stage"] == "quiz" and d["status"] == "done"]
     assert quiz_done and "built-in question" in quiz_done[0]["detail"]
     meta, _ = store.get(result["lesson_id"])

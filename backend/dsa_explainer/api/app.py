@@ -104,7 +104,9 @@ def lesson_view(lesson: Lesson) -> dict:
             right = answer_index(lesson, q)
         except Exception:  # an unverifiable question is never shown
             continue
-        quiz.append({"question": q.question, "options": q.options, "answer": right, "explanation": q.explanation})
+        why = {i: q.why_wrong[o] for i, o in enumerate(q.options) if o in q.why_wrong and i != right}
+        quiz.append({"question": q.question, "options": q.options, "answer": right, "explanation": q.explanation,
+                     "why_wrong": why})
     return {"scenes": scenes, "quiz": quiz,
             "verified": {"ok": report.ok, "checks": report.checks, "errors": report.errors[:5]},
             "plan": lesson.model_dump(mode="json")}

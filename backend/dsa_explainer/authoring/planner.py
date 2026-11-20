@@ -40,6 +40,7 @@ Return ONLY one JSON object of this shape:
     {{"kind": "step", "caption": "<at most 50 characters, e.g. push(7)>",
       "op": {{"name": "push", "args": {{"value": 7}}}},
       "claimed_state": <the full state AFTER this step, in the state format>,
+      "claims": [{{"fact": "top", "value": 7, "when": "after"}}],
       "narration": "<...>"}},
     {{"kind": "summary", "caption": "Summary", "points": ["<at most 60 characters>", "..."], "narration": "<...>"}}
   ]
@@ -49,7 +50,8 @@ Rules:
 - One intro scene first, one summary scene last, and 4 to {max_steps} step scenes between them, one operation each.
 - Work out claimed_state carefully, one step at a time, starting from "initial".
 - The narration is spoken aloud: plain sentences, no markdown, no symbols such as -> or brackets. Write numbers as digits. Each scene has 2 to 4 sentences (25 to 60 words); the whole narration has at least {min_words} words. Explain what happens in the step and why.
-- In a step's narration only mention values that are in the structure or in that step's operation. Whenever you name the top, front, rear, head, tail, root, size or current node, it must be true right after that step.
+- In a step's narration only mention values that are in the structure or in that step's operation, or counts the structure's facts report. Whenever you name the top, front, rear, head, tail, root, size or current node, it must be true right after that step.
+- In "claims", list every fact the step's narration states, using the fact names from the reference: "when" is "after" (true right after the step) or "before" (true just before it, e.g. "the root is 3, so we remove it"). The narration must say each claimed value. Every claim is checked exactly.
 - Use small values (whole numbers from 1 to 99, or single capital letters for graph nodes) and at most 7 items or nodes, so the picture stays readable.
 - Level: beginner = everyday analogies and simple words; intermediate = precise terms and time complexity; advanced = complexity, edge cases and trade-offs.
 - If the learner gives their own data (values, a list of edges, a start node), use it as "initial".

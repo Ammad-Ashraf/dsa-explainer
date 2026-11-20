@@ -37,7 +37,7 @@ The open questions from the vision, decided so work can proceed without waiting:
 | 3 | React frontend | 1, 2, 5 (registry) | **Done** |
 | 6 | Richer, still-verified animations | 5 | **Done** |
 | 4 | Voice research and pluggable voice engines | 0 | **Done** |
-| 7 | Stronger verification and an evaluation harness | 5 | |
+| 7 | Stronger verification and an evaluation harness | 5 | **Done** |
 | 8 | Latency and responsiveness | 1, 3 | |
 | 9 | Open-source release | all | |
 
@@ -177,15 +177,32 @@ app, and data-structure words read wrongly ("deque" as "de-queue").
 
 ## Milestone 7: Stronger verification and an evaluation harness
 
-- [ ] 7.1 Declared claims: each scene lists the facts it states, each marked as true before or after the step; the
-      verifier checks each one and that the narration expresses it; the regular expressions remain a backstop.
-      Closes two gaps found while writing the saved plans: a claim is accepted if it is true before *or* after the
-      step ("the root is 3" on the step that changes it), and any number from 0 to 8 passes as a count ("D drops
-      to 7").
-- [ ] 7.2 Paraphrase coverage for the narration checker (counts, "holds", "sits on top"), with tests.
-- [ ] 7.3 Quiz: new question types and distractors from simulated mistakes, verified wrong.
-- [ ] 7.4 Mutation testing of the verifier over every saved plan, with a reported catch rate.
-- [ ] 7.5 Evaluation harness extending `scripts/live_eval.py` across algorithms and providers.
+**Why.** Two gaps were found while writing the saved plans (below), the quiz's wrong options were whatever the
+model wrote, and there was no measure of how much the verifier actually catches.
+
+- [x] 7.1 Declared claims: a scene may list `claims` (`{"fact", "value", "when": "before" | "after"}`); each is
+      checked exactly at its moment and the narration must say the value; the planner prompt asks for them. The
+      pattern checks stay as the backstop and now hold a step's statements to the state *right after* it unless a
+      claim declares "before". Numbers must be values, arguments or the simulator's own counts at that moment.
+      Both gaps are closed and tested: "the root is 3" on the step that changes the root, and "D drops to 7"
+      passing as a count.
+- [x] 7.2 Paraphrase coverage: "holds three values", "has four items", "only two nodes remain", "7 is now the top",
+      "becomes the new root", "changes to", "drops to", "the distance to D", "D's distance", "after three
+      comparisons", and sentences that are not claims ("this is the root of the problem"), with tests.
+- [x] 7.3 Quiz: wrong options from simulated mistakes (`authoring/mistakes.py`: forgetting the last operation,
+      running it twice, the wrong order, the value before any operation, treating a queue as a stack, BFS as DFS,
+      one sort as another), each verified wrong and kept with its reason, which the app shows when a learner picks
+      it. New question types: true/false (`claim`) and counts (comparisons, swaps, shifts, nodes walked). A
+      question with a right answer but broken options is repaired instead of thrown away, and built-in questions
+      cover every algorithm when the model fails.
+- [x] 7.4 Mutation testing over every saved plan (`core/mutants.py`, `scripts/mutation_report.py`,
+      `tests/test_mutations.py`): 601 mutants of ten kinds, **97.0% caught** (92.7% by the Milestone 6 verifier);
+      wrong facts in the narration went from 78% to 100%. The survivors and why they survive are in
+      [docs/research/verification.md](../research/verification.md).
+- [x] 7.5 Evaluation harness `scripts/eval_harness.py`: algorithms x providers x JSON modes, timing of every
+      language-model call, a call budget for free tiers, JSON-lines results and a Markdown summary; `--dry-run`
+      replays the saved plans so the harness is tested offline. `live_eval.py` stays as the fixed course run.
+      Results of a real Gemini run by JSON mode: [docs/research/eval-json-modes.md](../research/eval-json-modes.md).
 
 ## Milestone 8: Latency and responsiveness
 

@@ -72,9 +72,9 @@ def make_lesson(topic: str, level: str = "beginner", quality: str = "draft", log
     except events.Cancelled:
         raise
     except Exception as exc:  # the lesson is verified and ready: a quiz problem must not throw it away
-        lesson.quiz = [quiz.fallback_question(lesson)]
-        rep(f"The quiz writer failed ({str(exc)[:200]}); using a question built from the lesson.")
-        rep.stage("quiz", "done", "1 built-in question (the language model did not answer in time)")
+        lesson.quiz = quiz.builtin_questions(lesson, 2)
+        rep(f"The quiz writer failed ({str(exc)[:200]}); using questions built from the lesson.")
+        rep.stage("quiz", "done", f"{len(lesson.quiz)} built-in question(s) (the language model did not answer)")
     extra = {"rejected": rejected, "plan_seconds": plan_seconds, "quiz_seconds": time.perf_counter() - started}
     return _finish(lesson, config.OUTPUT_DIR / store.new_id(lesson.title), 1, quality, rep, extra)
 

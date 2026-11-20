@@ -75,7 +75,11 @@ export interface LessonSummary {
   versions: number; latest_version: number | null; seconds: number | null;
 }
 export interface SceneView { label: string; kind: string; caption: string; narration: string; op: string | null; speed: number; points: string[] }
-export interface QuizQuestion { question: string; options: string[]; answer: number; explanation: string }
+export interface QuizQuestion {
+  question: string; options: string[]; answer: number; explanation: string;
+  /** option index -> the simulated mistake that gives it ("forgetting the last operation") */
+  why_wrong?: Record<number, string>;
+}
 export interface LessonView {
   scenes: SceneView[];
   quiz: QuizQuestion[];

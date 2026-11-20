@@ -34,7 +34,9 @@ class Preset:
 
 PRESETS: dict[str, Preset] = {p.id: p for p in (
     Preset("gemini", "Google Gemini", "https://generativelanguage.googleapis.com/v1beta/openai/",
-           "gemini-3.5-flash", "gemini-3.5-flash-lite", "https://aistudio.google.com/apikey", structured="json_schema",
+           # json_object, not json_schema: measured slower and less reliable on Gemini for these long plans
+           # (docs/research/eval-json-modes.md); the schema still shapes the prompt and Pydantic checks the reply.
+           "gemini-3.5-flash", "gemini-3.5-flash-lite", "https://aistudio.google.com/apikey", structured="json_object",
            notes="Free tier: a few requests a minute and about 20 a day per model; the fallback model takes over "
                  "when the daily allowance runs out."),
     Preset("anthropic", "Anthropic Claude", "https://api.anthropic.com/v1/", "claude-sonnet-5-5",

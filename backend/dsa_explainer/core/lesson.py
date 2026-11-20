@@ -18,12 +18,22 @@ class Op(BaseModel):
         return f"{self.name}({', '.join(str(v) for v in self.args.values())})"
 
 
+class Claim(BaseModel):
+    """A fact the narration states, declared so the verifier can check it exactly:
+    {"fact": "root", "value": 3, "when": "before"} says "the root is 3" about the state just before the step."""
+
+    fact: str
+    value: Any
+    when: Literal["before", "after"] = "after"
+
+
 class Scene(BaseModel):
     kind: Literal["intro", "step", "summary"]
     narration: str = Field(min_length=10)
     caption: str = ""
     op: Op | None = None  # step scenes only
     claimed_state: Any = None  # the planner's belief about the state after the op
+    claims: list[Claim] = Field(default_factory=list)  # the facts the narration states, checked exactly
     points: list[str] = Field(default_factory=list)  # summary bullet points
     speed: float = Field(default=1.0, ge=0.5, le=1.5)  # < 1 is slower (revisions)
 
@@ -38,6 +48,8 @@ class Question(BaseModel):
     options: list[str] = Field(min_length=2, max_length=4)
     answer: str
     explanation: str = ""
+    claim: str | None = None  # set for a true/false question: "is the {ask} {claim}?"; options are True and False
+    why_wrong: dict[str, str] = Field(default_factory=dict)  # wrong option -> the simulated mistake that gives it
 
 
 class Lesson(BaseModel):
