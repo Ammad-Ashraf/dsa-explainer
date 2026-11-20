@@ -13,7 +13,7 @@ import gradio as gr
 from dsa_explainer import config, pipeline
 from dsa_explainer.authoring import llm
 from dsa_explainer.core.lesson import Lesson, scene_labels
-from dsa_explainer.core.structures import DISPLAY_NAMES
+from dsa_explainer.algorithms import DISPLAY_NAMES
 from dsa_explainer.core.verifier import answer_index
 
 QUALITIES = {"Draft (480p, faster)": "draft", "Standard (720p)": "standard"}

@@ -1,0 +1,205 @@
+{
+  "topic": "Order tasks with dependencies using a topological sort",
+  "level": "advanced",
+  "title": "Topological Sort with Kahn's Algorithm",
+  "structure": "topological_sort",
+  "initial": {
+    "edges": [
+      [
+        "A",
+        "B"
+      ],
+      [
+        "A",
+        "C"
+      ],
+      [
+        "B",
+        "D"
+      ],
+      [
+        "C",
+        "D"
+      ]
+    ]
+  },
+  "scenes": [
+    {
+      "kind": "intro",
+      "narration": "Each arrow means one task must come before another: A before B and C, and both B and C before D. Kahn's algorithm keeps the tasks whose arrows into them are all gone as ready, and takes the alphabetically first one each step.",
+      "caption": "Do every task after what it depends on",
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Only A has no incoming arrows, so A is taken first. Removing its arrows frees both B and C, which become ready.",
+      "caption": "take A",
+      "op": {
+        "name": "take",
+        "args": {}
+      },
+      "claimed_state": {
+        "current": "A",
+        "ready": [
+          "B",
+          "C"
+        ],
+        "order": [
+          "A"
+        ]
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "B and C are ready, and B comes first alphabetically. Removing the arrow from B leaves D with just one incoming arrow.",
+      "caption": "take B",
+      "op": {
+        "name": "take",
+        "args": {}
+      },
+      "claimed_state": {
+        "current": "B",
+        "ready": [
+          "C"
+        ],
+        "order": [
+          "A",
+          "B"
+        ]
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "C is taken next. Its arrow to D was the last one, so D becomes ready.",
+      "caption": "take C",
+      "op": {
+        "name": "take",
+        "args": {}
+      },
+      "claimed_state": {
+        "current": "C",
+        "ready": [
+          "D"
+        ],
+        "order": [
+          "A",
+          "B",
+          "C"
+        ]
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Finally D is taken. The order A, B, C, D respects every arrow.",
+      "caption": "take D",
+      "op": {
+        "name": "take",
+        "args": {}
+      },
+      "claimed_state": {
+        "current": "D",
+        "ready": [],
+        "order": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ]
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "summary",
+      "narration": "A topological order only exists for graphs without cycles. Build tools, course plans and spreadsheet formulas all rely on it.",
+      "caption": "Summary",
+      "points": [
+        "Ready: tasks with no remaining incoming arrows",
+        "Take one, remove its arrows, repeat",
+        "If nothing is ready but tasks remain, there is a cycle"
+      ],
+      "speed": 1.0
+    }
+  ],
+  "quiz": [
+    {
+      "question": "Arrows: A to C, B to C, C to D, B to E. After taking two tasks, which tasks are ready?",
+      "start": {
+        "edges": [
+          [
+            "A",
+            "C"
+          ],
+          [
+            "B",
+            "C"
+          ],
+          [
+            "C",
+            "D"
+          ],
+          [
+            "B",
+            "E"
+          ]
+        ]
+      },
+      "ops": [
+        {
+          "name": "take",
+          "args": {}
+        },
+        {
+          "name": "take",
+          "args": {}
+        }
+      ],
+      "ask": "ready",
+      "options": [
+        "C, E",
+        "C",
+        "E",
+        "D, E"
+      ],
+      "answer": "C, E",
+      "explanation": "Taking A and B removes every arrow into C and E."
+    },
+    {
+      "question": "Arrows: B to A and C to A. Before any step, which tasks are ready?",
+      "start": {
+        "edges": [
+          [
+            "B",
+            "A"
+          ],
+          [
+            "C",
+            "A"
+          ]
+        ]
+      },
+      "ops": [],
+      "ask": "ready",
+      "options": [
+        "B, C",
+        "A",
+        "A, B, C",
+        "C, B"
+      ],
+      "answer": "B, C",
+      "explanation": "B and C have no incoming arrows; A waits for both."
+    }
+  ],
+  "provenance": {
+    "author": "Claude (Anthropic), hand-written for DSA Explainer",
+    "written": "2026-11-20",
+    "checked_by": "DSA Explainer verifier (scripts/author_plans.py)"
+  }
+}

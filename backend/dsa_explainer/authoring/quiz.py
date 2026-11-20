@@ -13,7 +13,8 @@ from pydantic import ValidationError
 from .. import events
 from . import llm, schemas
 from ..core.lesson import Lesson, Question
-from ..core.structures import STRUCTURES, build, fact_text
+from .. import algorithms
+from ..algorithms import build, fact_text
 from ..core.verifier import check_question
 
 PROMPT = """Write {n} multiple-choice quiz questions for the end of a video lesson.
@@ -33,7 +34,7 @@ Return only JSON: {{"questions": [{{"question": "...", "start": <data or null>, 
 
 
 def _prompt(lesson: Lesson, n: int) -> str:
-    cls = STRUCTURES[lesson.structure]
+    cls = algorithms.get(lesson.structure)
     ds = build(lesson.structure, lesson.initial)
     ops = [s.op for s in lesson.scenes if s.kind == "step" and s.op]
     for op in ops:
@@ -78,8 +79,8 @@ def fallback_question(lesson: Lesson) -> Question:
     for op in ops:
         ds.run(op.name, op.args)
     size = int(fact_text(ds.facts()["size"]))
-    noun = "nodes" if lesson.structure in ("bst", "graph") else "items"
-    q.question = f"After all the steps in this video, how many {noun} does the {lesson.structure.replace('_', ' ')} hold?"
+    cls = algorithms.get(lesson.structure)
+    q.question = f"After all the steps in this video, how many {cls.NOUN} does the {cls.TITLE.lower()} have?"
     q.options = [str(v) for v in sorted({max(0, size - 1), size, size + 1, size + 2})]
     q.answer = str(size)
     q.explanation = f"Counting them in the final picture gives {size}."

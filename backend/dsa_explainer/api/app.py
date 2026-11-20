@@ -34,7 +34,7 @@ from pydantic import BaseModel, Field
 from .. import config, pipeline, settings, store
 from ..authoring import llm, providers
 from ..core.lesson import Lesson, scene_labels
-from ..core.structures import DISPLAY_NAMES, STRUCTURES
+from .. import algorithms
 from ..core.verifier import answer_index, verify_lesson
 from .jobs import JobManager, JobReporter
 
@@ -154,8 +154,7 @@ def create_app() -> FastAPI:
 
     @app.get("/api/catalog")
     def catalog():
-        return [{"id": name, "name": DISPLAY_NAMES.get(name, name), "operations": list(cls.OPS),
-                 "facts": list(cls.FACTS), "help": cls.HELP} for name, cls in STRUCTURES.items()]
+        return {"categories": algorithms.CATEGORIES, "algorithms": algorithms.info()}
 
     # --- saved plans ---
 

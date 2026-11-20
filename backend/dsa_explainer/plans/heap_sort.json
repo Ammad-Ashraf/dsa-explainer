@@ -1,0 +1,223 @@
+{
+  "topic": "Explain heap sort on the array 4, 10, 3, 5, 1, 8",
+  "level": "advanced",
+  "title": "Heap Sort in Place",
+  "structure": "heap_sort",
+  "initial": [
+    4,
+    10,
+    3,
+    5,
+    1,
+    8
+  ],
+  "scenes": [
+    {
+      "kind": "intro",
+      "narration": "Heap sort works in two phases on the same array. First it builds a max heap, where every parent is larger than its children. Then it moves the root, the largest value, to the end, again and again.",
+      "caption": "Heapify, then extract the maximum",
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Build heap sifts down from the last parent to the root. 3 swaps with 8, then 4 sinks below 10 and 5. The array becomes a max heap and the root is 10.",
+      "caption": "build_heap()",
+      "op": {
+        "name": "build_heap",
+        "args": {}
+      },
+      "claimed_state": {
+        "array": [
+          10,
+          5,
+          8,
+          4,
+          1,
+          3
+        ],
+        "heap_size": 6
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Swap the root 10 with the last value 3, so 10 is in its final place. The heap shrinks by one, and 3 sinks below 8. The root is now 8.",
+      "caption": "extract_max(): 10 to the end",
+      "op": {
+        "name": "extract_max",
+        "args": {}
+      },
+      "claimed_state": {
+        "array": [
+          8,
+          5,
+          3,
+          4,
+          1,
+          10
+        ],
+        "heap_size": 5
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Swap 8 with 1, and 8 joins the sorted part. 1 sinks past 5 and 4, so the root is 5.",
+      "caption": "extract_max(): 8 to the end",
+      "op": {
+        "name": "extract_max",
+        "args": {}
+      },
+      "claimed_state": {
+        "array": [
+          5,
+          4,
+          3,
+          1,
+          8,
+          10
+        ],
+        "heap_size": 4
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Swap 5 with 1. Then 1 sinks below 4, and 4 becomes the root.",
+      "caption": "extract_max(): 5 to the end",
+      "op": {
+        "name": "extract_max",
+        "args": {}
+      },
+      "claimed_state": {
+        "array": [
+          4,
+          1,
+          3,
+          5,
+          8,
+          10
+        ],
+        "heap_size": 3
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Swap 4 with 3. The heap now holds just 3 and 1, and 3 is already larger, so nothing sinks.",
+      "caption": "extract_max(): 4 to the end",
+      "op": {
+        "name": "extract_max",
+        "args": {}
+      },
+      "claimed_state": {
+        "array": [
+          3,
+          1,
+          4,
+          5,
+          8,
+          10
+        ],
+        "heap_size": 2
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "One last swap puts 3 in place, leaving 1 at the front. The array reads 1, 3, 4, 5, 8, 10.",
+      "caption": "extract_max(): done",
+      "op": {
+        "name": "extract_max",
+        "args": {}
+      },
+      "claimed_state": {
+        "array": [
+          1,
+          3,
+          4,
+          5,
+          8,
+          10
+        ],
+        "heap_size": 1
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "summary",
+      "narration": "Heap sort never needs a second array and always takes n log n time. The sorted part grew from the back while the heap shrank from the front.",
+      "caption": "Summary",
+      "points": [
+        "Build a max heap in O(n)",
+        "Swap the root to the end and sift down, n times",
+        "O(n log n) always, and O(1) extra space"
+      ],
+      "speed": 1.0
+    }
+  ],
+  "quiz": [
+    {
+      "question": "Heap sort starts on the array 2, 9, 4. After build heap, what is the root?",
+      "start": [
+        2,
+        9,
+        4
+      ],
+      "ops": [
+        {
+          "name": "build_heap",
+          "args": {}
+        }
+      ],
+      "ask": "root",
+      "options": [
+        "9",
+        "2",
+        "4",
+        "3"
+      ],
+      "answer": "9",
+      "explanation": "9 is the largest value, and a max heap keeps it at the root."
+    },
+    {
+      "question": "Heap sort runs build heap, then one extract max, on 2, 9, 4. What is the array now?",
+      "start": [
+        2,
+        9,
+        4
+      ],
+      "ops": [
+        {
+          "name": "build_heap",
+          "args": {}
+        },
+        {
+          "name": "extract_max",
+          "args": {}
+        }
+      ],
+      "ask": "items",
+      "options": [
+        "4, 2, 9",
+        "2, 4, 9",
+        "9, 2, 4",
+        "4, 9, 2"
+      ],
+      "answer": "4, 2, 9",
+      "explanation": "9 swaps to the end; 4 at the root is already larger than 2."
+    }
+  ],
+  "provenance": {
+    "author": "Claude (Anthropic), hand-written for DSA Explainer",
+    "written": "2026-11-20",
+    "checked_by": "DSA Explainer verifier (scripts/author_plans.py)"
+  }
+}

@@ -1,0 +1,221 @@
+{
+  "topic": "How does a hash table with chaining handle collisions?",
+  "level": "intermediate",
+  "title": "Hash Tables and Collisions",
+  "structure": "hash_table",
+  "initial": {
+    "buckets": 5,
+    "keys": [
+      12,
+      7
+    ]
+  },
+  "scenes": [
+    {
+      "kind": "intro",
+      "narration": "A hash table turns each key into a bucket number. Ours has 5 buckets and uses the key mod 5. The keys 12 and 7 both landed in bucket 2, a collision, so they share a chain.",
+      "caption": "Jump straight to the right bucket",
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "3 mod 5 is 3, so the key 3 goes straight into the empty bucket 3.",
+      "caption": "insert 3: bucket 3",
+      "op": {
+        "name": "insert",
+        "args": {
+          "key": 3
+        }
+      },
+      "claimed_state": [
+        [],
+        [],
+        [
+          12,
+          7
+        ],
+        [
+          3
+        ],
+        []
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "17 mod 5 is 2, another collision. 17 joins the end of the chain in bucket 2, after 12 and 7.",
+      "caption": "insert 17: bucket 2",
+      "op": {
+        "name": "insert",
+        "args": {
+          "key": 17
+        }
+      },
+      "claimed_state": [
+        [],
+        [],
+        [
+          12,
+          7,
+          17
+        ],
+        [
+          3
+        ],
+        []
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "To find 7 we only look in bucket 2 and walk its chain: 12, then 7. Found, without touching any other bucket.",
+      "caption": "search 7",
+      "op": {
+        "name": "search",
+        "args": {
+          "key": 7
+        }
+      },
+      "claimed_state": [
+        [],
+        [],
+        [
+          12,
+          7,
+          17
+        ],
+        [
+          3
+        ],
+        []
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Deleting 12 also starts at bucket 2. We remove it from the chain, which now holds 7 and 17. The size is 3.",
+      "caption": "delete 12",
+      "op": {
+        "name": "delete",
+        "args": {
+          "key": 12
+        }
+      },
+      "claimed_state": [
+        [],
+        [],
+        [
+          7,
+          17
+        ],
+        [
+          3
+        ],
+        []
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "10 mod 5 is 0, and bucket 0 is empty, so we know at once that 10 is not in the table.",
+      "caption": "search 10: not found",
+      "op": {
+        "name": "search",
+        "args": {
+          "key": 10
+        }
+      },
+      "claimed_state": [
+        [],
+        [],
+        [
+          7,
+          17
+        ],
+        [
+          3
+        ],
+        []
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "summary",
+      "narration": "A good hash function spreads keys evenly, so chains stay short and lookups stay fast.",
+      "caption": "Summary",
+      "points": [
+        "The hash picks the bucket: key mod 5",
+        "Colliding keys share a chain",
+        "O(1) on average, O(n) if every key collides"
+      ],
+      "speed": 1.0
+    }
+  ],
+  "quiz": [
+    {
+      "question": "A table with 4 buckets holds 5 and 9. We insert 13, using key mod 4. Which keys are in its bucket?",
+      "start": {
+        "buckets": 4,
+        "keys": [
+          5,
+          9
+        ]
+      },
+      "ops": [
+        {
+          "name": "insert",
+          "args": {
+            "key": 13
+          }
+        }
+      ],
+      "ask": "chain",
+      "options": [
+        "5, 9, 13",
+        "13",
+        "13, 5, 9",
+        "5, 13"
+      ],
+      "answer": "5, 9, 13",
+      "explanation": "5, 9 and 13 all leave remainder 1 when divided by 4."
+    },
+    {
+      "question": "A table with 7 buckets holds 10 and 3. Into which bucket does 24 go, using key mod 7?",
+      "start": {
+        "buckets": 7,
+        "keys": [
+          10,
+          3
+        ]
+      },
+      "ops": [
+        {
+          "name": "insert",
+          "args": {
+            "key": 24
+          }
+        }
+      ],
+      "ask": "bucket",
+      "options": [
+        "3",
+        "4",
+        "6",
+        "0"
+      ],
+      "answer": "3",
+      "explanation": "24 mod 7 is 3."
+    }
+  ],
+  "provenance": {
+    "author": "Claude (Anthropic), hand-written for DSA Explainer",
+    "written": "2026-11-20",
+    "checked_by": "DSA Explainer verifier (scripts/author_plans.py)"
+  }
+}

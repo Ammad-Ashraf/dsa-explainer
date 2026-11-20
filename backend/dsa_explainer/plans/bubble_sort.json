@@ -1,0 +1,164 @@
+{
+  "topic": "How does bubble sort work on 5, 1, 4, 2, 8, 3?",
+  "level": "beginner",
+  "title": "Bubble Sort, Pass by Pass",
+  "structure": "bubble_sort",
+  "initial": [
+    5,
+    1,
+    4,
+    2,
+    8,
+    3
+  ],
+  "scenes": [
+    {
+      "kind": "intro",
+      "narration": "Bubble sort walks along the array comparing neighbours and swapping any pair that is out of order. After each pass, the largest value that is not yet in place has bubbled to the end.",
+      "caption": "Big values bubble to the end",
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "In the first pass, 5 swaps past 1, 4 and 2, and later 8 swaps past 3. That is 4 swaps, and 8 is now in its final place at the end.",
+      "caption": "pass 1: 8 bubbles to the end",
+      "op": {
+        "name": "bubble_pass",
+        "args": {}
+      },
+      "claimed_state": [
+        1,
+        4,
+        2,
+        5,
+        3,
+        8
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "The second pass swaps 4 with 2 and 5 with 3. Now 5 sits in place before 8.",
+      "caption": "pass 2: 5 is placed",
+      "op": {
+        "name": "bubble_pass",
+        "args": {}
+      },
+      "claimed_state": [
+        1,
+        2,
+        4,
+        3,
+        5,
+        8
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "The third pass needs just one swap, 4 with 3. The array reads 1, 2, 3, 4, 5, 8.",
+      "caption": "pass 3: 4 is placed",
+      "op": {
+        "name": "bubble_pass",
+        "args": {}
+      },
+      "claimed_state": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        8
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "The fourth pass compares the first values and swaps nothing. No swaps means the array is sorted, so bubble sort stops early.",
+      "caption": "pass 4: no swaps, stop",
+      "op": {
+        "name": "bubble_pass",
+        "args": {}
+      },
+      "claimed_state": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        8
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "summary",
+      "narration": "Bubble sort is simple to follow but slow on large arrays. Its early stop makes it quick when the array is already nearly sorted.",
+      "caption": "Summary",
+      "points": [
+        "Compare neighbours, swap if out of order",
+        "Each pass places the largest unsorted value",
+        "O(n squared), but it stops early on sorted input"
+      ],
+      "speed": 1.0
+    }
+  ],
+  "quiz": [
+    {
+      "question": "Bubble sort makes one pass over 3, 1, 2. How many swaps does it make?",
+      "start": [
+        3,
+        1,
+        2
+      ],
+      "ops": [
+        {
+          "name": "bubble_pass",
+          "args": {}
+        }
+      ],
+      "ask": "swaps",
+      "options": [
+        "2",
+        "1",
+        "3",
+        "0"
+      ],
+      "answer": "2",
+      "explanation": "3 swaps past 1, then past 2, so there are 2 swaps."
+    },
+    {
+      "question": "Bubble sort makes one pass over 4, 3, 2, 1. What is the array afterwards?",
+      "start": [
+        4,
+        3,
+        2,
+        1
+      ],
+      "ops": [
+        {
+          "name": "bubble_pass",
+          "args": {}
+        }
+      ],
+      "ask": "items",
+      "options": [
+        "3, 2, 1, 4",
+        "1, 2, 3, 4",
+        "3, 4, 2, 1",
+        "4, 3, 2, 1"
+      ],
+      "answer": "3, 2, 1, 4",
+      "explanation": "4 bubbles all the way to the end; the rest keep their order."
+    }
+  ],
+  "provenance": {
+    "author": "Claude (Anthropic), hand-written for DSA Explainer",
+    "written": "2026-11-20",
+    "checked_by": "DSA Explainer verifier (scripts/author_plans.py)"
+  }
+}

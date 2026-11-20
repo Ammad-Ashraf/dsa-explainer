@@ -61,8 +61,11 @@ def wait(client, job_id, timeout=10):
 def test_health_and_catalog(client):
     health = client.get("/api/health").json()
     assert health["ok"] and "llm" in health and "voice" in health
-    names = {s["id"] for s in client.get("/api/catalog").json()}
-    assert {"stack", "queue", "linked_list", "bst", "graph"} <= names
+    catalog = client.get("/api/catalog").json()
+    names = {a["id"] for a in catalog["algorithms"]}
+    assert {"stack", "queue", "linked_list", "bst", "bfs", "quick_sort", "dijkstra"} <= names
+    assert set(catalog["categories"]) >= {a["category"] for a in catalog["algorithms"]}
+    assert all(a["complexity"] and a["summary"] and a["presets"] for a in catalog["algorithms"])
 
 
 def test_saved_plans_are_listed_with_checked_quiz_answers(client):

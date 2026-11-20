@@ -18,7 +18,7 @@ from pathlib import Path
 import av
 import imageio_ffmpeg
 
-from .. import config, events
+from .. import algorithms, config, events
 from ..core.lesson import Lesson, scene_labels
 from ..core.verifier import Report, answer_index
 from . import voice
@@ -29,12 +29,13 @@ def jobs_for(lesson: Lesson, report: Report) -> list[dict]:
     """Everything the renderer needs for each clip, as plain data."""
     labels = scene_labels(lesson)
     steps = sum(s.kind == "step" for s in lesson.scenes)
+    cls = algorithms.get(lesson.structure)
+    common = {"structure": cls.NAME, "view": cls.VIEW, "structure_title": cls.TITLE, "title": lesson.title}
     jobs = []
     for name, scene, frame in zip(labels, lesson.scenes, report.frames):
         header = f"Step {name.split()[1]} of {steps}" if scene.kind == "step" else name.title()
         jobs.append({
-            "name": name, "kind": scene.kind, "structure": lesson.structure, "title": lesson.title,
-            "level": lesson.level, "label": header if scene.kind != "intro" else "", "caption": scene.caption,
+            "name": name, "kind": scene.kind, **common, "level": lesson.level, "label": header if scene.kind != "intro" else "", "caption": scene.caption,
             "points": scene.points, "narration": scene.narration, "speed": scene.speed,
             "before": frame.before, "after": frame.after, "focus": frame.focus,
         })
@@ -43,7 +44,7 @@ def jobs_for(lesson: Lesson, report: Report) -> list[dict]:
         spoken = [f"{letter}: {text}" for letter, text in zip("ABCD", q.options)]
         choices = ", ".join(spoken[:-1]) + ", or " + spoken[-1]
         jobs.append({
-            "name": f"quiz {i}", "kind": "quiz", "structure": lesson.structure, "title": lesson.title,
+            "name": f"quiz {i}", "kind": "quiz", **common,
             "label": f"Quiz {i} of {len(lesson.quiz)}", "question": q.question, "options": q.options,
             "answer": right, "speed": 1.0,
             "narration": f"Quiz time. {q.question} Is it {choices}?",

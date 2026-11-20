@@ -1,0 +1,249 @@
+{
+  "topic": "Find shortest paths from A with Dijkstra's algorithm",
+  "level": "advanced",
+  "title": "Dijkstra's Shortest Paths",
+  "structure": "dijkstra",
+  "initial": {
+    "edges": [
+      [
+        "A",
+        "B",
+        4
+      ],
+      [
+        "A",
+        "C",
+        1
+      ],
+      [
+        "C",
+        "B",
+        2
+      ],
+      [
+        "B",
+        "D",
+        5
+      ],
+      [
+        "C",
+        "D",
+        8
+      ]
+    ],
+    "start": "A"
+  },
+  "scenes": [
+    {
+      "kind": "intro",
+      "narration": "Dijkstra's algorithm finds the shortest distance from A to every node. A starts at 0 and every other node at infinity. Each step settles the closest unsettled node, then checks whether going through it shortens the route to its neighbours.",
+      "caption": "Settle the closest node first",
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "A is closest, at 0, so we settle it. Its edges give B a distance of 4 and C a distance of 1.",
+      "caption": "settle A (0)",
+      "op": {
+        "name": "settle",
+        "args": {}
+      },
+      "claimed_state": {
+        "current": "A",
+        "settled": [
+          "A"
+        ],
+        "dist": {
+          "A": 0,
+          "B": 4,
+          "C": 1,
+          "D": null
+        }
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "C at 1 is now the closest unsettled node. Going through C, B costs 1 plus 2, which is 3, better than 4. D gets 1 plus 8, which is 9.",
+      "caption": "settle C (1)",
+      "op": {
+        "name": "settle",
+        "args": {}
+      },
+      "claimed_state": {
+        "current": "C",
+        "settled": [
+          "A",
+          "C"
+        ],
+        "dist": {
+          "A": 0,
+          "B": 3,
+          "C": 1,
+          "D": 9
+        }
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "B at 3 is next. Through B, D costs 3 plus 5, which is 8, better than 9, so D drops to 8.",
+      "caption": "settle B (3)",
+      "op": {
+        "name": "settle",
+        "args": {}
+      },
+      "claimed_state": {
+        "current": "B",
+        "settled": [
+          "A",
+          "C",
+          "B"
+        ],
+        "dist": {
+          "A": 0,
+          "B": 3,
+          "C": 1,
+          "D": 8
+        }
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Finally we settle D at 8. Every node is settled: A 0, C 1, B 3 and D 8.",
+      "caption": "settle D (8)",
+      "op": {
+        "name": "settle",
+        "args": {}
+      },
+      "claimed_state": {
+        "current": "D",
+        "settled": [
+          "A",
+          "C",
+          "B",
+          "D"
+        ],
+        "dist": {
+          "A": 0,
+          "B": 3,
+          "C": 1,
+          "D": 8
+        }
+      },
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "summary",
+      "narration": "The direct edge from A to B cost 4, but the route through C cost only 3. Dijkstra's algorithm finds such detours by always settling the closest node next.",
+      "caption": "Summary",
+      "points": [
+        "Settle the unsettled node with the smallest distance",
+        "Relax its edges: keep any shorter route",
+        "Needs weights that are not negative"
+      ],
+      "speed": 1.0
+    }
+  ],
+  "quiz": [
+    {
+      "question": "Edges: A-B weight 5, A-C weight 2, B-C weight 1. Dijkstra runs from A until three nodes are settled. What is the distance to B?",
+      "start": {
+        "edges": [
+          [
+            "A",
+            "B",
+            5
+          ],
+          [
+            "A",
+            "C",
+            2
+          ],
+          [
+            "B",
+            "C",
+            1
+          ]
+        ],
+        "start": "A"
+      },
+      "ops": [
+        {
+          "name": "settle",
+          "args": {}
+        },
+        {
+          "name": "settle",
+          "args": {}
+        },
+        {
+          "name": "settle",
+          "args": {}
+        }
+      ],
+      "ask": "dist_B",
+      "options": [
+        "3",
+        "5",
+        "2",
+        "6"
+      ],
+      "answer": "3",
+      "explanation": "Going through C costs 2 plus 1, which is 3, less than 5."
+    },
+    {
+      "question": "Edges: A-B weight 5, A-C weight 2, B-C weight 1. After two settle steps from A, which nodes are settled, in order?",
+      "start": {
+        "edges": [
+          [
+            "A",
+            "B",
+            5
+          ],
+          [
+            "A",
+            "C",
+            2
+          ],
+          [
+            "B",
+            "C",
+            1
+          ]
+        ],
+        "start": "A"
+      },
+      "ops": [
+        {
+          "name": "settle",
+          "args": {}
+        },
+        {
+          "name": "settle",
+          "args": {}
+        }
+      ],
+      "ask": "settled",
+      "options": [
+        "A, C",
+        "A, B",
+        "A, B, C",
+        "C, A"
+      ],
+      "answer": "A, C",
+      "explanation": "After A, C is the closest node at 2."
+    }
+  ],
+  "provenance": {
+    "author": "Claude (Anthropic), hand-written for DSA Explainer",
+    "written": "2026-11-20",
+    "checked_by": "DSA Explainer verifier (scripts/author_plans.py)"
+  }
+}

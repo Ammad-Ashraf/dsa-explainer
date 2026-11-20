@@ -1,0 +1,186 @@
+{
+  "topic": "How does a deque (double-ended queue) work?",
+  "level": "beginner",
+  "title": "Deques: Both Ends Open",
+  "structure": "deque",
+  "initial": [
+    4,
+    6
+  ],
+  "scenes": [
+    {
+      "kind": "intro",
+      "narration": "A deque is a double ended queue. Think of a line where people may join or leave at either end. Ours starts with 4 at the front and 6 at the rear, and every operation touches one of the two ends.",
+      "caption": "A line you can join at both ends",
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "First we push 9 onto the back, exactly like joining an ordinary queue. The deque now holds 4, 6 and 9, and the rear is 9.",
+      "caption": "push_back(9)",
+      "op": {
+        "name": "push_back",
+        "args": {
+          "value": 9
+        }
+      },
+      "claimed_state": [
+        4,
+        6,
+        9
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Now something a queue cannot do: we push 2 onto the front. The front is now 2, and the size is 4.",
+      "caption": "push_front(2)",
+      "op": {
+        "name": "push_front",
+        "args": {
+          "value": 2
+        }
+      },
+      "claimed_state": [
+        2,
+        4,
+        6,
+        9
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Pop back removes the value at the rear, which is 9. That end behaves like the top of a stack, so the rear is now 6.",
+      "caption": "pop_back()",
+      "op": {
+        "name": "pop_back",
+        "args": {}
+      },
+      "claimed_state": [
+        2,
+        4,
+        6
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Pop front removes 2 from the front, just like dequeuing. The front is 4 again and the size is 2.",
+      "caption": "pop_front()",
+      "op": {
+        "name": "pop_front",
+        "args": {}
+      },
+      "claimed_state": [
+        4,
+        6
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Finally we push 7 at the front. Every push and pop here took the same short time, because we only ever touch an end. The deque holds 7, 4 and 6.",
+      "caption": "push_front(7)",
+      "op": {
+        "name": "push_front",
+        "args": {
+          "value": 7
+        }
+      },
+      "claimed_state": [
+        7,
+        4,
+        6
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "summary",
+      "narration": "A deque gives you a stack and a queue in one structure. Use it for sliding windows, undo histories and any job that needs both ends.",
+      "caption": "Summary",
+      "points": [
+        "Push and pop at both the front and the rear",
+        "Every end operation takes O(1) time",
+        "One end acts like a stack, both ends like a queue"
+      ],
+      "speed": 1.0
+    }
+  ],
+  "quiz": [
+    {
+      "question": "A deque holds 1 then 5. We push_front 3, push_back 8, then pop_front. What is at the front?",
+      "start": [
+        1,
+        5
+      ],
+      "ops": [
+        {
+          "name": "push_front",
+          "args": {
+            "value": 3
+          }
+        },
+        {
+          "name": "push_back",
+          "args": {
+            "value": 8
+          }
+        },
+        {
+          "name": "pop_front",
+          "args": {}
+        }
+      ],
+      "ask": "front",
+      "options": [
+        "3",
+        "1",
+        "5",
+        "8"
+      ],
+      "answer": "1",
+      "explanation": "Pop front removes the 3 we just pushed, so 1 is at the front again."
+    },
+    {
+      "question": "A deque holds 2, 6 and 4. We pop_back, then push_front 9. What does it hold, front to rear?",
+      "start": [
+        2,
+        6,
+        4
+      ],
+      "ops": [
+        {
+          "name": "pop_back",
+          "args": {}
+        },
+        {
+          "name": "push_front",
+          "args": {
+            "value": 9
+          }
+        }
+      ],
+      "ask": "items",
+      "options": [
+        "9, 2, 6",
+        "2, 6, 9",
+        "9, 2, 4",
+        "6, 2, 9"
+      ],
+      "answer": "9, 2, 6",
+      "explanation": "Pop back removes 4, then 9 joins at the front."
+    }
+  ],
+  "provenance": {
+    "author": "Claude (Anthropic), hand-written for DSA Explainer",
+    "written": "2026-11-20",
+    "checked_by": "DSA Explainer verifier (scripts/author_plans.py)"
+  }
+}

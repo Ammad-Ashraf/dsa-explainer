@@ -1,0 +1,186 @@
+{
+  "topic": "Explain insertion sort like sorting playing cards",
+  "level": "beginner",
+  "title": "Insertion Sort, Card by Card",
+  "structure": "insertion_sort",
+  "initial": [
+    5,
+    2,
+    4,
+    6,
+    1,
+    3
+  ],
+  "scenes": [
+    {
+      "kind": "intro",
+      "narration": "Insertion sort works like sorting cards in your hand. The left part is always sorted. Each step takes the next value and slides it left past every larger value.",
+      "caption": "Slide each card into place",
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "The first card, 5, is sorted on its own. The key 2 is smaller, so 5 shifts right and 2 goes in front.",
+      "caption": "insert 2",
+      "op": {
+        "name": "insert_next",
+        "args": {}
+      },
+      "claimed_state": [
+        2,
+        5,
+        4,
+        6,
+        1,
+        3
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "The key 4 is smaller than 5 but larger than 2, so 5 shifts right and 4 drops in between.",
+      "caption": "insert 4",
+      "op": {
+        "name": "insert_next",
+        "args": {}
+      },
+      "claimed_state": [
+        2,
+        4,
+        5,
+        6,
+        1,
+        3
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "The key 6 is larger than everything sorted so far, so nothing shifts. The sorted part is 2, 4, 5, 6.",
+      "caption": "insert 6",
+      "op": {
+        "name": "insert_next",
+        "args": {}
+      },
+      "claimed_state": [
+        2,
+        4,
+        5,
+        6,
+        1,
+        3
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "The key 1 is the smallest yet. All 4 sorted values shift right, and 1 goes to the very front.",
+      "caption": "insert 1",
+      "op": {
+        "name": "insert_next",
+        "args": {}
+      },
+      "claimed_state": [
+        1,
+        2,
+        4,
+        5,
+        6,
+        3
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "The last key 3 slides past 6, 5 and 4, and stops after 2. The array is sorted.",
+      "caption": "insert 3",
+      "op": {
+        "name": "insert_next",
+        "args": {}
+      },
+      "claimed_state": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "summary",
+      "narration": "Insertion sort did very little work for 6, which was already in place, and the most for 1. That is why it shines on small or nearly sorted data.",
+      "caption": "Summary",
+      "points": [
+        "Grow a sorted part on the left",
+        "Shift larger values right, drop the key in the gap",
+        "Fast on nearly sorted input, O(n squared) at worst"
+      ],
+      "speed": 1.0
+    }
+  ],
+  "quiz": [
+    {
+      "question": "Insertion sort inserts one key into 3, 1, 2. What is the array afterwards?",
+      "start": [
+        3,
+        1,
+        2
+      ],
+      "ops": [
+        {
+          "name": "insert_next",
+          "args": {}
+        }
+      ],
+      "ask": "items",
+      "options": [
+        "1, 3, 2",
+        "1, 2, 3",
+        "3, 1, 2",
+        "3, 2, 1"
+      ],
+      "answer": "1, 3, 2",
+      "explanation": "The key 1 slides in front of 3; 2 has not been inserted yet."
+    },
+    {
+      "question": "Insertion sort runs two steps on 4, 5, 1. How many values shift in the second step?",
+      "start": [
+        4,
+        5,
+        1
+      ],
+      "ops": [
+        {
+          "name": "insert_next",
+          "args": {}
+        },
+        {
+          "name": "insert_next",
+          "args": {}
+        }
+      ],
+      "ask": "shifts",
+      "options": [
+        "2",
+        "1",
+        "0",
+        "3"
+      ],
+      "answer": "2",
+      "explanation": "The key 1 is smaller than both 4 and 5, so 2 values shift."
+    }
+  ],
+  "provenance": {
+    "author": "Claude (Anthropic), hand-written for DSA Explainer",
+    "written": "2026-11-20",
+    "checked_by": "DSA Explainer verifier (scripts/author_plans.py)"
+  }
+}

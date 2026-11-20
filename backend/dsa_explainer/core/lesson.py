@@ -48,6 +48,7 @@ class Lesson(BaseModel):
     initial: Any
     scenes: list[Scene]
     quiz: list[Question] = Field(default_factory=list)
+    provenance: dict[str, Any] | None = None  # who wrote a saved plan, and how it was checked
 
 
 def scene_labels(lesson: Lesson) -> list[str]:

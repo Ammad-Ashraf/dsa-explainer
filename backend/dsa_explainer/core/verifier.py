@@ -19,7 +19,8 @@ import re
 from dataclasses import dataclass, field
 
 from .lesson import Lesson, Question, scene_labels
-from .structures import MAX_ITEMS, OpError, build, fact_text, normalize
+from .. import algorithms
+from ..algorithms import MAX_ITEMS, OpError, build, fact_text, normalize
 
 MIN_WORDS = 90  # about 36 s of speech: the video must last at least 30 s
 MIN_STEPS, MAX_STEPS = 3, 10
@@ -48,11 +49,8 @@ class Report:
 
 # --- narration checks -----------------------------------------------------------
 
-_FACT_WORDS = {
-    "top": "top", "front": "front", "rear": "rear", "back": "rear", "head": "head", "tail": "tail",
-    "root": "root", "size": "size", "length": "size", "current node": "current",
-}
-_FACT = r"(top|front|rear|back|head|tail|root|size|length|current node)"
+_FACT_WORDS = algorithms.fact_words()  # shared words (top, front, root, size...) plus each algorithm's own
+_FACT = "(" + "|".join(sorted((w.replace(" ", r"\s+") for w in _FACT_WORDS), key=len, reverse=True)) + ")"
 _VERB = r"(?:is now|now is|is|becomes|will be|remains|stays|now points to|points to)"
 # "the top of the stack is now 7", "the size is 3", "head now points to 5"
 _CLAIM_A = re.compile(
@@ -81,7 +79,7 @@ def fact_claims(text: str, known: set[str]) -> list[tuple[str, str]]:
     found += [(m.group(2), m.group(1)) for m in _CLAIM_B.finditer(text)]
     claims = []
     for word, said in found:
-        fact = _FACT_WORDS[word.lower()]
+        fact = _FACT_WORDS[re.sub(r"\s+", " ", word.lower())]
         said = said.lower()
         said = _NUMBER_WORDS.get(said, said)
         if said in _EMPTY_WORDS:

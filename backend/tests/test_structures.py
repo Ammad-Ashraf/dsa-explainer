@@ -1,6 +1,6 @@
 import pytest
 
-from dsa_explainer.core.structures import BST, Graph, LinkedList, OpError, Queue, Stack, build
+from dsa_explainer.algorithms import BST, Graph, LinkedList, OpError, Queue, Stack, build
 
 
 def test_stack_is_last_in_first_out():

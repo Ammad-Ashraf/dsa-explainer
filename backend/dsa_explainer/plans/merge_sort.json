@@ -1,0 +1,196 @@
+{
+  "topic": "Explain merge sort on 5, 1, 4, 2, 8, 3",
+  "level": "intermediate",
+  "title": "Merge Sort, Bottom Up",
+  "structure": "merge_sort",
+  "initial": [
+    5,
+    1,
+    4,
+    2,
+    8,
+    3
+  ],
+  "scenes": [
+    {
+      "kind": "intro",
+      "narration": "Merge sort treats every single value as a sorted run. It merges neighbouring runs of width 1 into pairs, then pairs into fours, and so on, until one run holds everything.",
+      "caption": "Merge small sorted runs into bigger ones",
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "The first two runs, 5 and 1, merge into the sorted pair 1, 5.",
+      "caption": "merge 5 | 1",
+      "op": {
+        "name": "merge_next",
+        "args": {}
+      },
+      "claimed_state": [
+        1,
+        5,
+        4,
+        2,
+        8,
+        3
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Next, 4 and 2 merge into 2, 4.",
+      "caption": "merge 4 | 2",
+      "op": {
+        "name": "merge_next",
+        "args": {}
+      },
+      "claimed_state": [
+        1,
+        5,
+        2,
+        4,
+        8,
+        3
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Then 8 and 3 become 3, 8. Every run now has width 2.",
+      "caption": "merge 8 | 3",
+      "op": {
+        "name": "merge_next",
+        "args": {}
+      },
+      "claimed_state": [
+        1,
+        5,
+        2,
+        4,
+        3,
+        8
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Now we merge runs of width 2. Taking the smaller front value each time, 1, 5 and 2, 4 become 1, 2, 4, 5. The run 3, 8 has no partner yet, so it waits.",
+      "caption": "merge 1 5 | 2 4",
+      "op": {
+        "name": "merge_next",
+        "args": {}
+      },
+      "claimed_state": [
+        1,
+        2,
+        4,
+        5,
+        3,
+        8
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "step",
+      "narration": "Last, the run of 4 merges with 3, 8. The array is 1, 2, 3, 4, 5, 8.",
+      "caption": "merge 1 2 4 5 | 3 8",
+      "op": {
+        "name": "merge_next",
+        "args": {}
+      },
+      "claimed_state": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        8
+      ],
+      "points": [],
+      "speed": 1.0
+    },
+    {
+      "kind": "summary",
+      "narration": "Merging only ever compares the front values of two sorted runs, so each round is one quick pass, and there are about log n rounds.",
+      "caption": "Summary",
+      "points": [
+        "Every merge takes two sorted runs",
+        "Widths double: 1, 2, 4",
+        "O(n log n) every time, with O(n) extra space"
+      ],
+      "speed": 1.0
+    }
+  ],
+  "quiz": [
+    {
+      "question": "Merge sort performs two merges on 4, 3, 2, 1. What is the array afterwards?",
+      "start": [
+        4,
+        3,
+        2,
+        1
+      ],
+      "ops": [
+        {
+          "name": "merge_next",
+          "args": {}
+        },
+        {
+          "name": "merge_next",
+          "args": {}
+        }
+      ],
+      "ask": "items",
+      "options": [
+        "3, 4, 1, 2",
+        "1, 2, 3, 4",
+        "3, 4, 2, 1",
+        "4, 3, 1, 2"
+      ],
+      "answer": "3, 4, 1, 2",
+      "explanation": "The pairs 4, 3 and 2, 1 each become sorted."
+    },
+    {
+      "question": "Merge sort performs three merges on 4, 3, 2, 1. What was the run width of the third merge?",
+      "start": [
+        4,
+        3,
+        2,
+        1
+      ],
+      "ops": [
+        {
+          "name": "merge_next",
+          "args": {}
+        },
+        {
+          "name": "merge_next",
+          "args": {}
+        },
+        {
+          "name": "merge_next",
+          "args": {}
+        }
+      ],
+      "ask": "width",
+      "options": [
+        "2",
+        "1",
+        "4",
+        "3"
+      ],
+      "answer": "2",
+      "explanation": "The third merge joins two runs of width 2 into the final run."
+    }
+  ],
+  "provenance": {
+    "author": "Claude (Anthropic), hand-written for DSA Explainer",
+    "written": "2026-11-20",
+    "checked_by": "DSA Explainer verifier (scripts/author_plans.py)"
+  }
+}

@@ -14,3 +14,4 @@ numpy==2.4.6
 httpx==0.28.1           # model download script, API tests
 markdown==3.11.2        # prints the report to PDF (scripts/build_report.py)
 pytest==9.2.0
+hypothesis==6.170.17    # property-based tests of the simulators

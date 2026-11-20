@@ -33,8 +33,8 @@ The open questions from the vision, decided so work can proceed without waiting:
 | 0 | Reorganise the repository and write the roadmap | | **Done** |
 | 1 | Local API server | 0 | **Done** |
 | 2 | Bring-your-own-key, provider-independent LLM layer | 1 | **Done** |
-| 5 | Algorithm plugin architecture, new algorithms, saved-plan library | 0 | Next |
-| 3 | React frontend | 1, 2, 5 (registry) | |
+| 5 | Algorithm plugin architecture, new algorithms, saved-plan library | 0 | **Done** |
+| 3 | React frontend | 1, 2, 5 (registry) | Next |
 | 6 | Richer, still-verified animations | 5 | |
 | 4 | Voice research and pluggable voice engines | 0 | |
 | 7 | Stronger verification and an evaluation harness | 5 | |
@@ -85,18 +85,23 @@ before the frontend because the library pages are built from it.
 **Why.** Adding one algorithm today touches the simulator file, two lookup tables, the drawers and their enter/exit
 tables, the verifier's fixed fact words and the structure list hard-coded in the planner prompt.
 
-- [ ] 5.1 `algorithms/` registry: one package per algorithm with simulator, drawer and metadata (name, category,
-      difficulty, complexity, description, pseudocode, fact words, presets). Planner, verifier, renderer, quiz and
-      API read from it.
-- [ ] 5.2 Migrate stack, queue, linked list, BST and BFS with no behaviour change (all tests, same pictures).
-- [ ] 5.3 Property-based tests (Hypothesis) comparing every simulator with a reference implementation.
-- [ ] 5.4 Wave 1, arrays and sorting: array (sequence) renderer; bubble, insertion, selection, merge, quick sort;
-      linear and binary search; deque.
-- [ ] 5.5 Wave 2, trees and heaps: min-heap / priority queue (tree and array views), heap sort, tree traversals.
-- [ ] 5.6 Wave 3, graphs: depth-first search, Dijkstra, topological sort.
-- [ ] 5.7 Wave 4, hashing and dynamic programming: hash table (chaining), DP table (Fibonacci, coin change).
-- [ ] 5.8 Saved-plan library: verified plans for every algorithm at several levels, with provenance, plus
-      `scripts/generate_plans.py`.
+- [x] 5.1 `algorithms/` registry: one simulator class per algorithm, grouped by family (`linear`, `trees`,
+      `graphs`, `arrays`, `hashing`, `dp`), each carrying its metadata (title, category, difficulty, complexity,
+      description, pseudocode, keywords, presets, fact words, view). Drawers are grouped by picture in
+      `media/views/` (stack, queue, linked list, tree, heap, graph, array, buckets, table), since many algorithms
+      share one. Planner, verifier, quiz, renderer and API read from the registry; the planner only sends the
+      reference of the algorithms a topic names.
+- [x] 5.2 Migrate stack, queue, linked list, BST and BFS (`graph` stays an alias of `bfs`) with no behaviour change.
+- [x] 5.3 Property-based tests (Hypothesis) comparing every simulator with a reference implementation; they found
+      two real bugs (selection sort on one value, a graph edge given twice), both fixed.
+- [x] 5.4 Wave 1, arrays and sorting: array view (bars and cells, pointers, ranges); bubble, insertion, selection,
+      merge, quick sort; linear and binary search; deque.
+- [x] 5.5 Wave 2, trees and heaps: min-heap / priority queue (tree and array views), heap sort, tree traversals.
+- [x] 5.6 Wave 3, graphs: depth-first search, Dijkstra, topological sort.
+- [x] 5.7 Wave 4, hashing and dynamic programming: hash table (chaining), DP table (Fibonacci, coin change).
+- [x] 5.8 Saved-plan library: one verified plan per algorithm (22), written by Claude in `scripts/author_plans.py`
+      with provenance, and `scripts/generate_plans.py` to draft more with any provider. More levels per algorithm
+      are added through that script and review.
 
 ## Milestone 3: React frontend
 
@@ -131,8 +136,11 @@ tables, the verifier's fixed fact words and the structure list hard-coded in the
 
 ## Milestone 7: Stronger verification and an evaluation harness
 
-- [ ] 7.1 Declared claims: each scene lists the facts it states; the verifier checks each one and that the narration
-      expresses it; the regular expressions remain a backstop.
+- [ ] 7.1 Declared claims: each scene lists the facts it states, each marked as true before or after the step; the
+      verifier checks each one and that the narration expresses it; the regular expressions remain a backstop.
+      Closes two gaps found while writing the saved plans: a claim is accepted if it is true before *or* after the
+      step ("the root is 3" on the step that changes it), and any number from 0 to 8 passes as a count ("D drops
+      to 7").
 - [ ] 7.2 Paraphrase coverage for the narration checker (counts, "holds", "sits on top"), with tests.
 - [ ] 7.3 Quiz: new question types and distractors from simulated mistakes, verified wrong.
 - [ ] 7.4 Mutation testing of the verifier over every saved plan, with a reported catch rate.

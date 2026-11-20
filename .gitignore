@@ -19,3 +19,5 @@ __pycache__/
 GeminiAPIKey.txt
 *APIKey*
 *apikey*
+/backend/plans-draft/
+.hypothesis/
