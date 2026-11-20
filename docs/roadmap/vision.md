@@ -27,9 +27,14 @@ usability, latency, the range of algorithms, the quality of the animations, and 
    a **React** web app.
 2. **Layout and sections.** Model the app's pages, sections and content on a **reference web app**. Analyse its
    pages, what each section contains, and how content is organised, then design our layout from that.
-   *Reference link: not yet shared.*
+   Reference: [visualizedsa.com](https://visualizedsa.com/), for the sections only.
 3. **Design system.** Take the design system of a **reference website** (design tokens, colours, typography, spacing,
-   components) and build our app with it. *Reference link: not yet shared.*
+   components, motion, graphics) and build our app with it. Reference:
+   [design-system.md](../design/design-system.md).
+4. **Content and product decisions** (copy, the exact layout, where the video, the pipeline progress and every
+   feature appear) are left to the implementation; see [product.md](../design/product.md).
+5. **Autonomy.** The platform is completed milestone by milestone with minimal intervention, asking only when
+   something is genuinely needed from Ammad.
 
 ## 2. Language model: bring your own key
 
@@ -65,13 +70,7 @@ usability, latency, the range of algorithms, the quality of the animations, and 
 
 - Reorganise the repository for the platform and do all the work on the new branch (done in Milestone 0).
 
-## Open questions
+## Decisions
 
-| Question | Why it matters |
-| --- | --- |
-| Which web app is the **layout reference**? | Needed to design the pages and sections of the React app (Milestone 3). |
-| Which website is the **design-system reference**? | Needed for the design tokens and components (Milestone 3). |
-| Which **open-source licence**? | Decides how others can use the code. Some dependencies (for example espeak-ng, used through the voice model's phonemizer) and some model weights have their own licences that must be compatible. |
-| Do we keep the name **DSA Explainer**? | Package name, repository name and launch material depend on it. |
-| Who pays for **generating the saved plans** with Claude? | Batch generation with the latest Claude models needs a paid Anthropic API key. |
-| When is the **course submission** final? | `main` should stay frozen until then; this branch merges into `main` only afterwards. |
+The open questions raised when these ideas were first written down (references, licence, name, who writes the saved
+plans, where keys live, the course submission) are decided in [milestones.md](milestones.md#decisions).
