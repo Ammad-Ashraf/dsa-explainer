@@ -65,8 +65,15 @@ def make_lesson(topic: str, level: str = "beginner", quality: str = "draft", log
     rep.check_cancelled()
     rep.stage("quiz", "running")
     started = time.perf_counter()
-    lesson.quiz = quiz.make_quiz(lesson, log=rep)
-    rep.stage("quiz", "done", f"{len(lesson.quiz)} verified question(s)")
+    try:
+        lesson.quiz = quiz.make_quiz(lesson, log=rep)
+        rep.stage("quiz", "done", f"{len(lesson.quiz)} verified question(s)")
+    except events.Cancelled:
+        raise
+    except Exception as exc:  # the lesson is verified and ready: a quiz problem must not throw it away
+        lesson.quiz = [quiz.fallback_question(lesson)]
+        rep(f"The quiz writer failed ({str(exc)[:200]}); using a question built from the lesson.")
+        rep.stage("quiz", "done", "1 built-in question (the language model did not answer in time)")
     extra = {"rejected": rejected, "plan_seconds": plan_seconds, "quiz_seconds": time.perf_counter() - started}
     return _finish(lesson, config.OUTPUT_DIR / store.new_id(lesson.title), 1, quality, rep, extra)
 

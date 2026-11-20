@@ -20,7 +20,7 @@ def fake_llm(monkeypatch, replies: list[str]) -> list[list[dict]]:
 
     calls, queue = [], list(replies)
 
-    def chat(messages, temperature=None, schema=None):
+    def chat(messages, temperature=None, schema=None, timeout=None):
         calls.append([dict(m) for m in messages])
         return queue.pop(0)
 

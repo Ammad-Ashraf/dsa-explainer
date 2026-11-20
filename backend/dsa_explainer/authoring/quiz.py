@@ -17,6 +17,8 @@ from .. import algorithms
 from ..algorithms import build, fact_text
 from ..core.verifier import check_question
 
+QUIZ_TIMEOUT = 90  # seconds per request: the quiz is the least important part, so it never holds a lesson up for long
+
 PROMPT = """Write {n} multiple-choice quiz questions for the end of a video lesson.
 Lesson: "{title}" ({level} level) about a {structure}.
 Lesson data: initial = {initial}; operations in order: {ops}; final state = {final}.
@@ -51,7 +53,7 @@ def make_quiz(lesson: Lesson, n: int = 2, attempts: int = 2, log=print) -> list[
     best: list[Question] = []
     for attempt in range(1, attempts + 1):
         log(f"Writing the quiz (attempt {attempt})", 0.3)
-        reply = llm.chat(messages, schema=schemas.quiz())
+        reply = llm.chat(messages, schema=schemas.quiz(), timeout=QUIZ_TIMEOUT)
         try:
             questions = [Question.model_validate(q) for q in llm.parse_json(reply).get("questions", [])]
         except (ValidationError, ValueError) as exc:

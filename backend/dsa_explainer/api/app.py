@@ -28,7 +28,8 @@ import json
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .. import config, pipeline, settings, store
@@ -83,7 +84,7 @@ def _plan_files() -> dict[str, object]:
 
 def plan_summary(plan_id: str, lesson: Lesson) -> dict:
     steps = sum(s.kind == "step" for s in lesson.scenes)
-    return {"id": plan_id, "title": lesson.title, "topic": lesson.topic, "structure": lesson.structure,
+    return {"id": plan_id, "title": lesson.title, "topic": lesson.topic, "structure": algorithms.resolve(lesson.structure),
             "level": lesson.level, "steps": steps, "questions": len(lesson.quiz)}
 
 
@@ -355,4 +356,33 @@ def create_app() -> FastAPI:
     def provider_models(provider_id: str):
         return {"models": _client(provider_id, None).list_models()}
 
+    _serve_web_app(app)
     return app
+
+
+NO_WEB_APP = """<!doctype html><meta charset="utf-8"><title>DSA Explainer</title>
+<body style="font-family:system-ui;max-width:640px;margin:80px auto;line-height:1.5;color:#4b4b4b">
+<h1 style="color:#58cc02">DSA Explainer is running</h1>
+<p>The API is up, but the web app has not been built yet. Build it once with:</p>
+<pre style="background:#f7f7f7;padding:12px;border-radius:12px">cd frontend
+npm install
+npm run build</pre>
+<p>Then reload this page. The API reference is at <a href="/api/docs">/api/docs</a>.</p></body>"""
+
+
+def _serve_web_app(app: FastAPI) -> None:
+    """Serve the built React app; every non-API path falls back to index.html (client-side routes)."""
+    web = config.FRONTEND_DIR.resolve()
+    if (web / "assets").is_dir():
+        app.mount("/assets", StaticFiles(directory=web / "assets"), name="assets")
+
+    @app.get("/{path:path}", include_in_schema=False)
+    def web_app(path: str):
+        if path.startswith("api/"):
+            raise HTTPException(404, f"no API route /{path}")
+        if not (web / "index.html").is_file():
+            return HTMLResponse(NO_WEB_APP)
+        file = (web / path).resolve()
+        if path and file.is_file() and web in file.parents:
+            return FileResponse(file)
+        return FileResponse(web / "index.html", headers={"Cache-Control": "no-cache"})

@@ -69,7 +69,7 @@ class Client:
     def openai(self) -> OpenAI:
         if self._openai is None:
             self._openai = OpenAI(base_url=self.settings.base_url, api_key=self.settings.api_key or "not-needed",
-                                  timeout=config.LLM_TIMEOUT, max_retries=2)
+                                  timeout=config.LLM_TIMEOUT, max_retries=1)  # a slow model should not wait 3 x the timeout
         return self._openai
 
     def model_in_use(self) -> str:
@@ -103,9 +103,12 @@ class Client:
                                    "in Settings.") from exc
                 raise
 
-    def chat(self, messages: list[dict], temperature: float | None = None, schema: dict | None = None) -> str:
+    def chat(self, messages: list[dict], temperature: float | None = None, schema: dict | None = None,
+             timeout: float | None = None) -> str:
         """One chat completion; returns the reply text. Uses the strongest JSON mode the provider accepts."""
         kwargs = {"messages": messages, "temperature": config.LLM_TEMPERATURE if temperature is None else temperature}
+        if timeout is not None:
+            kwargs["timeout"] = timeout
         while True:
             mode = self.mode if (self.mode != "json_schema" or schema) else "json_object"
             extra = {}
@@ -187,10 +190,11 @@ def use(settings: LLMSettings | None):
         _current.reset(token)
 
 
-def chat(messages: list[dict], temperature: float | None = None, schema: dict | None = None) -> str:
+def chat(messages: list[dict], temperature: float | None = None, schema: dict | None = None,
+         timeout: float | None = None) -> str:
     """One chat completion with the provider in use; returns the reply text."""
     try:
-        return current().chat(messages, temperature, schema)
+        return current().chat(messages, temperature, schema, timeout)
     except LLMError:
         raise
     except Exception as exc:  # never let a key reach a message or a log

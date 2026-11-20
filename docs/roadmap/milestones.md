@@ -34,8 +34,8 @@ The open questions from the vision, decided so work can proceed without waiting:
 | 1 | Local API server | 0 | **Done** |
 | 2 | Bring-your-own-key, provider-independent LLM layer | 1 | **Done** |
 | 5 | Algorithm plugin architecture, new algorithms, saved-plan library | 0 | **Done** |
-| 3 | React frontend | 1, 2, 5 (registry) | Next |
-| 6 | Richer, still-verified animations | 5 | |
+| 3 | React frontend | 1, 2, 5 (registry) | **Done** |
+| 6 | Richer, still-verified animations | 5 | Next |
 | 4 | Voice research and pluggable voice engines | 0 | |
 | 7 | Stronger verification and an evaluation harness | 5 | |
 | 8 | Latency and responsiveness | 1, 3 | |
@@ -107,16 +107,18 @@ tables, the verifier's fixed fact words and the structure list hard-coded in the
 
 **Why.** Replace Gradio with the product in [product.md](../design/product.md).
 
-- [ ] 3.1 `frontend/` with Vite, React, TypeScript, React Router, TanStack Query; API types generated from OpenAPI.
-- [ ] 3.2 Design tokens and primitives from the design system (buttons with the lower lip, chips, tags, tabs, rules).
-- [ ] 3.3 Original illustration set (helper, data-structure tokens, valley, category emblems) as SVG components.
-- [ ] 3.4 Home page.
-- [ ] 3.5 Studio: composer, pipeline rail with live events, progressive clip player, chapters, quiz, verification,
+- [x] 3.1 `frontend/` with Vite, React, TypeScript, React Router, TanStack Query. The API types are written by hand in
+      `src/api.ts` (most replies are plain dictionaries, so generated types would be empty); the API tests guard the
+      shapes.
+- [x] 3.2 Design tokens and primitives from the design system (buttons with the lower lip, chips, tags, tabs, rules).
+- [x] 3.3 Original illustration set (helper, data-structure tokens, valley, category emblems) as SVG components.
+- [x] 3.4 Home page.
+- [x] 3.5 Studio: composer, pipeline rail with live events, progressive clip player, chapters, quiz, verification,
       revisions, transcript, plan, versions.
-- [ ] 3.6 Library and algorithm pages.
-- [ ] 3.7 My lessons and settings (providers, keys, models, voice, video, storage).
-- [ ] 3.8 The backend serves the built frontend; one command opens the app; responsive and keyboard checks.
-- [ ] 3.9 Remove Gradio; update the README.
+- [x] 3.6 Library and algorithm pages.
+- [x] 3.7 My lessons and settings (providers, keys, models, voice, video, storage).
+- [x] 3.8 The backend serves the built frontend; one command opens the app; responsive and keyboard checks.
+- [x] 3.9 Remove Gradio; update the README.
 
 ## Milestone 6: Richer, still-verified animations
 
@@ -149,8 +151,10 @@ tables, the verifier's fixed fact words and the structure list hard-coded in the
 ## Milestone 8: Latency and responsiveness
 
 - [ ] 8.1 Per-stage timings recorded for every job and shown in the app.
-- [ ] 8.2 Write the quiz while lesson scenes are voiced and drawn.
-- [ ] 8.3 Progressive playback of finished clips (already used by the Studio player).
+- [ ] 8.2 Write the quiz while lesson scenes are voiced and drawn. (Done already: a quiz request is capped at 90 s, and
+      a failed quiz no longer fails the lesson; the built-in question is used instead.)
+- [x] 8.3 Progressive playback: clips are announced as soon as they are drawn, even while later scenes are still
+      being voiced, and the Studio plays them in order.
 - [ ] 8.4 Voice speed: ONNX Runtime thread tuning, optional GPU execution providers.
 - [ ] 8.5 Before and after measurements in the README.
 

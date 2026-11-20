@@ -172,7 +172,9 @@ def test_revision_creates_version_two(client, monkeypatch):
 def test_lessons_are_protected_from_path_tricks(client):
     assert client.get("/api/lessons/..%2F..%2Fetc").status_code == 404
     assert client.get("/api/lessons/not-an-id").status_code == 404
-    assert client.get("/api/clips/../../secret").status_code == 404
+    assert client.get("/api/clips/..%2F..%2Fsecret").status_code == 404
+    plain = client.get("/api/clips/../../secret")  # normalised to /secret: the web app's page, never a file
+    assert plain.status_code == 404 or plain.headers["content-type"].startswith("text/html")
     assert client.delete("/api/lessons/20260101-000000-missing").status_code == 404
 
 

@@ -42,6 +42,9 @@ OUTPUT_DIR = HOME / "outputs"  # one folder per lesson
 CACHE_DIR = HOME / "cache"  # narration audio and video clips, reused across lessons
 SETTINGS_FILE = HOME / "settings.json"
 PLANS_DIR = PACKAGE_DIR / "plans"  # verified lesson plans that render without an API key
+# The built web app: frontend/dist from a source checkout, or bundled inside the installed package.
+FRONTEND_DIR = Path(os.getenv("DSA_FRONTEND_DIR") or (
+    _SOURCE_ROOT / "frontend" / "dist" if IS_SOURCE_CHECKOUT else PACKAGE_DIR / "web"))
 
 HOST = os.getenv("DSA_HOST", "127.0.0.1")  # local only by default: the app is not meant to be exposed
 PORT = int(os.getenv("DSA_PORT", "8000"))

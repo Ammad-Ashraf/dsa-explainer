@@ -1,0 +1,28 @@
+{
+  "name": "dsa-explainer-web",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "description": "The web app for DSA Explainer: verified, narrated algorithm lessons made on your own computer.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource/nunito": "^5.2.5",
+    "@fontsource/nunito-sans": "^5.2.5",
+    "@tanstack/react-query": "^5.80.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.6.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.0"
+  }
+}

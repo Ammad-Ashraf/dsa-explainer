@@ -87,6 +87,17 @@ def build_video(lesson: Lesson, report: Report, out: Path, quality: str = "draft
         rep.emit("clip", index=index, total=total, name=jobs[index]["name"], key=clips[index].stem,
                  seconds=round(clip_seconds(clips[index]), 2), cached=cached)
 
+    reported: set = set()
+
+    def report_finished() -> None:
+        """Announce clips that finished drawing, so playback can start while later scenes are still voiced."""
+        for future in [f for f in futures if f.done() and f not in reported]:
+            future.result()  # re-raises a drawing error
+            reported.add(future)
+            i = futures[future]
+            rep.emit("scene", stage="draw", index=i, total=total, name=jobs[i]["name"])
+            clip_ready(i, cached=False)
+
     # The voice runs here; each clip goes to a drawing process as soon as its audio
     # exists, so speaking and drawing overlap, and several clips are drawn at once.
     pool = ProcessPoolExecutor(max_workers=config.RENDER_WORKERS)
@@ -95,6 +106,7 @@ def build_video(lesson: Lesson, report: Report, out: Path, quality: str = "draft
         rep.stage("draw", "running")
         for i, job in enumerate(jobs):
             rep.check_cancelled()
+            report_finished()
             rep.emit("scene", stage="voice", index=i, total=total, name=job["name"])
             rep(f"Speaking {job['name']} ({i + 1}/{total})", 0.35 + 0.3 * i / total)
             spoken = time.perf_counter()
@@ -108,12 +120,15 @@ def build_video(lesson: Lesson, report: Report, out: Path, quality: str = "draft
             else:
                 futures[pool.submit(render_clip, job, clips[-1], quality)] = i
         rep.stage("voice", "done", f"{total} scenes")
-        for done, future in enumerate(as_completed(futures), 1):
+        for future in as_completed(futures):
             rep.check_cancelled()
+            if future in reported:
+                continue
             future.result()  # re-raises a drawing error
+            reported.add(future)
             i = futures[future]
             rep.emit("scene", stage="draw", index=i, total=total, name=jobs[i]["name"])
-            rep(f"Drew {jobs[i]['name']} ({done}/{len(futures)} clips)", 0.65 + 0.3 * done / len(futures))
+            rep(f"Drew {jobs[i]['name']} ({len(reported)}/{len(futures)} clips)", 0.65 + 0.3 * len(reported) / len(futures))
             clip_ready(i, cached=False)
         rep.stage("draw", "done", f"{len(futures)} drawn, {total - len(futures)} reused")
     except BaseException:

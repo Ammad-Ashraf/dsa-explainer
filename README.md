@@ -39,17 +39,19 @@ branch's layout (`dsa_explainer/`, `app.py` and `scripts/` at the top level).
 ## Repository layout
 
 ```
-backend/                    Python: the whole pipeline, run locally
-  app.py                    web interface (Gradio; replaced by frontend/ in a later milestone)
+backend/                    Python: the whole pipeline and the local API, run on your computer
   dsa_explainer/
-    core/                   lesson schema, data-structure simulators, step verifier (no AI, no I/O)
-    authoring/              everything the language model writes: planner, quiz, revisions, API client
-    media/                  local voice (Kokoro), animation (Manim), joining clips into a video
-    plans/                  verified lesson plans that render without an API key
+    algorithms/             22 simulators the verifier trusts, with their catalogue data
+    core/                   lesson schema and step verifier (no AI, no I/O)
+    authoring/              everything a language model writes: planner, quiz, revisions, providers
+    media/                  local voice (Kokoro), animation (Manim, one view per picture), joining clips
+    api/                    FastAPI app and the job runner (live progress over Server-Sent Events)
+    plans/                  verified lesson plans that play without an API key
     pipeline.py             plan -> verify -> quiz -> voice -> animation -> video
-    config.py               settings from .env
-  scripts/                  model download, live evaluation, diagram, report PDF
+    config.py, settings.py  settings from .env and from the app
+  scripts/                  model download, plan authoring, live evaluation, diagram, report PDF
   tests/
+frontend/                   React + TypeScript web app (Vite), served by the backend once built
 docs/
   roadmap/                  vision and milestones for the open-source platform
   course/                   the course submission: report, diagram, live evaluation, Loom guide
@@ -62,11 +64,11 @@ models/  outputs/  cache/   created at run time, not in git
 | Part | Model / tool | Where it runs |
 | --- | --- | --- |
 | Lesson planning, narration text, quiz questions, revisions | Any OpenAI-compatible LLM API; default **Gemini 3.5 Flash** (free tier), switching to **Gemini 3.5 Flash-Lite** when the daily free allowance runs out. Groq, Claude, OpenAI or a local Ollama model work by changing `.env` | API (allowed by the brief) |
-| Step verifier, quiz answer checking | Plain Python data structures (`dsa_explainer/core/structures.py`) | Local |
+| Step verifier, quiz answer checking | Plain Python simulators (`dsa_explainer/algorithms/`) | Local |
 | Text to speech | **Kokoro-82M** (ONNX, CPU) via `kokoro-onnx` | **Local** (required by the brief) |
 | Animation | **Manim Community 0.22** (Cairo renderer, no LaTeX) | Local |
 | Joining clips | ffmpeg (bundled by `imageio-ffmpeg`) | Local |
-| User interface | Gradio web app | Local |
+| User interface | React web app talking to a local FastAPI server | Local |
 
 ## Architecture
 
@@ -86,45 +88,43 @@ only ever draws the verifier's snapshots of the real structure, never the model'
 | --- | --- | --- |
 | 1. Lesson planner | `authoring/planner.py`, `core/lesson.py` | Topic + level → JSON plan (intro, 4–8 steps, summary). Validated with Pydantic, then by the verifier; errors are fed back for repair. |
 | 2. Animation renderer | `media/render.py` | Manim. Each structure has a drawer that turns a snapshot into named shapes; one generic `morph` animates any step by moving shapes that exist before and after, fading out removed ones and fading in new ones. Paths (BST comparisons, list walks) are highlighted first. |
-| 3. Step verifier | `core/verifier.py`, `core/structures.py` | Runs every operation; compares `claimed_state` with the true state; checks narration claims (top/front/rear/head/tail/root/size/current node) and flags any number that is not in the structure or the operation; checks the video will last over 30 s. |
+| 3. Step verifier | `core/verifier.py`, `algorithms/` | Runs every operation; compares `claimed_state` with the true state; checks narration claims (top/front/rear/head/tail/root/size/current node) and flags any number that is not in the structure or the operation; checks the video will last over 30 s. |
 | 4. Narration and voice | `media/voice.py`, `media/video.py` | Kokoro-82M on the CPU. Each scene's audio is made first and the animation is timed to it, so voice and picture stay in sync. |
 | 5. Quiz generator | `authoring/quiz.py` | The LLM writes multiple-choice questions that carry their own operations; each answer is checked by running them. Wrong questions are sent back; if none survive, a question is built from the lesson itself. |
 | 6. Revision control | `authoring/revise.py`, `media/video.py` | "Slow down / speed up step N" is handled by rules; other requests go to the LLM, which may only change narration, captions, speed and summary points. The result is verified again. Clips are cached by a hash of their content, so only changed scenes are re-rendered. |
 
-All module paths are inside `backend/dsa_explainer/`. `pipeline.py` ties the modules together; `backend/app.py` is
-the web interface.
+All module paths are inside `backend/dsa_explainer/`. `pipeline.py` ties the modules together; `api/` serves
+them to the web app in `frontend/`.
 
 ## Setup (Windows, macOS or Linux; Python 3.11 to 3.13)
 
-Run these from the repository root:
+You need Python 3.11 to 3.13 and Node.js 20 or newer. Run these from the repository root:
 
 ```bash
 python -m venv .venv
 .venv\Scripts\activate                      # macOS/Linux: source .venv/bin/activate
 pip install -r backend/requirements.txt
 python backend/scripts/download_models.py   # Kokoro voice, ~350 MB, once
-copy .env.example .env                      # macOS/Linux: cp .env.example .env
-```
-
-Put an API key in `.env` (a free Gemini key from https://aistudio.google.com/apikey works), then check it:
-
-```bash
-cd backend
-python -m dsa_explainer.authoring.llm
+cd frontend && npm install && npm run build && cd ..
 ```
 
 ## Run
 
 ```bash
-python backend/app.py
+cd backend
+python -m dsa_explainer serve --open
 ```
 
-Open http://127.0.0.1:7860, type a topic, pick a level and press **Make video**. Under the video, type a change
-such as `slow down step 4` or `explain step 2 for a beginner`.
+The app opens at http://127.0.0.1:8000. Every lesson in the **Library** plays without an API key. To make lessons
+from your own topics, open **Settings** and add a key for any provider (Gemini and Groq have free tiers; Ollama runs
+on your computer with no key). A key in `.env` works too (copy `.env.example`).
 
-Without an API key you can still make videos from the saved lesson plans in `backend/dsa_explainer/plans/` (in the
-app, open **"No API key? Make a video from a saved lesson plan"**, or run
-`python -m dsa_explainer --file dsa_explainer/plans/bst.json` inside `backend/`).
+In the **Studio**, type a topic and press **Make my lesson**. The pipeline's progress appears on the left, and each
+scene plays as soon as it is drawn. Under the finished video: the quiz, the verification report, **Change it**
+(`slow down step 4`, `explain step 2 for a beginner`), the transcript and the verified plan.
+
+For frontend development, run `npm run dev` in `frontend/` (http://127.0.0.1:5173, which forwards `/api` to the
+backend on port 8000).
 
 Videos are saved in `outputs/<time>-<title>/`: `lesson_v1.mp4`, then `lesson_v2.mp4` after a change, and
 the verified plan `lesson.json`.
