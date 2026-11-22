@@ -28,7 +28,7 @@ def test_a_quiz_failure_keeps_the_verified_lesson(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "OUTPUT_DIR", tmp_path)
     lesson = load("stack")
     lesson.quiz = []
-    monkeypatch.setattr(planner, "plan_lesson", lambda topic, level, log: (lesson, []))
+    monkeypatch.setattr(planner, "plan_lesson", lambda topic, level, log, structure=None: (lesson, []))
 
     def broken_quiz(lesson, log=None):
         raise llm.LLMError("Request timed out.")
@@ -53,7 +53,7 @@ def test_the_quiz_is_written_while_the_video_is_built(tmp_path, monkeypatch):
     lesson = load("stack")
     questions = list(lesson.quiz)
     lesson.quiz = []
-    monkeypatch.setattr(planner, "plan_lesson", lambda topic, level, log: (lesson, []))
+    monkeypatch.setattr(planner, "plan_lesson", lambda topic, level, log, structure=None: (lesson, []))
     quiz_started, seen = threading.Event(), {}
 
     def slow_quiz(lesson, log=None):

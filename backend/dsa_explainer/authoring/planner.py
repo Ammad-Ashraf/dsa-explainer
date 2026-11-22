@@ -59,10 +59,11 @@ Rules:
 {also}"""
 
 
-def system_prompt(topic: str = "") -> str:
-    """The planner's instructions. When the topic names an algorithm, only its reference is included
-    (a shorter prompt, and fewer chances to mix formats); the full list is still named."""
-    picked = algorithms.candidates(topic)
+def system_prompt(topic: str = "", structure: str | None = None) -> str:
+    """The planner's instructions. When the topic names an algorithm (or the topic gate picked one as
+    `structure`), only its reference is included (a shorter prompt, and fewer chances to mix formats);
+    the full list is still named."""
+    picked = algorithms.candidates(topic) or ([algorithms.get(structure)] if structure else [])
     names = [cls.NAME for cls in (picked or algorithms.ALL)]
     also = ("" if not picked else "Also supported (ask for these by name): "
             + ", ".join(cls.NAME for cls in algorithms.ALL if cls not in picked) + ".")
@@ -84,10 +85,12 @@ def _check(reply: str) -> tuple[Lesson | None, list[str]]:
     return lesson, verify_lesson(lesson).errors
 
 
-def plan_lesson(topic: str, level: str = "beginner", log=print) -> tuple[Lesson, list[str]]:
-    """A verified lesson plan, and the problems the verifier found on the way."""
+def plan_lesson(topic: str, level: str = "beginner", log=print,
+                structure: str | None = None) -> tuple[Lesson, list[str]]:
+    """A verified lesson plan, and the problems the verifier found on the way.
+    `structure` is the algorithm the topic gate matched, if any: it narrows the prompt."""
     messages = [
-        {"role": "system", "content": system_prompt(topic)},
+        {"role": "system", "content": system_prompt(topic, structure)},
         {"role": "user", "content": f"Topic: {topic.strip()}\nLearner level: {level}"},
     ]
     history: list[str] = []

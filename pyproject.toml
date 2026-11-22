@@ -83,6 +83,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "backend/tests/*" = ["E402"]  # tests group their imports by milestone section
 # prompts are written one rule per line, as the language model reads them
+"backend/dsa_explainer/authoring/gate.py" = ["E501"]
 "backend/dsa_explainer/authoring/planner.py" = ["E501"]
 "backend/dsa_explainer/authoring/quiz.py" = ["E501"]
 "backend/dsa_explainer/authoring/revise.py" = ["E501"]

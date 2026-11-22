@@ -29,6 +29,10 @@ LLM_FALLBACK_MODEL = os.getenv("LLM_FALLBACK_MODEL", "")  # used once LLM_MODEL'
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.4"))
 LLM_TIMEOUT = float(os.getenv("LLM_TIMEOUT", "180"))
 MAX_ATTEMPTS = int(os.getenv("MAX_ATTEMPTS", "4"))  # first plan + repairs
+# Topic gate (authoring/gate.py): turn away off-topic requests before the planning call.
+TOPIC_GATE = os.getenv("TOPIC_GATE", "1").strip().lower() not in ("0", "false", "no", "off")
+GATE_TIMEOUT = float(os.getenv("GATE_TIMEOUT", "10"))  # seconds; past this the request goes on to the planner
+GATE_MODEL = os.getenv("GATE_MODEL", "")  # the classifier's model; empty = the fallback model, else the main one
 
 # Narration voice: a local engine (media/voices). Kokoro-82M runs through ONNX Runtime.
 VOICE_ENGINE = os.getenv("VOICE_ENGINE", "kokoro")

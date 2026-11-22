@@ -133,7 +133,8 @@ export function JobPage() {
           ) : job.status === "done" ? (
             <Loading what="Opening your lesson" />
           ) : (
-            <ProgressivePlayer clips={job.clips} total={job.scenes.total} finished={job.stages.join?.status === "running"} />
+            <ProgressivePlayer clips={job.clips} total={job.scenes.total} finished={job.stages.join?.status === "running"}
+              stopped={job.status === "failed" || job.status === "cancelled" ? job.status : undefined} />
           )}
         </section>
       </div>

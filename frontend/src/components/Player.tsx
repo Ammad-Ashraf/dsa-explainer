@@ -13,7 +13,11 @@ function useCuesUrl(cues: Cue[] | undefined): string | undefined {
 }
 
 /** Plays finished clips in order while the rest are still being drawn. */
-export function ProgressivePlayer({ clips, total, finished }: { clips: Record<number, Clip>; total: number; finished: boolean }) {
+export function ProgressivePlayer({ clips, total, finished, stopped }: {
+  clips: Record<number, Clip>; total: number; finished: boolean;
+  /** Set once the job failed or was cancelled: no more scenes are coming, so stop the spinner. */
+  stopped?: "failed" | "cancelled";
+}) {
   const video = useRef<HTMLVideoElement>(null);
   const [index, setIndex] = useState(0);
   const [started, setStarted] = useState(false);
@@ -45,6 +49,11 @@ export function ProgressivePlayer({ clips, total, finished }: { clips: Record<nu
                 <span>Start watching while the rest are drawn.</span>
                 <button type="button" className="btn btn-primary" onClick={() => setStarted(true)}>Play {label(current.name)}</button>
               </>
+            ) : stopped ? (
+              <>
+                <strong>{stopped === "failed" ? "No video was made" : "Cancelled"}</strong>
+                <span>{stopped === "failed" ? "The reason is shown beside the pipeline." : "No more scenes will be drawn."}</span>
+              </>
             ) : (
               <>
                 <Spinner />
@@ -54,7 +63,7 @@ export function ProgressivePlayer({ clips, total, finished }: { clips: Record<nu
             )}
           </div>
         )}
-        {waiting && (
+        {waiting && !stopped && (
           <div className="overlay">
             <Spinner />
             <strong>Drawing the next scene</strong>

@@ -53,13 +53,13 @@ class CallLog:
     def __enter__(self):
         log = self
 
-        def chat(client, messages, temperature=None, schema=None, timeout=None):
+        def chat(client, messages, temperature=None, schema=None, timeout=None, model=None, quick=False):
             if len(log.calls) >= log.max_calls:
                 raise Budget(f"stopped at --max-calls {log.max_calls}")
             started = time.perf_counter()
-            entry = {"purpose": log.purpose, "mode": client.mode, "model": client.model_in_use()}
+            entry = {"purpose": log.purpose, "mode": client.mode, "model": model or client.model_in_use()}
             try:
-                reply = log._original(client, messages, temperature, schema, timeout)
+                reply = log._original(client, messages, temperature, schema, timeout, model, quick)
                 entry["ok"] = True
                 return reply
             except Exception as exc:
@@ -215,7 +215,7 @@ def _dry_run(names: list[str]) -> None:
     """Replace the network with the saved plans, so the harness itself can be tested offline."""
     from dsa_explainer.core.lesson import Lesson
 
-    def fake(client, messages, temperature=None, schema=None, timeout=None):
+    def fake(client, messages, temperature=None, schema=None, timeout=None, model=None, quick=False):
         text = " ".join(m["content"] for m in messages)
         if "multiple-choice quiz" in text:
             return json.dumps({"questions": []})  # the built-in questions fill in

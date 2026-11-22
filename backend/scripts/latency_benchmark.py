@@ -64,7 +64,7 @@ def run(plan: str, mode: str, threads: int, quiz_seconds: float, quality: str) -
     original = (planner.plan_lesson, quiz.make_quiz, pipeline.start_quiz, config.CACHE_DIR, config.OUTPUT_DIR)
     with tempfile.TemporaryDirectory(dir=Path(config.CACHE_DIR).parent) as tmp:
         config.CACHE_DIR, config.OUTPUT_DIR = Path(tmp) / "cache", Path(tmp) / "outputs"
-        planner.plan_lesson = lambda topic, level, log: (lesson.model_copy(deep=True), [])
+        planner.plan_lesson = lambda topic, level, log, structure=None: (lesson.model_copy(deep=True), [])
         quiz.make_quiz = slow_quiz
         if mode == "sequential":
             pipeline.start_quiz = sequential

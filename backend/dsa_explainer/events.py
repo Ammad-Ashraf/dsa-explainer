@@ -5,6 +5,7 @@ STAGES, in order. Event types:
 
   stage     {"stage", "status": running | done | failed | skipped, "detail"?, "seconds"?}
   message   {"text", "fraction"?}            free text, with overall progress 0..1
+  gate      {"in_scope", "structure", "source", "reason", "seconds"}  the topic gate's verdict
   rejected  {"stage", "attempt", "reason"}   the verifier sent a plan, quiz or revision back
   scene     {"stage", "index", "total", "name"}  per-scene progress of voice and drawing
   clip      {"index", "total", "name", "key", "seconds", "cached"}  a finished clip, playable now
@@ -74,6 +75,11 @@ def describe(type: str, data: dict) -> str:
         detail = f": {data['detail']}" if data.get("detail") else ""
         return {"running": f"{name}...", "done": f"{name} done{detail}", "failed": f"{name} failed{detail}",
                 "skipped": ""}.get(data["status"], "")
+    if type == "gate":
+        how = {"keyword": "by keyword", "model": "by the classifier"}.get(data.get("source"), "")
+        if not data.get("in_scope"):
+            return f"The topic gate turned the request away {how}: {data.get('reason')}".rstrip(": ")
+        return f"Topic accepted {how}" + (f" ({data['structure']})" if data.get("structure") else "") if how else ""
     if type == "rejected":
         return f"The verifier sent {data['stage']} attempt {data['attempt']} back: {data['reason']}"
     if type == "clip":

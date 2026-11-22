@@ -20,7 +20,7 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from pathlib import Path
 
 from . import config, events, store
-from .authoring import planner, quiz, revise
+from .authoring import gate, planner, quiz, revise
 from .core.lesson import Lesson
 from .core.verifier import check_question, verify_lesson
 from .media import video
@@ -48,7 +48,7 @@ def _finish(lesson: Lesson, folder: Path, version: int, quality: str, rep: event
     if quiz_future is not None:  # the quiz arrived during the build: verify the whole lesson once more
         report = verify_lesson(lesson)
         extra["quiz_seconds"] = rep.timings.get("quiz", 0.0)
-    timings = {k: round(extra[k], 2) for k in ("plan_seconds", "quiz_seconds") if k in extra}
+    timings = {k: round(extra[k], 2) for k in ("gate_seconds", "plan_seconds", "quiz_seconds") if k in extra}
     timings.update(voice_seconds=round(result["voice_seconds"], 2), build_seconds=round(result["build_seconds"], 2))
     timings["stages"] = dict(rep.timings)  # wall-clock seconds of every stage, as the app showed them
     timings["spans"] = dict(rep.spans)  # when each stage ran: stages overlap (the quiz runs beside the drawing)
@@ -71,7 +71,14 @@ def make_lesson(topic: str, level: str = "beginner", quality: str = "draft", log
     rep.stage("plan", "running")
     started = job_started = time.perf_counter()
     try:
-        lesson, rejected = planner.plan_lesson(topic, level, rep)
+        rep("Checking the topic", 0.02)
+        verdict = gate.check_topic(topic)
+        events.emit(rep, "gate", in_scope=verdict.in_scope, structure=verdict.structure, source=verdict.source,
+                    reason=verdict.reason, seconds=round(verdict.seconds, 2))
+        if not verdict.in_scope:
+            raise planner.PlanError(gate.unsupported_message())
+        rep.check_cancelled()
+        lesson, rejected = planner.plan_lesson(topic, level, rep, structure=verdict.structure)
     except Exception as exc:
         rep.stage("plan", "failed", str(exc))
         raise
@@ -79,7 +86,8 @@ def make_lesson(topic: str, level: str = "beginner", quality: str = "draft", log
     rep.stage("plan", "done", f"accepted after {len(rejected) + 1} attempt(s)")
     rep.check_cancelled()
     lesson.quiz = []
-    extra = {"rejected": rejected, "plan_seconds": plan_seconds, "started": job_started}
+    extra = {"rejected": rejected, "plan_seconds": plan_seconds, "gate_seconds": verdict.seconds,
+             "started": job_started}
     return _finish(lesson, config.OUTPUT_DIR / store.new_id(lesson.title), 1, quality, rep, extra,
                    quiz_future=start_quiz(lesson, rep))
 

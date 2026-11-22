@@ -64,6 +64,7 @@ class Client:
         self.settings = settings
         self.on_fallback = False  # set once the main model's daily allowance is used up
         self.mode = settings.structured if settings.structured in MODES else "json_object"
+        self.reasoning_effort_ok = True  # cleared if the provider rejects the reasoning_effort option
         self._openai: OpenAI | None = None
 
     def openai(self) -> OpenAI:
@@ -76,18 +77,21 @@ class Client:
     def model_in_use(self) -> str:
         return self.settings.fallback_model if self.on_fallback else self.settings.model
 
-    def _create(self, **kwargs):
-        """One API call. A per-minute rate limit: wait and try again. A daily limit: switch to the fallback model."""
+    def _create(self, model: str | None = None, quick: bool = False, **kwargs):
+        """One API call. A per-minute rate limit: wait and try again. A daily limit: switch to the fallback model.
+        `model` overrides the model in use. `quick`: no rate-limit waits, for small calls that have a
+        fallback of their own (the topic gate); the client's one retry stays, since a busy server's 503 is fast."""
+        api = self.openai()
         for wait in (*RATE_LIMIT_WAITS, None):
-            kwargs["model"] = self.model_in_use()
+            kwargs["model"] = model or self.model_in_use()
             try:
-                return self.openai().chat.completions.create(**kwargs)
+                return api.chat.completions.create(**kwargs)
             except RateLimitError as exc:
                 details = f"{exc} {exc.body}".lower()  # the quota name, e.g. "...PerDay...", is in the body
-                if self.settings.fallback_model and not self.on_fallback and "day" in details:
+                if not model and self.settings.fallback_model and not self.on_fallback and "day" in details:
                     self.on_fallback = True
                     continue
-                if wait is None:
+                if wait is None or quick:
                     raise LLMError("The language model's rate limit was reached (free tiers allow only a few "
                                    "requests per minute and per day). Wait a minute and try again, or choose another "
                                    "provider or model in Settings.") from exc
@@ -105,8 +109,9 @@ class Client:
                 raise
 
     def chat(self, messages: list[dict], temperature: float | None = None, schema: dict | None = None,
-             timeout: float | None = None) -> str:
-        """One chat completion; returns the reply text. Uses the strongest JSON mode the provider accepts."""
+             timeout: float | None = None, model: str | None = None, quick: bool = False) -> str:
+        """One chat completion; returns the reply text. Uses the strongest JSON mode the provider accepts.
+        `model` overrides the model in use; `quick`: no rate-limit waits, and low reasoning effort."""
         kwargs = {"messages": messages, "temperature": config.LLM_TEMPERATURE if temperature is None else temperature}
         if timeout is not None:
             kwargs["timeout"] = timeout
@@ -119,10 +124,15 @@ class Client:
                                                             "schema": schema, "strict": False}}
             elif mode == "json_object":
                 extra["response_format"] = {"type": "json_object"}
+            if quick and self.reasoning_effort_ok:
+                extra["reasoning_effort"] = "low"  # thinking models answer a short question in a second, not ten
             try:
-                reply = self._create(**kwargs, **extra)
+                reply = self._create(model=model, quick=quick, **kwargs, **extra)
             except BadRequestError as exc:
                 text = str(exc).lower()
+                if "reasoning_effort" in extra and "reasoning" in text:
+                    self.reasoning_effort_ok = False  # this provider has no such option: ask without it
+                    continue
                 if mode == "none" or not any(w in text for w in ("response_format", "json", "schema")):
                     raise
                 # this provider (or model) lacks that JSON mode: step down once, for good
@@ -192,10 +202,10 @@ def use(settings: LLMSettings | None):
 
 
 def chat(messages: list[dict], temperature: float | None = None, schema: dict | None = None,
-         timeout: float | None = None) -> str:
+         timeout: float | None = None, model: str | None = None, quick: bool = False) -> str:
     """One chat completion with the provider in use; returns the reply text."""
     try:
-        return current().chat(messages, temperature, schema, timeout)
+        return current().chat(messages, temperature, schema, timeout, model, quick)
     except LLMError:
         raise
     except Exception as exc:  # never let a key reach a message or a log
