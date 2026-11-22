@@ -25,7 +25,8 @@ guessed. Ask for *"slow down step 4"* and only that scene is redrawn.
   or treating a queue as a stack; the app tells you which mistake you made.
 
 > This project began as the Natural Language Processing course project of Ahmed Javaid and Ammad Ashraf (Fall
-> 2026). The submitted course version lives on the `main` branch and is documented in [docs/course/](docs/course/).
+> 2026) and grew into the platform described here. The course documents (report, diagram, evaluation) describe the
+> finished project and are in [docs/course/](docs/course/).
 
 ## Quick start
 
@@ -148,8 +149,11 @@ is GPL-3.0, installed as a dependency.
 
 ## The course project
 
-DSA Explainer was built for Project 1 (Data Structure Explainer) of our NLP course; Ahmed Javaid implemented the
-course version. The course documents describe the version on `main`: the [report](docs/course/report.md)
-([PDF](docs/course/report.pdf)), the [architecture diagram](docs/course/architecture.png), the
-[live evaluation](docs/course/live-eval.md), the [Loom video guide](docs/course/loom-video-guide.md), the
-[AI prompts](docs/course/ai-prompts.md) and the [submission checklist](docs/course/submission-checklist.md).
+DSA Explainer was built for Project 1 (Data Structure Explainer) of our NLP course (Ahmed Javaid, 22i-2530, and Ammad
+Ashraf, 22i-2470). The course documents describe the finished project: the [report](docs/course/report.md)
+([PDF](docs/course/report.pdf)), which includes the Complex Computing Problem analysis, the
+[architecture diagram](docs/course/architecture.png), the [live evaluation](docs/course/live-eval.md), the
+[Loom video guide](docs/course/loom-video-guide.md), the [AI prompts](docs/course/ai-prompts.md) and the
+[submission checklist](docs/course/submission-checklist.md).
+
+Demo video: *add the Loom link*

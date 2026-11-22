@@ -29,7 +29,9 @@ h2 { font-size: 15pt; margin: 20pt 0 6pt; padding-bottom: 3pt; border-bottom: 1p
      page-break-after: avoid; }
 h3 { font-size: 12pt; margin: 14pt 0 4pt; color: #0f172a; page-break-after: avoid; }
 p, li { orphans: 3; widows: 3; }
-table { border-collapse: collapse; width: 100%; margin: 8pt 0; font-size: 9.5pt; page-break-inside: avoid; }
+table { border-collapse: collapse; width: 100%; margin: 8pt 0; font-size: 9.5pt; page-break-inside: auto; }
+tr { page-break-inside: avoid; }
+thead { display: table-header-group; }
 th, td { border: 1px solid #cbd5e1; padding: 4pt 6pt; text-align: left; vertical-align: top; }
 th { background: #f1f5f9; }
 th:empty { display: none; }

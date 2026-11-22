@@ -9,7 +9,8 @@ The product the milestones build is described in [../design/product.md](../desig
 - **The verifier invariant is never relaxed.** The language model never has the last word on facts; the renderer
   draws only the verifier's snapshots of the real simulation. New features add checks, never remove them.
 - **Tests stay green and the app keeps running** after every commit. Each task adds tests for what it adds.
-- All work lands on `feat/open-source-platform` in meaningful commits. `main` stays as the course submission.
+- All work landed on `feat/open-source-platform` in meaningful commits. *Update, 21 November 2026:* the branch was merged
+  into `main`, so `main` is now the whole platform and the course documents in `docs/course/` describe it.
 
 ## Decisions
 
@@ -24,7 +25,7 @@ The open questions from the vision, decided so work can proceed without waiting:
 | Who writes the saved plans | Claude writes them in the development session, and the **verifier must accept every one** before it is committed; `scripts/generate_plans.py` lets anyone regenerate them with their own provider | No paid key is needed, and correctness does not depend on who wrote the plan. |
 | Where keys and lessons live | A data folder: the repository root when run from source (as today), `~/.dsa-explainer` when installed; overridable with `DSA_HOME`. Keys go in `settings.json` there, outside git, never logged | One rule for both ways of running, and existing `models/`, `outputs/`, `cache/` keep working. |
 | Gradio | Kept until the React app reaches parity, then removed (end of Milestone 3) | The app keeps working at every commit. |
-| Course submission | `main` is untouched; this branch is merged only when Ammad decides | The submission must not change under the graders. |
+| Course submission | `main` stayed untouched until Ammad decided to merge (done on 21 November 2026) | The submission must not change under the graders; the course documents were then updated to match. |
 
 ## Overview and order of work
 

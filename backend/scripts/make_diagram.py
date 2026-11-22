@@ -53,39 +53,48 @@ class Architecture(Scene):
     def construct(self) -> None:
         title = label("DSA Explainer: system architecture", 34, FG, bold=True).move_to(UP * 3.55)
 
-        learner = box("Learner", "Gradio web app", PERSON, (-5.3, 1.75))
-        planner = box("1. Lesson planner", "LLM writes a JSON scene plan", API, (-1.75, 1.75))
-        verifier = box("3. Step verifier", "runs the real data structure", LOCAL, (1.75, 1.75))
-        quiz = box("5. Quiz generator", "LLM writes, verifier checks", API, (5.3, 1.75))
-        revision = box("6. Revision control", "rules or LLM, then re-verified", API, (-1.75, 0.0))
-        voice = box("4. Voice", "Kokoro-82M on the CPU", LOCAL, (5.3, -1.75))
-        renderer = box("2. Renderer", "Manim, 4 clips at once", LOCAL, (1.75, -1.75))
+        learner = box("Learner", "React web app", PERSON, (-5.3, 1.75))
+        server = box("Local API server", "FastAPI, jobs, live events", LOCAL, (-1.75, 1.75))
+        planner = box("1. Lesson planner", "the LLM you choose writes a plan", API, (1.75, 1.75))
+        verifier = box("2. Step verifier", "22 real simulators, no AI", LOCAL, (5.3, 1.75))
+        revision = box("Revision control", "rules or LLM, then re-verified", API, (-1.75, 0.0))
+        quiz = box("3. Quiz writer", "LLM + simulated mistakes", API, (1.75, 0.0))
+        joiner = box("ffmpeg + captions", "joins clips, writes .vtt", LOCAL, (-5.3, -1.75))
         cache = box("Clip cache", "keyed by what a clip shows", LOCAL, (-1.75, -1.75))
-        joiner = box("ffmpeg", "joins clips into lesson.mp4", LOCAL, (-5.3, -1.75))
+        renderer = box("5. Renderer", "Manim, several clips at once", LOCAL, (1.75, -1.75))
+        voice = box("4. Voice", "pluggable, Kokoro-82M default", LOCAL, (5.3, -1.75))
         verifier[0].set_stroke(ACCENT, 7)
 
         feedback = CurvedArrow(verifier.get_top() + LEFT * 0.6, planner.get_top() + RIGHT * 0.6, angle=np.pi / 2.2,
                                color="#f472b6", stroke_width=4)
         feedback_text = label("errors + the true state (up to 4 attempts)", 17, "#f472b6").next_to(feedback, UP, 0.08)
         arrows = VGroup(
-            link(learner, planner, "topic"),
+            link(learner, server, "topic"),
+            link(server, planner, "job"),
             link(planner, verifier, "plan"),
-            link(verifier, quiz, "lesson"),
-            link(quiz, voice, "lesson + quiz", side=RIGHT),
+            link(verifier, quiz, start=verifier.get_bottom() + LEFT * 0.5,
+                 end=quiz.get_right()),
+            link(verifier, voice, start=verifier.get_bottom() + RIGHT * 0.9,
+                 end=voice.get_top() + RIGHT * 0.9),
+            link(quiz, renderer, "quiz clips last", side=RIGHT),
             link(voice, renderer, "audio"),
             link(renderer, cache, "clips"),
             link(cache, joiner),
-            link(joiner, learner, "video", side=LEFT),
-            link(learner, revision, start=learner.get_bottom() + RIGHT * 0.9, end=revision.get_left()),
-            link(revision, verifier, start=revision.get_right(), end=verifier.get_bottom() + LEFT * 0.9),
+            link(joiner, learner, "video", side=RIGHT),
+            link(server, revision, "change request", side=LEFT),
+            link(revision, verifier, start=revision.get_top() + RIGHT * 1.0, end=verifier.get_bottom() + LEFT * 1.1),
         )
-        request = label("change request", 17, MUTED).next_to(revision, LEFT, buff=0.15).shift(DOWN * 0.45)
+        notes = VGroup(
+            label("revised plan", 17, MUTED).move_to(np.array([-0.1, 0.93, 0])),
+            label("in parallel", 17, MUTED).move_to(np.array([4.95, 0.45, 0])),
+            label("lesson", 17, MUTED).move_to(np.array([5.55, -0.7, 0])),
+        )
         legend = VGroup(*[
             VGroup(RoundedRectangle(corner_radius=0.06, width=0.42, height=0.26, stroke_color=c, stroke_width=4,
                                     fill_color=CELL, fill_opacity=1), label(t, 18, MUTED)).arrange(RIGHT, buff=0.15)
-            for c, t in ((API, "uses the LLM API"), (LOCAL, "runs locally"))
+            for c, t in ((API, "uses a language model"), (LOCAL, "runs on your computer"))
         ]).arrange(RIGHT, buff=0.7).move_to(DOWN * 3.45)
-        self.add(arrows, feedback, feedback_text, request, learner, planner, verifier, quiz, revision, voice,
+        self.add(arrows, notes, feedback, feedback_text, learner, server, planner, verifier, quiz, revision, voice,
                  renderer, cache, joiner, title, legend)
 
 

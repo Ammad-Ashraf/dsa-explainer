@@ -1,6 +1,13 @@
 # Live evaluation
 
-Provider: `https://generativelanguage.googleapis.com/v1beta/openai/`. Main model `gemini-3.5-flash`, fallback `gemini-3.5-flash-lite` (used once the main model's daily free allowance runs out). Updated 05 November 2026 with `python scripts/live_eval.py --render`.
+> **Which version this measured.** This is the fixed course run, made on 5 November 2026 against the first version of
+> the project (five structures: stack, queue, linked list, binary search tree and BFS). It is kept as it was. The
+> project now supports 22 algorithms, so "Explain heap sort", refused below, is now a supported topic. The later
+> evaluations are in the report (Sections 8.4 to 8.7): the mutation tests of the verifier
+> ([verification.md](../research/verification.md)), the Gemini JSON-mode run
+> ([eval-json-modes.md](../research/eval-json-modes.md)), and the latency and voice measurements.
+
+Provider: `https://generativelanguage.googleapis.com/v1beta/openai/`. Main model `gemini-3.5-flash`, fallback `gemini-3.5-flash-lite` (used once the main model's daily free allowance runs out). Updated 05 November 2026 with `python backend/scripts/live_eval.py --render`.
 
 | # | Topic | Level | Expected | Result | Model | Plan attempts | Steps | Words | Quiz | Checks | Plan time | Video |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
