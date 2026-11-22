@@ -52,9 +52,9 @@ gpu = ["onnxruntime-gpu>=1.20; platform_system != 'Darwin'"]
 dsa-explainer = "dsa_explainer.__main__:main"
 
 [project.urls]
-Homepage = "https://github.com/Ahmed-Javaid/NLP-Project-2026"
-Documentation = "https://github.com/Ahmed-Javaid/NLP-Project-2026#readme"
-Roadmap = "https://github.com/Ahmed-Javaid/NLP-Project-2026/blob/feat/open-source-platform/docs/roadmap/milestones.md"
+Homepage = "https://github.com/Ammad-Ashraf/dsa-explainer"
+Documentation = "https://github.com/Ammad-Ashraf/dsa-explainer#readme"
+Roadmap = "https://github.com/Ammad-Ashraf/dsa-explainer/blob/main/docs/roadmap/milestones.md"
 
 [tool.setuptools.dynamic]
 version = { attr = "dsa_explainer.config.VERSION" }

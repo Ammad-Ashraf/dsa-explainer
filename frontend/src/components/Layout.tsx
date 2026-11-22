@@ -60,7 +60,7 @@ export function GreenFooter() {
         <div><h4>Learn</h4><ul><li><Link to="/library?category=sorting">Sorting</Link></li><li><Link to="/library?category=graphs">Graphs</Link></li><li><Link to="/library?category=trees">Trees and heaps</Link></li><li><Link to="/library?category=dp">Dynamic programming</Link></li></ul></div>
         <div><h4>How it works</h4><ul><li><a href="/#how-it-works">The pipeline</a></li><li><a href="/#checked">Verification</a></li><li><a href="/#faq">Questions</a></li></ul></div>
         <div><h4>Set up</h4><ul><li><Link to="/settings#language-model">Language model</Link></li><li><Link to="/settings#voice">Voice</Link></li><li><Link to="/settings#video">Video</Link></li></ul></div>
-        <div><h4>Project</h4><ul><li><a href="https://github.com/Ahmed-Javaid/NLP-Project-2026" target="_blank" rel="noreferrer">Source code</a></li><li><a href="/api/docs" target="_blank" rel="noreferrer">API reference</a></li></ul></div>
+        <div><h4>Project</h4><ul><li><a href="https://github.com/Ammad-Ashraf/dsa-explainer" target="_blank" rel="noreferrer">Source code</a></li><li><a href="/api/docs" target="_blank" rel="noreferrer">API reference</a></li></ul></div>
       </div>
       <div className="container legal">
         <span>DSA Explainer: open source, runs on your computer.</span>
@@ -78,7 +78,7 @@ export function CompactFooter() {
     <footer className="compact-footer">
       <Link to="/">Home</Link><Link to="/studio">Studio</Link><Link to="/library">Library</Link>
       <Link to="/lessons">My lessons</Link><Link to="/settings">Settings</Link>
-      <a href="https://github.com/Ahmed-Javaid/NLP-Project-2026" target="_blank" rel="noreferrer">Source</a>
+      <a href="https://github.com/Ammad-Ashraf/dsa-explainer" target="_blank" rel="noreferrer">Source</a>
     </footer>
   );
 }

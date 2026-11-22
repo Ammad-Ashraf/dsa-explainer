@@ -1,6 +1,6 @@
 # DSA Explainer
 
-[![CI](https://github.com/Ahmed-Javaid/NLP-Project-2026/actions/workflows/ci.yml/badge.svg)](https://github.com/Ahmed-Javaid/NLP-Project-2026/actions/workflows/ci.yml)
+[![CI](https://github.com/Ammad-Ashraf/dsa-explainer/actions/workflows/ci.yml/badge.svg)](https://github.com/Ammad-Ashraf/dsa-explainer/actions/workflows/ci.yml)
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-58cc02.svg)](LICENSE)
 
 **Watch any data structure come alive, step by checked step.** Type a topic such as *"how does a queue handle
@@ -34,7 +34,7 @@ You need **Python 3.11 to 3.13** and about 1 GB of disk. On Linux, first install
 pkg-config`.
 
 ```bash
-git clone https://github.com/Ahmed-Javaid/NLP-Project-2026.git dsa-explainer
+git clone https://github.com/Ammad-Ashraf/dsa-explainer.git dsa-explainer
 cd dsa-explainer
 python -m venv .venv
 .venv/Scripts/activate                       # macOS and Linux: source .venv/bin/activate

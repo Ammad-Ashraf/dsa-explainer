@@ -18,7 +18,7 @@ video without being verified, it will not be merged, however nice it looks.
 You need Python 3.11 to 3.13, Node 20 or newer, and about 1 GB of disk for the voice model and the cache.
 
 ```bash
-git clone https://github.com/Ahmed-Javaid/NLP-Project-2026.git dsa-explainer
+git clone https://github.com/Ammad-Ashraf/dsa-explainer.git dsa-explainer
 cd dsa-explainer
 python -m venv .venv
 .venv/Scripts/activate            # Windows; on macOS and Linux: source .venv/bin/activate

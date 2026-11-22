@@ -1,5 +1,5 @@
 blank_issues_enabled: true
 contact_links:
   - name: Add an algorithm (guide)
-    url: https://github.com/Ahmed-Javaid/NLP-Project-2026/blob/feat/open-source-platform/CONTRIBUTING.md#add-an-algorithm
+    url: https://github.com/Ammad-Ashraf/dsa-explainer/blob/main/CONTRIBUTING.md#add-an-algorithm
     about: The step-by-step guide to adding a simulator, a view and a saved lesson.
