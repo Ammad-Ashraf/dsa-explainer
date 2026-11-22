@@ -64,7 +64,10 @@ export function GreenFooter() {
       </div>
       <div className="container legal">
         <span>DSA Explainer: open source, runs on your computer.</span>
-        <span>Made by Ahmed Javaid and Ammad Ashraf</span>
+        <span>Made by{" "}
+          <a href="https://github.com/Ahmed-Javaid" target="_blank" rel="noreferrer">Ahmed Javaid</a> and{" "}
+          <a href="https://ammad-ashraf.dev/" target="_blank" rel="noreferrer">Ammad Ashraf</a>
+        </span>
       </div>
     </footer>
   );

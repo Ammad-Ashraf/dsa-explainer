@@ -217,6 +217,7 @@ a.card:hover { text-decoration: none; border-color: var(--blue); transform: tran
 .site-footer h4 { font: 800 19px/1.4 var(--font-display); color: var(--footer-ink); margin-bottom: 14px; }
 .site-footer ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
 .site-footer a { color: var(--footer-link-ink); font: 700 16px/22px var(--font-body); }
+.site-footer .legal a { text-decoration: underline; text-underline-offset: 4px; font-weight: 800; }
 .site-footer a:hover { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
 .site-footer .legal {
   border-top: 2px solid rgba(13, 47, 0, 0.3); padding: 28px 16px 64px; color: var(--footer-ink); font: 700 15px/1.5 var(--font-body);
