@@ -1,5 +1,9 @@
 # Loom video guide
 
+> **The submitted demo video is the scripted launch video**: [watch it on Google Drive](https://drive.google.com/file/d/1KCi2dclZBBQBWeeuSz0wrhLI8nOqIlPO/view?usp=sharing) (1 min 56 s). It was
+> made with `launch-video/`, which drives the running app frame by frame and edits the footage with Remotion, so
+> nothing was recorded by hand. Use this guide for a live walkthrough, for example in the viva.
+
 The brief asks for **a 2 to 3 minute Loom video of the product, including a quick demo**. This guide is a ready
 script: what to show, what to say, and what to do if something goes wrong. It runs about 2 minutes 50 seconds. Pause
 Loom while the first scene is being made (step 2) so the waiting does not count.

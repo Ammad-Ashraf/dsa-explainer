@@ -8,7 +8,7 @@
 | Group | Ahmed Javaid (22i-2530), Ammad Ashraf (22i-2470) |
 | Repository | https://github.com/Ammad-Ashraf/dsa-explainer |
 | Version | 0.3.0 (MIT licence) |
-| Demo video | *add the Loom link* |
+| Demo video | [DSA Explainer launch video](https://drive.google.com/file/d/1KCi2dclZBBQBWeeuSz0wrhLI8nOqIlPO/view?usp=sharing) (1 min 56 s) |
 | Date | November 2026 |
 
 ---
@@ -499,6 +499,7 @@ back, the clips drawn or reused, and the time of each stage.
 | `backend/scripts/` | | Live evaluation, evaluation harness, mutation report, benchmarks, plan authoring, diagram, report PDF |
 | `frontend/src/` | 3017 | React and TypeScript web app |
 | `docs/` | | Roadmap, design, research and the course documents |
+| `launch-video/` | | Scripted capture and Remotion edit of the demo video |
 
 ## 7. Setup and use
 

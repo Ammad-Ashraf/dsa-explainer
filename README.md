@@ -24,6 +24,9 @@ guessed. Ask for *"slow down step 4"* and only that scene is redrawn.
 - **A quiz from real mistakes.** Wrong options are what you get by forgetting a step, doing two in the wrong order
   or treating a queue as a stack; the app tells you which mistake you made.
 
+**[Watch the demo video](<https://drive.google.com/file/d/1KCi2dclZBBQBWeeuSz0wrhLI8nOqIlPO/view?usp=sharing>)** (1 min 56 s): a real lesson made from a typed topic, then the quiz, the verifier's
+report, a revision, the library and the settings.
+
 > This project began as the Natural Language Processing course project of Ahmed Javaid and Ammad Ashraf (Fall
 > 2026) and grew into the platform described here. The course documents (report, diagram, evaluation) describe the
 > finished project and are in [docs/course/](docs/course/).
@@ -163,4 +166,5 @@ Ashraf, 22i-2470). The course documents describe the finished project: the [repo
 [Loom video guide](docs/course/loom-video-guide.md), the [AI prompts](docs/course/ai-prompts.md) and the
 [submission checklist](docs/course/submission-checklist.md).
 
-Demo video: *add the Loom link*
+Demo video: [DSA Explainer launch video](<https://drive.google.com/file/d/1KCi2dclZBBQBWeeuSz0wrhLI8nOqIlPO/view?usp=sharing>) (1 min 56 s, 1080p). It was made with the scripted capture in
+[launch-video/](launch-video/), which records the running app frame by frame and edits it with Remotion.

@@ -10,7 +10,7 @@ the same contents. No late submissions.
 - The report as `docs/course/report.md` and the printed `docs/course/report.pdf`. It follows the Complex Computing
   Problem guidelines: Section 2 has the Problem Statement, Complexity Drivers, Design Justification, Trade-off
   Analysis and Societal and Ethical Impact, and the rest has the module descriptions, setup and technical details.
-- The Loom video (2 to 3 minutes), linked from the README and the report.
+- The demo video, linked from the README and the report: [DSA Explainer launch video](https://drive.google.com/file/d/1KCi2dclZBBQBWeeuSz0wrhLI8nOqIlPO/view?usp=sharing) (1 min 56 s).
 
 ## Already done
 
@@ -25,6 +25,9 @@ the same contents. No late submissions.
 - [x] Live evaluation with Gemini: `docs/course/live-eval.md` (the fixed course run), plus the later evaluations in
       `docs/research/`
 - [x] Loom script: `docs/course/loom-video-guide.md`, for the current app
+- [x] Demo video: a scripted launch video of the running app ([Google Drive](https://drive.google.com/file/d/1KCi2dclZBBQBWeeuSz0wrhLI8nOqIlPO/view?usp=sharing), 1 min 56 s), made with
+      `launch-video/` (frame-by-frame capture of the real app, edited with Remotion). It is linked from `README.md`
+      and the report's "Demo video" row, and shared with "Anyone with the link"
 - [x] Prompts given to the AI assistant: `docs/course/ai-prompts.md`
 - [x] API keys are kept out of git (`.env`, `settings.json` and `GeminiAPIKey.txt` are ignored; the history was checked)
 
@@ -32,10 +35,9 @@ the same contents. No late submissions.
 
 1. **Check the group details** in `README.md` and `docs/course/report.md`: Ahmed Javaid (22i-2530) and Ammad Ashraf
    (22i-2470).
-2. **Record the Loom video** with `docs/course/loom-video-guide.md` (2 to 3 minutes). Set sharing to "Anyone with the
-   link".
-3. **Paste the Loom link** into `README.md` (the "Demo video" line at the end) and `docs/course/report.md` (the "Demo
-   video" row).
+2. **Demo video length.** The brief asks for 2 to 3 minutes and the launch video runs 1 min 56 s. If that matters,
+   record a short live Loom with `docs/course/loom-video-guide.md` as well, or ask for a longer cut of the launch video.
+3. ~~Paste the video link~~ Done: the link is in `README.md` and `docs/course/report.md`.
 4. **Decide how the repository is shared.** The code is at https://github.com/Ammad-Ashraf/dsa-explainer, which is
    currently **public**. The brief asks for a private repository, so either make it private (Settings, then Danger
    Zone, then Change visibility) and add your partner and the instructor or TA under Settings > Collaborators, or
@@ -56,7 +58,8 @@ the same contents. No late submissions.
    ```bash
    git archive --format=zip --prefix=NLP-Project_22i-2530_22i-2470/ -o ../NLP-Project_22i-2530_Ahmed-Javaid_22i-2470_Ammad-Ashraf.zip HEAD
    ```
-9. **Submit on Google Classroom** before the deadline.
+9. **Submit on Google Classroom** before the deadline. A ready folder is prepared next to the repository, in
+   `../NLP-Project-Submission/`: the .zip of the repository, the report PDF, the demo video and a links file.
 
 ## For the viva
 

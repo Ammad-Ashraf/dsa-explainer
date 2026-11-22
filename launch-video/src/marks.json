@@ -1,0 +1,85 @@
+{
+  "home": {
+    "frames": 1446,
+    "fps": 60,
+    "marks": {
+      "hero": 0,
+      "scroll": 318,
+      "pipeline": 990,
+      "popular": 1248
+    }
+  },
+  "lesson": {
+    "frames": 3617,
+    "fps": 60,
+    "marks": {
+      "open": 0,
+      "play4": 54,
+      "play7": 579,
+      "quiz": 1266,
+      "verified": 1574,
+      "plan": 1924,
+      "change": 2130,
+      "revise": 2446,
+      "revised": 3237
+    },
+    "audio": [
+      {
+        "frame": 111,
+        "frames": 468,
+        "start": 41.699999999999996
+      },
+      {
+        "frame": 636,
+        "frames": 630,
+        "start": 71.16000000000001
+      }
+    ],
+    "reviseReal": 202.081,
+    "revise": {
+      "lesson_id": "20261122-195544-bst-insert-and-delete",
+      "version": 2,
+      "changed": [
+        "step 2"
+      ]
+    }
+  },
+  "library": {
+    "frames": 685,
+    "fps": 60,
+    "marks": {
+      "grid": 60,
+      "open": 246,
+      "ops": 401
+    }
+  },
+  "settings": {
+    "frames": 644,
+    "fps": 60,
+    "marks": {
+      "providers": 54,
+      "voice": 354
+    }
+  },
+  "studio": {
+    "frames": 1708,
+    "fps": 60,
+    "marks": {
+      "type": 54,
+      "options": 329,
+      "submit": 477,
+      "job": 581,
+      "timelapse": 653,
+      "done": 1558
+    },
+    "jobId": "cd038c3cddd0",
+    "realSeconds": 459.85,
+    "status": "done",
+    "result": {
+      "lesson_id": "20261122-195544-bst-insert-and-delete",
+      "version": 1,
+      "model": "gemini-3.5-flash-lite"
+    },
+    "error": null
+  }
+}

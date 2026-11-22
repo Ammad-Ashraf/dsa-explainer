@@ -83,6 +83,22 @@ When the assistant asked, we chose the repository name `dsa-explainer` and a pub
    so I can just evaluate the gates, and you can update the documentation. After that, commit and push to the both
    remotes."
 
+## Session 6: the launch video
+
+1. "Okay, so basically, I need to record a long video of the platform, and in the repo, you can find the long video
+   guide as well. But I don't want to record the video by myself. I basically want to like get a minimalistic kind of
+   launch video that if you are aware about the different kinds of launch videos the products made when they are
+   launching their product, right? So let me know. uh, You can record that video of this platform, with smooth
+   scrolling and animations, behavior, like all of that stuff. Like, I don't know the exact vocabulary, so you just
+   have to research first and then made a video. And let me know uh, if I record a video of the platform by myself and
+   give that video to you, so you can edit that video if that's easy for you, or you can just record all by yourself."
+2. "I have downloaded the video it's brilliant work. Amazing. This is the drive link (the Google Drive link) I want you
+   to update the documentation by including the launch the link as loom video link And push all the changes to the
+   both remotes. And prepare the submission folder to be submitted on the Google classroom."
+
+The assistant wrote the capture and edit in `launch-video/` (see its README) and made a real lesson with the app for
+the video.
+
 ## The prompts inside the application
 
 The prompts that the **application** sends to its own language model at run time are part of the code:

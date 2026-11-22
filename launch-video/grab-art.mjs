@@ -1,0 +1,11 @@
+import { chromium } from "playwright-core";
+const b = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe" });
+const p = await b.newPage({ viewport: { width: 1440, height: 810 }, deviceScaleFactor: 4 });
+await p.goto("http://127.0.0.1:8000/", { waitUntil: "networkidle" });
+await p.addStyleTag({ content: "*{animation:none!important;transition:none!important} .reveal{opacity:1!important;transform:none!important} html,body,header,.site-header,.green-close,.valley{background:transparent!important}" });
+await p.locator(".wordmark svg").screenshot({ path: "public/helper.png", omitBackground: true });
+const cta = p.locator(".green-close .valley svg").first();
+await cta.scrollIntoViewIfNeeded();
+await cta.screenshot({ path: "public/helper-arms.png", omitBackground: true });
+await p.locator(".hero .art").screenshot({ path: "public/hero-art.png", omitBackground: true });
+await b.close();
