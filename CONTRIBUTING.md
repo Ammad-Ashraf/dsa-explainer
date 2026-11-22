@@ -97,6 +97,9 @@ Rules that keep the verifier honest:
   actually did (see `BinarySearch.code_lines`).
 - `HELP` is all the planner knows about your algorithm: state the data format, every operation, the state format
   and every fact, precisely.
+- `KEYWORDS` choose which reference the planner sends, and the topic gate (`authoring/gate.py`) passes any topic that
+  matches one without a model call. Use words that clearly mean your algorithm; a vague one ("linear") lets
+  off-topic requests through to the slower planner.
 
 ### 2. Register it
 

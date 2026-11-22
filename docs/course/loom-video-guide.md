@@ -25,7 +25,7 @@ Loom while the first scene is being made (step 2) so the waiting does not count.
    Disturb in Windows so no notifications pop up.
 5. **Open two extra things:** `docs/course/architecture.png` in an image viewer, and a second terminal in the
    `dsa-explainer` folder with the virtual environment activated. Run `python -m pytest backend -q` in it once
-   beforehand (about two minutes, 289 tests) and keep the finished output on screen.
+   beforehand (about two minutes, 303 tests) and keep the finished output on screen.
 6. **Loom settings:** "Screen and camera", full screen, 1080p, your microphone selected (check the level). Put the
    camera bubble at the bottom left, where it does not cover the video player.
 7. **Decide who speaks when.** For example, Ahmed does the first four rows and Ammad does the rest.
@@ -40,10 +40,11 @@ Loom while the first scene is being made (step 2) so the waiting does not count.
 | 1:20 to 1:45 | Open the **Verified** tab, then **Plan** for a second. | "Here you see what was checked, whether any plan was sent back and why, and where the time went: the quiz overlaps the drawing. This is the plan the model wrote, after it was verified." |
 | 1:45 to 2:10 | **Change it** tab: type **slow down step 2** and press Enter. When it finishes, point out how few scenes were drawn again. | "We can change any part of the lesson. Only the changed scene is drawn again, and the rest comes from the cache, so the change takes about ten seconds." |
 | 2:10 to 2:30 | **Library**: open **Dijkstra** and pick an operation to show its pseudocode lines. Then **Settings**: show the provider list and the voice picker, and click **Preview voice**. | "There are 22 algorithms with ready-made lessons that need no key. You can bring a key for Gemini, OpenAI, Claude, Groq or OpenRouter, or run a model locally with Ollama. The voice is Kokoro, and you can pick and preview other voices." |
-| 2:30 to 2:50 | `docs/course/architecture.png`, then the terminal with **289 passed**. | "The language model only plans and writes text. The verifier is plain Python, and it catches 97% of 601 mistakes we planted in the saved lessons. The voice, the animation and the video joining run locally. We have 289 tests. The code, the report and this video are in our repository. Thanks for watching." |
+| 2:30 to 2:50 | `docs/course/architecture.png`, then the terminal with **303 passed**. | "The language model only plans and writes text. The verifier is plain Python, and it catches 97% of 601 mistakes we planted in the saved lessons. The voice, the animation and the video joining run locally. We have 303 tests. The code, the report and this video are in our repository. Thanks for watching." |
 
-If you have time left, show a refusal: type **Explain the travelling salesman problem** and click **Make my lesson**.
-The app explains which topics are supported instead of making an unchecked video.
+If you have time left, show a refusal: type **What is the capital of Pakistan** and click **Make my lesson**. The
+topic gate stops it in the Plan stage in about a second and explains which topics are supported, instead of making an
+unchecked video. (It used to take over two minutes, because the planner itself had to refuse it.)
 
 ## If something goes wrong
 

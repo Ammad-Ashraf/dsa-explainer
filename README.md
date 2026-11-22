@@ -65,6 +65,7 @@ real simulation.**
 
 | Stage | What happens | Code (in `backend/dsa_explainer/`) |
 | --- | --- | --- |
+| Topic gate | Before planning, the topic is checked: a keyword match passes it at once; otherwise a light model answers "is this one of the 22 algorithms, and which?" in about a second. Off-topic requests stop here instead of after a full planning call (1.5 s instead of 142 s for "What is the capital of Pakistan"). If the check fails, the planner decides | `authoring/gate.py` |
 | Plan | The model writes a JSON plan: initial data, one operation per step (`push(7)`), the state it expects after each, narration, and the facts the narration claims | `authoring/planner.py` |
 | Verify | Every step runs on the simulator; wrong states, false claims, invented numbers and impossible operations send the plan back with the truth, up to four attempts. No correct plan, no video | `core/verifier.py`, `algorithms/` |
 | Quiz | Written by the model while the video is made; every answer recomputed, wrong options from simulated mistakes | `authoring/quiz.py`, `authoring/mistakes.py` |
@@ -106,6 +107,10 @@ the difference is within the noise, so the default stays and `VOICE_THREADS` is 
   and drawn, so its time overlaps the build instead of adding to it, and the first scene plays long before the
   video is finished.
 - **Revisions** redraw only the scenes that changed; every other clip comes from the cache.
+- **Off-topic requests** are turned away by the topic gate before any planning: "What is the capital of Pakistan"
+  took 142 s to be refused by the planner and now takes 1.5 s. The gate's classifier uses the fallback model
+  (`gemini-3.5-flash-lite`) at low reasoning effort and usually answered in 0.6 to 1 s, about 9 s when Gemini was busy; `TOPIC_GATE`,
+  `GATE_MODEL` and `GATE_TIMEOUT` in `.env` control it.
 
 ## Development
 
@@ -124,7 +129,7 @@ inside. [CONTRIBUTING.md](CONTRIBUTING.md) explains how to add an algorithm, a v
 backend/dsa_explainer/
   algorithms/   22 simulators, grouped by family, with their catalogue data, facts strip and pseudocode lines
   core/         lesson schema, verifier, mutation testing (no AI, no I/O)
-  authoring/    what a language model writes: planner, quiz, simulated mistakes, revisions, providers
+  authoring/    what a language model writes: topic gate, planner, quiz, simulated mistakes, revisions, providers
   media/        voices (engines, lexicon, captions), views and panels (Manim), joining
   api/          FastAPI app and job runner (live progress over Server-Sent Events)
   plans/        22 verified saved lessons
@@ -140,6 +145,8 @@ docs/             roadmap, design, research, and the course submission
 - The narration check reads facts it can recognise (and every fact a plan declares); it cannot judge an explanation
   of *why*. The [verification note](docs/research/verification.md) lists what still gets through.
 - Free-tier keys allow few requests a day; the app waits on rate limits and switches to a fallback model.
+- The topic gate passes any topic that contains an algorithm keyword, so an off-topic request that happens to use
+  one ("linear regression" matches linear search) still goes to the planner, which refuses it more slowly.
 
 ## Licence
 

@@ -32,9 +32,9 @@ linear and binary search, hash tables, Fibonacci and coin change. The brief requ
 trees and one graph or sorting algorithm.
 
 **What this report describes.** The course submission started with five structures and a Gradio interface. After
-that, the project grew into an open-source platform in nine milestones (a local API server, a bring-your-own-model
+that, the project grew into an open-source platform in ten milestones (a local API server, a bring-your-own-model
 layer, a React web app, 17 more algorithms, richer animations, pluggable voices, stronger verification with an
-evaluation harness, faster builds and packaging). This report describes the finished project, version 0.3.0. The
+evaluation harness, faster builds, packaging, and a topic gate that turns away off-topic requests). This report describes the finished project, version 0.3.0. The
 five-structure version is kept where its measurements are reported (Section 8.3).
 
 ## 2. Complex Computing Problem analysis
@@ -82,7 +82,7 @@ Combining them so that each covers the other's weakness is the problem this proj
   animation timing. The cache key of a clip must include everything the clip shows, or a revision would show a stale
   picture. A change in one component breaks others unless the contracts are kept, so every algorithm is one class in
   a registry that the planner prompt, the verifier, the quiz, the renderer, the API and the web app all read from,
-  and 289 backend tests, including property-based, golden-layout and mutation tests, guard the contracts.
+  and 303 backend tests, including property-based, golden-layout and mutation tests, guard the contracts.
 - **Non-deterministic and imperfect input from many providers.** The language model may return invalid JSON, a wrong
   state, an impossible operation, a refusal, or nothing at all because of an outage or a rate limit, and different
   providers behave differently. In our own measurements, schema-constrained output made Gemini *slower and less
@@ -121,6 +121,7 @@ For each major decision we considered at least two approaches. The table lists t
 | Trade-off | Our choice | Reason |
 | --- | --- | --- |
 | **Correctness vs. coverage** | 22 algorithms, each with an exact simulator, and a polite refusal for anything else | Every supported topic can be verified. Explaining an algorithm without a simulator would mean showing an unchecked video, which the brief calls worse than none. In the live evaluation, both off-topic requests were refused (Section 8.3). Coverage grew from 5 to 22 by adding simulators, never by relaxing checks. |
+| **Fast refusal vs. one more model call** | A topic gate before planning: a keyword match, else a short classifier call to a lighter model; if the check fails, the planner decides | Refusing inside the planner cost a full planning call: 142 s for "What is the capital of Pakistan". The gate refuses it in 1.5 s. Topics that name an algorithm pass on a keyword with no extra call, and only topics with no keyword pay for the classifier (about a second). The gate never blocks on its own failure, so the worst case is the old behaviour plus at most the gate's timeout (Section 8.9). |
 | **Strict checking vs. complete checking of language** | Declared claims and rule-based checks that catch wrong values and false facts (97.0% of 601 planted mistakes), but not wrong reasons or poor analogies | Deterministic, fast and explainable checks rather than a slower second model that could also be wrong. We chose to measure and publish the 3% that gets through (Section 8.4) rather than claim the whole lesson is correct. |
 | **Reliability vs. waiting time** | Up to four planning attempts and a quiz repair before giving up | Each repair adds a few seconds, but a wrong video is never shown. In our Gemini runs one of two lessons needed a repair, and the claim check caught a narration that did not say what the plan declared. |
 | **Latency vs. a simple pipeline** | The quiz is written in a background thread while scenes are voiced and drawn, and its clips are added last | The quiz is the slowest model call (8 to 123 s). Overlapping it saves 46 to 56 s, at the price of a more complex job runner and a fallback when the quiz arrives late or fails. |
@@ -158,7 +159,8 @@ key leaks).
 
 **Safety and security.** The model never runs code: it can only choose operations from a fixed list (such as `push` or
 `insert`), and those are carried out by our own simulators. A topic that tries to change the instructions (a prompt
-injection) can at worst produce a plan that fails validation or verification. Off-topic requests are refused. The
+injection) can at worst produce a plan that fails validation or verification. Off-topic requests are turned away by
+a topic gate before any lesson is planned (Section 5.2). The
 server listens on the local address only.
 
 **Legal and licensing.** Our code is MIT. The components are open source: Manim (MIT), the Kokoro-82M weights (Apache
@@ -178,7 +180,7 @@ transcript in the lesson page, and the animation and pseudocode show each step w
 
 | Requirement from the brief | How DSA Explainer meets it |
 | --- | --- |
-| A learner types a topic; the system plans a lesson, writes the narration, draws the animation, adds a voice and exports a video with a quiz at the end | Web app → API server → lesson planner → step verifier → voice, quiz and renderer → one mp4 with captions |
+| A learner types a topic; the system plans a lesson, writes the narration, draws the animation, adds a voice and exports a video with a quiz at the end | Web app → API server → topic gate → lesson planner → step verifier → voice, quiz and renderer → one mp4 with captions |
 | Cover at least linked lists, stacks, queues, trees and one graph or sorting algorithm | 22 algorithms in seven families, each with its own simulator and picture: stack, queue, deque, linked list, BST, tree traversals, min-heap, BFS, DFS, Dijkstra, topological sort, six sorts, two searches, hash table, Fibonacci and coin change |
 | Every video is at least 30 seconds long | The verifier rejects plans with too little narration (about 36 s of speech). Real lessons last about 1.5 to 2.5 minutes |
 | The language model produces a structured scene plan that the renderer draws | A JSON scene plan, validated with Pydantic. The renderer reads only the verifier's snapshots |
@@ -195,20 +197,23 @@ The core modules are described in Section 5.
 
 1. The learner types a topic and picks a level (beginner, intermediate or advanced) in the **web app**, which talks to
    the **local API server**. The server runs one job at a time and streams its progress live.
-2. The **lesson planner** sends the topic, the level and the reference of the algorithms the topic names to the
-   language model the learner chose, which returns a JSON scene plan.
-3. The plan is checked against a Pydantic schema, and then the **step verifier** runs it on the real simulator.
+2. The **topic gate** checks that the request is about one of the 22 algorithms: by keyword, or else with one
+   short call to a lighter model. An off-topic request stops here, in about a second, with a message that lists
+   what is supported.
+3. The **lesson planner** sends the topic, the level and the reference of the algorithms the topic names (or the one
+   the gate recognised) to the language model the learner chose, which returns a JSON scene plan.
+4. The plan is checked against a Pydantic schema, and then the **step verifier** runs it on the real simulator.
    Any problem is sent back to the planner together with the true state, for up to four attempts in total. If no
    attempt passes, no video is made.
-4. **Kokoro** (or another voice engine) speaks each scene's narration on the local CPU, one sentence at a time, so
+5. **Kokoro** (or another voice engine) speaks each scene's narration on the local CPU, one sentence at a time, so
    caption times are exact. As soon as a scene's audio exists, the scene is handed to one of several drawing
    processes, and the **renderer** (Manim) draws it from the verifier's snapshots, timed to the audio. Each scene is
    announced to the web app as soon as it is drawn, so the first scene can be watched while the rest are made.
-5. At the same time, the **quiz writer** (a background thread) asks the model for questions. The verifier recomputes
+6. At the same time, the **quiz writer** (a background thread) asks the model for questions. The verifier recomputes
    every answer, and wrong options come from simulated mistakes. The quiz clips are added last.
-6. Each clip is stored in a cache under a hash of everything it shows and says, and **ffmpeg** joins the clips into
+7. Each clip is stored in a cache under a hash of everything it shows and says, and **ffmpeg** joins the clips into
    `lesson_v1.mp4`; the sentence times become one WebVTT captions file.
-7. A change request goes through **revision control**, is verified again, and only the clips whose content changed
+8. A change request goes through **revision control**, is verified again, and only the clips whose content changed
    are drawn again.
 
 ## 5. Core modules
@@ -233,7 +238,29 @@ picture; the planner, verifier, quiz, renderer, API and Library page need no cha
 an independent reference implementation with property-based tests (Hypothesis), which found two real bugs (selection
 sort on one value, and a graph edge given twice), both fixed.
 
-### 5.2 Lesson planner and providers (`authoring/planner.py`, `core/lesson.py`, `authoring/llm.py`, `authoring/providers.py`)
+### 5.2 Topic gate, lesson planner and providers (`authoring/gate.py`, `authoring/planner.py`, `core/lesson.py`, `authoring/llm.py`, `authoring/providers.py`)
+
+**Topic gate.** Before the planner is called, `gate.py` decides whether the request is something the app can
+explain. The first version had no such step: the planner prompt's last rule asked the model to reply
+`{"error": "unsupported"}` for other topics, so an off-topic request paid for the most expensive call there is. With
+no algorithm named, the prompt carried the reference of all 22 algorithms and the reply was constrained by the whole
+lesson schema; "What is the capital of Pakistan" took 142 s to be refused. The gate answers in two tiers:
+
+1. **Keywords.** Every algorithm class lists its keywords (`KEYWORDS`), which the planner already used to choose
+   which reference to send. A topic that matches one ("bubble sort", "FIFO", "undo") is in scope at once, with no
+   API call.
+2. **A short classifier call**, only when no keyword matched. The prompt lists the 22 names and titles and asks for
+   `{"in_scope", "structure", "reason"}`, with examples of paraphrases that are in scope ("the shortest route between
+   cities" is Dijkstra). The call goes to the provider's fallback model (`gemini-3.5-flash-lite` for Gemini; settable
+   with `GATE_MODEL`), at low reasoning effort, without rate-limit waits and with a 10 s timeout. Providers that do
+   not know the reasoning-effort option are asked again without it.
+
+An off-topic request ends the Plan stage at once with a fixed message naming the seven families that are supported.
+An in-scope paraphrase passes the recognised algorithm to the planner, which then sends only that algorithm's
+reference, a shorter prompt. The gate **fails open**: if the classifier errors, times out or replies with something
+unreadable, the request goes on to the planner as before, and the planner's own refusal rule stays as a second line.
+An outage of the light model therefore never blocks a valid topic. The gate's verdict, its tier and its time are
+sent to the web app as an event and saved with the lesson's timings; `TOPIC_GATE=0` turns it off for comparisons.
 
 The planner turns a topic and a learner level into a `Lesson`: a title, the algorithm, its initial data and a list of
 scenes. A plan has one intro scene, several step scenes and one summary scene. Each step holds exactly one operation,
@@ -423,6 +450,7 @@ responsive and keyboard-friendly.
 
 | Part | Model or tool | Where it runs |
 | --- | --- | --- |
+| Topic gate (is the request about a supported algorithm?) | Keyword match first; otherwise the chosen provider's lighter fallback model (`gemini-3.5-flash-lite` by default), at low reasoning effort | Local, then API or local |
 | Lesson planning, narration text, quiz questions, rewrite requests | The learner's choice: Gemini (default), OpenAI, Anthropic, Groq, OpenRouter, any OpenAI-compatible API, or Ollama or LM Studio on the same computer | API, or local |
 | Step verifier, simulated mistakes and quiz answer checking | Plain Python | Local |
 | Text to speech | Kokoro-82M (ONNX), behind a pluggable engine interface | Local, CPU |
@@ -448,6 +476,7 @@ from an empty cache:
 
 Runs on this laptop vary by about 20 s, and two or four voice threads were within that noise, so the default stays. The
 language model dominates a new lesson: on Gemini's free tier a plan call took 6 to 57 s and a quiz call 8 to 123 s.
+An off-topic request no longer waits for a plan call: the topic gate refuses it in about a second (Section 8.9).
 
 ### 6.3 User interface
 
@@ -461,12 +490,12 @@ back, the clips drawn or reused, and the time of each stage.
 | --- | --- | --- |
 | `backend/dsa_explainer/algorithms/` | 2131 | 22 simulators with their metadata, grouped by family, and the registry |
 | `backend/dsa_explainer/core/` | 623 | Scene-plan schema, verifier, mutation testing (no AI, no I/O) |
-| `backend/dsa_explainer/authoring/` | 990 | Planner, quiz, simulated mistakes, revisions, providers, language-model client |
+| `backend/dsa_explainer/authoring/` | 1110 | Topic gate, planner, quiz, simulated mistakes, revisions, providers, language-model client |
 | `backend/dsa_explainer/media/` | 1526 | Voice engines, lexicon, captions, Manim views and panels, joining |
 | `backend/dsa_explainer/api/` | 603 | FastAPI app and job runner |
 | `backend/dsa_explainer/` (root) | about 650 | Pipeline, lesson store, events, settings, configuration, command line, model download |
 | `backend/dsa_explainer/plans/` | 22 files | The verified saved lessons |
-| `backend/tests/` | 1904 | 289 automated tests |
+| `backend/tests/` | 2039 | 303 automated tests |
 | `backend/scripts/` | | Live evaluation, evaluation harness, mutation report, benchmarks, plan authoring, diagram, report PDF |
 | `frontend/src/` | 3017 | React and TypeScript web app |
 | `docs/` | | Roadmap, design, research and the course documents |
@@ -494,7 +523,7 @@ from the wheel that CI builds.
 
 ### 8.1 Automated tests
 
-`python -m pytest backend` runs **289 tests in about two minutes**, and all of them pass (including real clip renders
+`python -m pytest backend` runs **303 tests in about two minutes**, and all of them pass (including real clip renders
 with the voice model; tests that need the voice model skip without it). `ruff check .` is clean. In the web app,
 `npm test` runs 8 unit tests and `npm run build` runs the type check, ESLint and the production build.
 
@@ -507,6 +536,7 @@ with the voice model; tests that need the voice model skip without it). `ruff ch
 | Voices | 23 | Engine interface, sentence timing, captions, lexicon, cache keys |
 | Providers | 13 | Presets, keys never leaked, rate limits and fallback models |
 | API | 12 | Lessons, jobs and events, settings, saved plans (with a fake language model) |
+| Topic gate | 14 | Keyword topics need no API call; off-topic requests stop in the Plan stage without planning; a recognised algorithm narrows the planner prompt; the gate fails open on errors, bad replies and timeouts; quick calls use the given model at low reasoning effort, retry without that option when a provider rejects it, and never wait on a rate limit |
 | Structures, planner, mutation, harness, pipeline, rendering | 28 | Data structure basics, planner repair with a fake model, the mutation-rate floor, the evaluation harness offline, a full pipeline run, real clips with sound |
 
 ### 8.2 Installation and continuous integration
@@ -632,11 +662,48 @@ without an API key, and they are what the Library plays. They were written durin
 | Hashing | Hash table (intermediate) |
 | Dynamic programming | Fibonacci (beginner), Coin change (advanced) |
 
+### 8.9 Turning away off-topic requests (topic gate)
+
+Before the gate, "What is the capital of the Pakistan" spent **142.4 s** in the Plan stage before the planner refused
+it. Through the real pipeline with the gate, the same request was refused in **1.46 s**, with no planning call.
+
+We first timed the classifier prompt on both Gemini models, on an off-topic and an in-scope request. The main model,
+`gemini-3.5-flash`, was overloaded that day: every call ended in a 503, a 429 or a 120 s timeout. The light model,
+`gemini-3.5-flash-lite`, answered both correctly in 1.5 s and 9.6 s at its default reasoning, and in **0.8 s and
+0.7 s at low reasoning effort**, which the gate now uses. Then we sent nine requests through `gate.check_topic`:
+
+| # | Request | Expected | Gate | Tier | Time |
+| --- | --- | --- | --- | --- | ---: |
+| 1 | What is the capital of the Pakistan | refuse | refused | classifier | 11.1 s |
+| 2 | Write me a poem about spring | refuse | refused | classifier | 2.0 s |
+| 3 | Explain transformers in NLP | refuse | refused | classifier | 0.6 s |
+| 4 | Who won the 2022 football world cup? | refuse | passed to the planner (503 from the server) | fallback | 9.3 s |
+| 5 | How does a map app find the quickest route between two cities? | Dijkstra | Dijkstra | classifier | 10.2 s |
+| 6 | How do I check if an item is in a sorted list quickly | binary search | binary search | classifier | 8.1 s |
+| 7 | FIFO line at a bank, explain it | queue | queue | keyword | 0.0 s |
+| 8 | How do I schedule tasks that depend on each other | topological sort | topological sort | classifier | 0.8 s |
+| 9 | Explain bubble sort on 5 3 8 1 | bubble sort | bubble sort | keyword | 0.0 s |
+
+- **Every answer the classifier gave was right**, including the three paraphrases that name no algorithm (5, 6, 8),
+  which the gate passes on to the planner as that algorithm. Request 4 is not a wrong answer: the server returned
+  503, and the gate let the request through, as designed; the planner then refuses it the slow way.
+- **The times vary with the server's load, not with the request.** Of six repeated calls, three took 0.6 to 1.1 s, two
+  waited about 9 s and one got a 503. After this run, quick calls keep the client's one automatic retry, since a busy
+  server's 503 comes back in about a second, and the gate's timeout is 10 s.
+- **Keyword topics cost nothing**: requests 7 and 9 were decided in under a millisecond, with no API call.
+
+The run is small (nine requests on one day) and shows the design works; it is not a measurement of the classifier's
+accuracy over many phrasings.
+
 ## 9. Limitations and future work
 
 - **Scope.** 22 algorithms are supported. Other topics are refused with a message rather than explained badly. Adding
   one means writing a simulator class (and a picture, if none fits); the planner, verifier, quiz, API and Library
   need no change.
+- **The topic gate trusts keywords.** A topic that contains an algorithm keyword passes without the classifier, so an
+  off-topic request that happens to use one ("linear regression" matches linear search) still reaches the planner,
+  which refuses it as slowly as before. When the light model is unavailable, the gate also lets requests through.
+  In both cases the result is a slow refusal, never a wrong video.
 - **Size.** At most 7 to 8 items or nodes per lesson, so the picture stays readable.
 - **Narration checks are rule-based.** They catch wrong values and false statements about the facts they recognise, and
   every fact a plan declares, but not every wrong sentence, such as a wrong reason or a misleading analogy; 3% of
@@ -658,11 +725,11 @@ without an API key, and they are what the Library plays. They were written durin
 ## 10. Use of generative AI tools
 
 As the brief allows, we used an AI coding assistant (Claude Code) while building this project, in several sessions:
-the course version, and then the nine milestones of the platform, which followed the written roadmap in
+the course version, and then the ten milestones of the platform, which followed the written roadmap in
 `docs/roadmap/milestones.md`. It drafted code, tests and documentation from our instructions, and we reviewed, ran and
 tested the results. It also wrote the 22 saved lesson plans, each of which was accepted only after our verifier passed
-it. The prompts that the application itself sends to the language model are in the code (`authoring/planner.py`,
-`authoring/quiz.py` and `authoring/revise.py`), and the prompts we gave the assistant are listed in
+it. The prompts that the application itself sends to the language model are in the code (`authoring/gate.py`,
+`authoring/planner.py`, `authoring/quiz.py` and `authoring/revise.py`), and the prompts we gave the assistant are listed in
 `docs/course/ai-prompts.md`.
 
 ## 11. Conclusion
@@ -670,7 +737,8 @@ it. The prompts that the application itself sends to the language model are in t
 DSA Explainer produces narrated, animated lessons on 22 data structures and algorithms, with quizzes whose answers
 were computed and revisions that redraw only what changed, and it keeps them correct by never trusting the language
 model with facts: every step is run on real data structures before anything is drawn, wrong plans are repaired with
-the true state, and the video is drawn only from verified states. We measured the verifier rather than only claiming
+the true state, and the video is drawn only from verified states. Requests outside the 22 algorithms are turned away
+by a topic gate in about a second, before any lesson is planned. We measured the verifier rather than only claiming
 it works: it catches 97% of 601 planted mistakes, and we state what still gets through. The speech and the animation
 run locally on an ordinary laptop CPU, and only lesson planning and the quiz use a language model, which the learner
 chooses, and can run on their own computer.

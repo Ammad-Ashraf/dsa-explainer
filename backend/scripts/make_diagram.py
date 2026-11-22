@@ -55,7 +55,7 @@ class Architecture(Scene):
 
         learner = box("Learner", "React web app", PERSON, (-5.3, 1.75))
         server = box("Local API server", "FastAPI, jobs, live events", LOCAL, (-1.75, 1.75))
-        planner = box("1. Lesson planner", "the LLM you choose writes a plan", API, (1.75, 1.75))
+        planner = box("1. Lesson planner", "topic gate, then your LLM plans", API, (1.75, 1.75))
         verifier = box("2. Step verifier", "22 real simulators, no AI", LOCAL, (5.3, 1.75))
         revision = box("Revision control", "rules or LLM, then re-verified", API, (-1.75, 0.0))
         quiz = box("3. Quiz writer", "LLM + simulated mistakes", API, (1.75, 0.0))

@@ -72,10 +72,22 @@ The session started by pasting the previous session's summary of the five finish
 
 When the assistant asked, we chose the repository name `dsa-explainer` and a public repository.
 
+## Session 5: the topic gate
+
+1. A spoken request, with two screenshots of the Studio: "What is the capital of the Pakistan" took 142.4 s in the
+   Plan stage before the refusal appeared. Could the query be filtered against the guardrails first, so it does not go
+   on to the next stages and the message shows in the Plan phase, perhaps with a guardrail framework?
+2. "Yes, build it"
+3. "Okay, so before committing and pushing to both remotes, I want you to update all the required documentations as
+   well to include this feature in the documentation as well. After that, meanwhile, I want you to restart the server
+   so I can just evaluate the gates, and you can update the documentation. After that, commit and push to the both
+   remotes."
+
 ## The prompts inside the application
 
 The prompts that the **application** sends to its own language model at run time are part of the code:
 
+- topic gate (is the request about a supported algorithm?): `SYSTEM_PROMPT` in `backend/dsa_explainer/authoring/gate.py`
 - lesson planning: `SYSTEM_PROMPT` in `backend/dsa_explainer/authoring/planner.py`
 - quiz questions: `PROMPT` in `backend/dsa_explainer/authoring/quiz.py`
 - rewrite revisions: `PROMPT` in `backend/dsa_explainer/authoring/revise.py`

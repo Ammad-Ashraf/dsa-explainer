@@ -41,6 +41,7 @@ The open questions from the vision, decided so work can proceed without waiting:
 | 7 | Stronger verification and an evaluation harness | 5 | **Done** |
 | 8 | Latency and responsiveness | 1, 3 | **Done** |
 | 9 | Open-source release | all | **Done** |
+| 10 | Topic gate: turn away off-topic requests before planning | 2, 5 | **Done** |
 
 Milestone numbers are names, not order: the table is in the order the work happens. Milestone 5's registry comes
 before the frontend because the library pages are built from it.
@@ -257,3 +258,26 @@ the difference is within the noise, so the default stays and `VOICE_THREADS` is 
       pull-request checklist.
 - [x] 9.5 README rewritten for the open-source project (what it does, quick start, how it works, performance,
       development, limitations, licence), with the course material linked from it.
+
+## Milestone 10: Topic gate
+
+**Why.** The planner was the only guard against off-topic requests: its prompt asked for `{"error": "unsupported"}`,
+so a request such as "What is the capital of Pakistan" paid for a full planning call, with the reference of all 22
+algorithms in the prompt and the whole lesson schema to fill. In the Studio it took 142.4 s to be refused.
+
+- [x] 10.1 `authoring/gate.py`: tier 1, the registry's `KEYWORDS` (`algorithms.candidates`) pass a topic with no API
+      call; tier 2, only when no keyword matches, a short classifier prompt with the 22 names returns
+      `{"in_scope", "structure", "reason"}`. A recognised algorithm narrows the planner prompt to its reference.
+- [x] 10.2 Fails open: an error, timeout or unreadable reply sends the request on to the planner, whose refusal rule
+      stays. `TOPIC_GATE=0` turns the gate off for comparisons.
+- [x] 10.3 Speed: the classifier uses the provider's fallback model (`GATE_MODEL` overrides it) at low reasoning
+      effort, with no rate-limit waits and a 10 s timeout (`GATE_TIMEOUT`). `llm.Client.chat` gained a model override
+      and a `quick` mode; a provider that rejects `reasoning_effort` is asked again without it.
+- [x] 10.4 Pipeline: the gate runs inside the Plan stage, so a refusal ends it with a fixed message naming the seven
+      families; a `gate` event reports the verdict, tier and time, and `gate_seconds` is saved with the timings.
+- [x] 10.5 Web app: a failed or cancelled job no longer shows the "being made" spinner in the player.
+- [x] 10.6 14 tests (`backend/tests/test_gate.py`).
+
+**Result.** "What is the capital of the Pakistan" is refused in 1.46 s instead of 142.4 s. On nine live requests
+every classifier answer was right, including three paraphrases that name no algorithm; the one request that missed
+was a 503 from the server, which the gate passed to the planner as designed (report Section 8.9).
